@@ -1,0 +1,2 @@
+"### Video 8 — Market Protraction (Temporal Manipulation): ✅ COMPLETE\n- [x] Time-sensitive daily clock anchors (20:00, 00:00, 07:00 NY) detecting temporal manipulation swings.\n- [x] Standalone mathematical detector classmethod `smc.market_protraction
+<truncated 972 bytes>

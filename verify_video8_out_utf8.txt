@@ -1,0 +1,21 @@
+====================================================================
+RUNNING FORENSIC REGRESSION AUDIT: VIDEO 8 MARKET PROTRACTION
+====================================================================
+Loading test data from: tests/test_data/EURUSD/EURUSD_15M.csv
+Running smc.market_protraction()...
+python : Traceback (most recent call last):
+At line:1 char:32
++ ... NCODING='utf-8'; python verify_video8.py > verify_video8_out.txt 2>&1
++                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "D:\C.Slim\ict-intelligence\verify_video8.py", line 52, in <module>
+    main()
+    ~~~~^^
+  File "D:\C.Slim\ict-intelligence\verify_video8.py", line 22, in main
+    result = smc.market_protraction(df, threshold_pips=0.0005)
+             ^^^^^^^^^^^^^^^^^^^^^^
+
+AttributeError: type object 'smc' has no attribute 'market_protraction'
+

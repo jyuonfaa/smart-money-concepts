@@ -1,86 +1,82 @@
 import pandas as pd
-import yfinance as yf
+import os
 from smartmoneyconcepts import smc
+from smartmoneyconcepts.state_machine import PriceDeliveryStateMachine
 
-def annual_opportunity_audit(symbol):
-    try:
-        # Fetch Data - 1 Year Daily, Max (60d) 15M
-        df_1d = yf.download(symbol, period="1y", interval="1d", progress=False)
-        df_15m = yf.download(symbol, period="60d", interval="15m", progress=False)
+def run_annual_audit():
+    data_path = "HISTDATA_COM_ASCII_AUDUSD_M12016/DAT_ASCII_AUDUSD_M1_2016.csv"
+    if not os.path.exists(data_path):
+        print(f"Error: {data_path} not found.")
+        return
+
+    print("==========================================================")
+    print("ANNUAL SOVEREIGN AUDIT (MASTER 2016 DATA)")
+    print("==========================================================\n")
+
+    # Load 1M data and resample to 15M for institutional speed
+    df_1m = pd.read_csv(data_path, sep=';', names=['ts', 'open', 'high', 'low', 'close', 'vol'], index_col=False)
+    df_1m['ts'] = pd.to_datetime(df_1m['ts'], format='%Y%m%d %H%M%S')
+    df_1m.set_index('ts', inplace=True)
+    
+    # Process month by month to avoid memory issues
+    months = range(1, 13)
+    global_results = []
+
+    for m in months:
+        print(f"Processing Month {m}...")
+        df_month = df_1m[df_1m.index.month == m]
+        if df_month.empty: continue
         
-        if df_1d.empty or df_15m.empty:
-            return None
-
-        def clean(df):
-            if isinstance(df.columns, pd.MultiIndex): df.columns = df.columns.get_level_values(0)
-            df.columns = [c.lower() for c in df.columns]
-            return df
+        df_15m = df_month.resample('15min').agg({'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last'}).dropna()
         
-        df_1d, df_15m = clean(df_1d), clean(df_15m)
-
-        # 1. Identify All Daily OTE Zones for the Year
-        d_swings = smc.swing_highs_lows_v4(df_1d)
-        year_otes = []
-        for i in range(1, len(d_swings)):
-            p1, p5 = d_swings.iloc[i-1], d_swings.iloc[i]
-            mode = 'BULLISH' if p1['type'] == 'LOW' else 'BEARISH'
-            r = abs(p5['p'] - p1['p'])
-            o62 = p5['p'] - 0.62*r if mode == 'BULLISH' else p5['p'] + 0.62*r
-            o79 = p5['p'] - 0.79*r if mode == 'BULLISH' else p5['p'] + 0.79*r
-            year_otes.append({'62': o62, '79': o79, 'type': mode})
-
-        # 2. Audit 60-Day Surgical Sample
-        m15_swings = smc.swing_highs_lows_v4(df_15m)
-        setups = []
-        zone_cooldowns = {}
+        # 1. Scanners
+        swings = smc.swing_highs_lows_v4(df_15m)
+        fvgs = smc.fvg(df_15m)
+        expansion = fvgs[['FVG', 'Top', 'Bottom', 'CE', 'MitigatedIndex']].copy()
+        expansion.columns = ['Expansion', 'Top', 'Bottom', 'CE', 'MitigatedIndex']
+        cons = smc.consolidation(df_15m)
+        clean_ranges = smc.detect_clean_ranges(df_15m, swings)
         
-        for _, row in m15_swings.iterrows():
-            for i, ote in enumerate(year_otes):
-                if min(ote['62'], ote['79']) <= row['p'] <= max(ote['62'], ote['79']):
-                    cooldown_key = (i, row['type'])
-                    if cooldown_key in zone_cooldowns:
-                        if row['ts'] - zone_cooldowns[cooldown_key] < pd.Timedelta(hours=2):
-                            continue
-                    setups.append((row['ts'], row['type']))
-                    zone_cooldowns[cooldown_key] = row['ts']
-                    break
-
-        # 3. Global Alternation (H -> L -> H)
-        setups.sort(key=lambda x: x[0])
-        final_trades = []
-        last_type = None
-        for ts, sig_type in setups:
-            if sig_type != last_type:
-                final_trades.append(sig_type)
-                last_type = sig_type
-
-        # 4. Statistics
-        days_sampled = (df_15m.index[-1] - df_15m.index[0]).days
-        count_60d = len(final_trades)
-        annual_projection = int((count_60d / days_sampled) * 365) if days_sampled > 0 else 0
+        # 2. State Machine
+        from smartmoneyconcepts.state_machine import detect_reversals
+        reversals = detect_reversals(df_15m, swings)
+        sm = PriceDeliveryStateMachine()
+        audit = sm.process(
+            ohlc=df_15m,
+            consolidation=cons,
+            expansion=expansion,
+            liquidity=smc.liquidity(df_15m, swings),
+            swing_hl=swings,
+            clean_ranges=clean_ranges,
+            reversals=reversals
+        )
         
-        return {
-            "symbol": symbol,
-            "otes_in_year": len(year_otes),
-            "trades_in_60d": count_60d,
-            "annual_projection": annual_projection,
-            "avg_weekly": round(count_60d / (days_sampled / 7), 1) if days_sampled > 0 else 0
-        }
+        # 3. Accuracy Calculation
+        lrr_mask = (audit['SovereignEnv'] == "LRR").astype(int)
+        lrr_diff = lrr_mask.diff()
+        starts = lrr_mask.index[lrr_diff == 1]
+        ends = lrr_mask.index[lrr_diff == -1]
+        
+        successes = 0
+        totals = 0
+        for start, end in zip(starts, ends):
+            totals += 1
+            seg = df_15m.loc[start:end]
+            move = abs(seg['close'].iloc[-1] - seg['close'].iloc[0])
+            if move > 0.0015: # 15 pips on 15m is strong delivery
+                successes += 1
+            elif len(seg) > 8:
+                successes += 1
+        
+        accuracy = (successes / totals * 100) if totals > 0 else 0
+        global_results.append({"Month": m, "Runs": totals, "Accuracy": f"{accuracy:.1f}%"})
 
-    except Exception as e:
-        return {"symbol": symbol, "error": str(e)}
+    report = pd.DataFrame(global_results)
+    print("\n" + "="*40)
+    print("FINAL ANNUAL SOVEREIGN REPORT (AUDUSD 2016)")
+    print("="*40)
+    print(report.to_string(index=False))
+    print("="*40)
 
 if __name__ == "__main__":
-    assets = ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "GC=F", "BTC-USD"]
-    print("\n" + "="*70)
-    print("ICT ANNUAL OPPORTUNITY AUDIT: 60-DAY SURGICAL SAMPLE")
-    print("="*70)
-    print(f"{'ASSET':<10} | {'D1 OTEs':<8} | {'60D TRADES':<12} | {'EST. ANNUAL':<12} | {'WEEKLY'}")
-    print("-" * 70)
-    
-    for asset in assets:
-        data = annual_opportunity_audit(asset)
-        if data and "error" not in data:
-            print(f"{data['symbol']:<10} | {data['otes_in_year']:<8} | {data['trades_in_60d']:<12} | {data['annual_projection']:<12} | {data['avg_weekly']} setups")
-    
-    print("="*70 + "\n")
+    run_annual_audit()

@@ -1,0 +1,99 @@
+{
+  "project_name": "ICT Intelligence Suite",
+  "developer_handle": "C.Slim",
+  "repository": "jyuonfaa/smart-money-concepts",
+  "curriculum_version": "2016 Mentorship",
+  "last_updated": "2026-06-07",
+  "last_locked_milestone": "Month 2, Video 4",
+  "next_milestone": "Month 2, Video 5 (Notes First)",
+  "golden_master_metrics": {
+    "test_range": "Sept 11-18, 2016 (AUDUSD)",
+    "expected_hrr_count": 471,
+    "expected_lrr_count": 37,
+    "expected_transitions": 11,
+    "last_regression_status": "PASSED",
+    "video8_status": "FAILED",
+    "month2_video2_status": "PASSED",
+    "month2_video3_status": "PASSED",
+    "month2_video4_status": "PASSED"
+  },
+  "data_source": {
+    "pair": "AUDUSD",
+    "file": "HISTDATA_COM_ASCII_AUDUSD_M12016/DAT_ASCII_AUDUSD_M1_2016.csv",
+    "format": "date;open;high;low;close;volume",
+    "date_format": "%Y%m%d %H%M%S"
+  },
+  "timezone_configuration": {
+    "base_timezone": "America/New_York",
+    "normalization": "Eastern Standard Time (EST/EDT aware via pytz)",
+    "clock_anchors": {
+      "ASIA": "20:00 NY time (UTC 00:00 EDT / UTC 01:00 EST)",
+      "MIDNIGHT": "00:00 NY time (UTC 04:00 EDT / UTC 05:00 EST)",
+      "NY_OPEN": "07:00 NY time (UTC 11:00 EDT / UTC 12:00 EST)"
+    }
+  },
+  "active_verification_scripts": [
+    "verify_step2.py",
+    "verify_video8.py",
+    "verify_month2_video2.py",
+    "verify_month2_video3.py",
+    "verify_month2_video4.py"
+  ],
+  "active_visualizers": [
+    "visualize_month2_video1.py",
+    "visualize_month2_video2.py",
+    "visualize_month2_video3.py",
+    "visualize_month2_video4.py",
+    "visualize_video8.py"
+  ],
+  "active_html_outputs": [
+    "ICT_MONTH2_VIDEO1_TURTLE_SOUP.html",
+    "ICT_MONTH2_VIDEO2_TURTLE_SOUP.html",
+    "ICT_MONTH2_VIDEO3_TURTLE_SOUP.html",
+    "ICT_MONTH2_VIDEO4_EXPECTANCY.html",
+    "ICT_VIDEO_8_MARKET_PROTRACTION.html",
+    "ICT_VIDEO_6_VALUATION.html"
+  ],
+  "curriculum_locks": {
+    "V1_V3": {
+      "status": "Locked",
+      "description": "Power of 3, Liquidity Pools, NY Time"
+    },
+    "V4": {
+      "status": "Locked",
+      "description": "Equilibrium vs Discount (Bullish OTE)"
+    },
+    "V5": {
+      "status": "Locked",
+      "description": "Equilibrium vs Premium (Bearish OTE)"
+    },
+    "V6": {
+      "status": "Locked",
+      "description": "Institutional Suite (OB, FVG, MTF Confluence)"
+    },
+    "V7": {
+      "status": "Locked",
+      "description": "Sovereign Liquidity Engine (LRR/HRR State Machine)"
+    },
+    "V8": {
+      "status": "Locked",
+      "description": "Market Protraction (Temporal Manipulation)"
+    },
+    "Month2_Video1": {
+      "status": "Locked",
+      "description": "Growing Small Accounts (Turtle Soup, risk_engine, pre-entry structural targets)"
+    },
+    "Month2_Video2": {
+      "status": "Locked",
+      "description": "Framing Low-Risk Trade Setups (LTF fractal refinement, use_daily_ob_stop, direction-correct stops)"
+    },
+    "Month2_Video3": {
+      "status": "Locked",
+      "description": "How Traders Make 10% Per Month (EXIT_SCHEDULE_V3 doc constant, liq_1h parameter, ts_target_1h column, strict > filter)"
+    },
+    "Month2_Video4": {
+      "status": "Locked",
+      "description": "No Fear of Losing (Expectancy Matrix, calc_expectancy, calc_position_size, min_rr_for_win_rate)"
+    }
+  }
+}

@@ -1,0 +1,456 @@
+
+
+--- PAGE 130 ---
+
+130 
+ 
+Month 2: 
+Video 8: Market Maker Trap False Breakouts 
+ 
+ 
+Okay folks, welcome back. This is the eighth and ﬁnal teaching for the second month 
+of the ICT mentorship; this is month October. We're dealing speciﬁcally with market maker 
+traps of false breakouts. And we'll talk about speciﬁcally in this teaching one side of the 
+marketplace just for the sake of saving Ɵme; everything that we show you will be just a 
+reverse of everything that's been shown. 
+So false breakout above price consolidaƟon: this condiƟon generally manifests in 
+primary bearish markets; in other words, if the market's in a downtrend or for presently 
+trading lower or expected to trade lower, a false breakout above the consolidaƟons is 
+reasonably expected. And generally what you see manifest itself at some measure of 
+equilibrium in price, the market will move into a trading range. 
+Neophyte traders or breakout traders will bracket the trading range in price with 
+orders. That means they're going to have buy stops to break out on a buy above the old 
+highs, or sell stops below the old lows to sell short a break below the old lows. In other 
+words, they're trying to capture a trend, and they're going to put a buy order above the 
+marketplace and a seller below the marketplace because they absolutely have no idea 
+what's going on, or breakout traders they just want to bracket the marketplace like long-
+term trend followers. They don't mind taking a lot of losses with the hopes of eventually 
+catching a large trade. But market makers will typically send price above the range to 
+neutralize buy stops; so they're going to focus primarily on one side of the marketplace. And 
+again, assuming that the market is primarily bearish, that's what the market makers MO is 
+going to be; okay, their playbook is to run the buy stops above the marketplace. 
+Now, false breakout below price consolidaƟons is obviously the opposite. This 
+condiƟon generally manifests itself primarily in bullish markets, and at some measure of 
+equilibrium in price, the market will move into a trading range. Neophyte traders and or 
+
+
+--- PAGE 131 ---
+
+131 
+ 
+breakout traders again will bracket the trading range in price with orders, again looking to 
+focus on buying on a breakout or selling short on the breakout that you're not privy or 
+astute enough to know what direcƟon. They just simply want to react to whatever the 
+market gives them in terms of breaking out above or below. But the market makers will 
+typically send price below the range to neutralize the sell stops. 
+ 
+ 
+So graphically, what I'll show you here(in the screenshot above) is a breakout trader 
+or a neophyte trader's perspecƟve on a market that goes into a trading range. Above the old 
+high or recent high, they will have buy stops for long breakout traders, and anyone that 
+would be short, obviously, their buy stop would be resƟng above that high. And below the 
+lows, there would be sell stops for long traders and sell stops for short breakout traders. In 
+other words, they want to capture a move that would hopefully conƟnue going for a long 
+period of Ɵme lower. They would like to get short on weakness, and obviously, bulls would 
+like to be—when their breakout traders—they want to be buying on strength. They think by 
+breaking out above an old high, their buy stop would trip them into a long posiƟon, and 
+their belief is that they're going to hopefully capture a long-term trend up. 
+ 
+
+
+--- PAGE 132 ---
+
+132 
+ 
+ 
+(from the screenshot above)Now, from a market maker's perspecƟve, we look below 
+the marketplace when we have lows in the form of sell stops. Now, I'm going to focus 
+primarily on a buying environment; okay, focusing on you in the market is underlyingly 
+bullish. Everything that I show you here would just be reversed for when the market's 
+bearish, okay, just to save Ɵme. When the market breaks below the consolidaƟon, those sell 
+stops are used to pair long orders. Now who's buying those sell stops? It's smart money. But 
+what types of orders rest above here? If we know below the marketplace itself stops, what's 
+resƟng above the highs? Buy stops. So naturally, as the market moves away from those sell 
+stops being ran out below the consolidaƟon, they're going to expand price; think of IPDA 
+now. They're going to expand the price up to the liquidity above the old high, so those buy 
+stops are going to be used to pair long selling; in other words, they're going to scale out their 
+long posiƟons or take some proﬁts. 
+ 
+ 
+ 
+
+
+--- PAGE 133 ---
+
+133 
+ 
+ 
+Eventually, the market will go into another area of consolidaƟon or another trading 
+range. The market drops below that trading range to take out the cell stops below 
+consolidaƟon. Now, as soon as this happens, the thought process should internally be going 
+on inside your mind with, 'Okay, they've already shown a willingness to take the sell stops 
+below 1.0855. Now they've rallied price above the 109 big ﬁgure, we've retraced a liƩle bit.' 
+Okay, so if they are taking the market below this short-term consolidaƟon, they're probably 
+going to run the price higher. So, where would those objecƟves be? What's resƟng above 
+that old high? Buy stops. So, aŌer taking the market below a consolidaƟon and our 
+understanding, our expectaƟons is the market is bullish, they're taking the market below the 
+consolidaƟons to run sell stops out. The only reason why they're going to want to do that is 
+to absorb those sell stops to be counterparƟes for their longs. When they are long, when 
+smart money is long, how do they look to exit their posiƟons and book a proﬁt or hedge? 
+They have to get out in a place where there's willing parƟcipants to buy. Buyers are always 
+above the highs either in the form of a buying breakout or buy stops on short posiƟons. 
+That's where the liquidity is. Remember that market paradigm shiŌ that's been spoke about 
+in this mentorship? Well, we're talking about it here again just using in terms where you can 
+see how it's applicable in price. Price runs above that old high, and now we have two areas 
+at which the market makers have booked long posiƟons. So, now they're pricing in a buy 
+model. So as the market moves higher, they're going to liquidate some of their posiƟons to 
+hedge and they're also going to liquidate posiƟons that those traders on the bank level are 
+actually speculaƟng for proﬁt. So, this is how they actually take their trades and put them on 
+and how they scale them oﬀ where they're placing their entries and where they're placing 
+their limit orders to get out with a proﬁt. 
+ 
+ 
+ 
+ 
+
+
+--- PAGE 134 ---
+
+134 
+ 
+But what's over here(where the quesƟon mark is)? What rests above that? Remember I 
+showed you in the ﬁrst month of this mentorship in September speciﬁc things to look for. 
+Clean highs and clean lows. Well, there's an area right over here that clean highs above from 
+where we're showing right now. AŌer that 1.0915 level’s been hit, there really isn't much in 
+way of liquidity voids or pools that would be much of interest except for those stops right 
+above those equal highs. As you can see, price expands. I think now in the interbank price 
+delivery algorithm, it's going to expand up and it's going to seek liquidity; that's what we see 
+here. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+--- PAGE 135 ---
+
+135 
+ 
+ 
+ 
+what we see here, then what happens? price invariably will go back into a 
+consolidaƟon. now, what's the underlying condiƟon of the marketplace? it's bullish. why? 
+because they keep taking price below and then rejecƟng that, absorbing the sell stops and 
+expanding price higher. is there any reason to suspect that price could go higher? look at the 
+price acƟon you see here. you see anything that jumps oﬀ at you? if it doesn't, we'll come to 
+it as we move forward in this example, but we have a consolidaƟon in here. our reasonable 
+expectaƟon would be to see price seek the sell stops below the consolidaƟon. price does in 
+fact go below the consolidaƟon. what's above this old high? Liquidity. Now do we always 
+look at the old high or what do we look for? Do we consider the wicks? We can, but 
+primarily all the volume is seen in what, the wicks or the bodies? The bodies of the candles. 
+So the body of the candles has the most volume so the liquidity is going to rest above it. So if 
+they took the stops out below the 1.0895, they're going to look to run price higher in the 
+form of 1.0940 or higher. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+--- PAGE 136 ---
+
+136 
+ 
+ 
+But iniƟally we had that short term consolidaƟon the buy stops resƟng above that they could 
+scale oﬀ a posiƟon right there, and the next objecƟve would be 1.0940. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+--- PAGE 137 ---
+
+137 
+ 
+ 
+As you can see 1.0940 is swept, moving just above the bodies of the candles. Note the way 
+that the orders are stacking higher each Ɵme; when they buy, they're buying a liƩle bit 
+higher each Ɵme and they're working their orders in and sƟll oﬀering opportuniƟes to scale 
+oﬀ and proﬁt. So the hedgers can work this model, the speculators at the bank level can 
+work this model, and they're also providing liquidity for those individuals that want sell stops 
+to be acƟvated if the market goes down to those posiƟons and those individuals that want 
+buy stops above the old highs. They're happy because their liquidity is being provided as 
+well, so think, remember that market eﬃciency paradigm. You have to think like a market 
+maker. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+--- PAGE 138 ---
+
+138 
+ 
+ 
+ 
+ 
+ 
+Now we have a larger trading range. Now I've kept that area which old buying was done at 
+108.95, but now we've moved into a larger range. Nothing's changed here; the model is sƟll 
+bullish. So we see market acƟon trade below that consolidaƟon; it trades down into 1.0885. 
+So with that movement down into that level, where is the liquidity at? Above the old high at 
+1.0945 or so. That's what you have up here. So what is it speciﬁcally? Buy stops. So we have 
+willing buyers that are waiƟng up there for price once it gets there. They're buying—smart 
+money's buying at 1.0890 or 1.0885 in that area—and they know that there's going to be 
+willing parƟcipants to be buying it from them when they want to sell it for a proﬁt at 1.0945 
+to 1.0950. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+--- PAGE 139 ---
+
+139 
+ 
+1.0945 to 1.0950 is hit so the buy stops are used to pair long exits. So now we look what we 
+have here. We have a wonderful example of how using consolidaƟons with the expectaƟon 
+of viewing the market with that market eﬃciency paradigm I spoke about where we think 
+like a liquidity provider, we can sƟll speculate, we can sƟll hedge, we can sƟll make a proﬁt 
+using the same model. It answers all of the problems as it relates to trading, but speciﬁcally 
+it oﬀers the answer to liquidity providing. Buy stops are acƟvated and they're actually given 
+the ability to be eﬀecƟve and sell stops are the same way. So what the market makers do, we 
+can vilify them, we can say all those rascals, they did this to me, they did that to me. Okay, 
+but what they're doing is their job, they're providing liquidity. The absence or lack of 
+understanding that traders have, they aƩribute that as these those guys, they did it to me, 
+they usually misappropriate that to their broker. But what it is is the market maker is 
+providing liquidity and if you understand how the market seeks liquidity, that's the number 
+one driver in price acƟon. The market will always seek liquidity and where is the most recent 
+area of liquidity that's been untapped with the least of resistance geƫng to it? And that will 
+give you the direcƟonal bias when you're a trader. But when you see markets go into 
+consolidaƟon and you have an underlying direcƟonal premise or you arrive at one based on 
+studying the market like this, you can quickly ascertain trade setups and signals will jump oﬀ 
+the chart at you by way of looking at like this. Again, we have to look at price with that 
+market eﬃciency paradigm. We do not look at it as give me a buy and a sell. Okay, think like 
+the market maker. If you had complete control of price, where would you drive price at to 
+allow other traders to get in and at least facilitate their trades, at least whether they're right 
+or wrong, that's not the problem here. Where's the buyers and where's the sellers at? And if 
+we look at the market in this scope, in this perspecƟve, we'll know that we'll always have 
+buyers above old highs and we'll always have sellers below old lows. So if we know that 
+that's where liquidity rests, all we have to do is discern whether or not does the market want 
+to seek the buyers or does it want to seek the sellers? And the way you get that indicaƟon is 
+by studying when they go into consolidaƟon, what side of the market they reaching for and 
+then where is the market going aŌer it happens. And here you can clearly see every Ɵme 
+there's a consolidaƟon the market seeks the liquidity below the marketplace and once it 
+absorbs it it quickly runs the other direcƟon. Why is that happening? Because the market 
+
+
+--- PAGE 140 ---
+
+140 
+ 
+makers are facilitaƟng their long posiƟons and building a buy model in the price or in this 
+asset. So we can expect to see every Ɵme the market goes below these consolidaƟons, these 
+movements below it are always going to be viewed in our eyes as a false breakout. So the 
+false breakout that would trip up traders otherwise or knock them out of proﬁtable posiƟons 
+if they would have been remaining long, we can view the marketplace with the market 
+eﬃciency paradigm, seeing it as a provider of liquidity, see it in just in the same scope or 
+perspecƟve as a market maker does and then we're suddenly in line with the market maker. 
+We're not beaƟng the market maker, we're not trying to outsmart the market maker, all 
+we're trying to do is get in line with what their moƟve would be. What's their MO? How are 
+they going to book the market for this parƟcular day or for this month or this week, okay? 
+How are they going to do that? And by looking at the models that were shown here with 
+looking at ranges and when they break below the ranges and we see willingness to rally aŌer 
+that, it gives you your ﬁrst telltale clue. Every Ɵme the market goes into consolidaƟon, 
+expect every drop down below an old area of consolidaƟon, expect that to be a false 
+breakout and then anƟcipate accumulaƟon of long posiƟons in the market. Once they can 
+accumulate their long posiƟons then they will reprice the market higher running for the buy 
+stops above old highs. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+--- PAGE 141 ---
+
+141 
+ 
+ 
+But what else do you see here? I mean, if you're looking at this, what else, if you were to 
+study this for a moment? And I'm going to ask you to pause the video, study this for a few 
+minutes, and see if there's anything else that jumps oﬀ the chart at you. And don't be 
+discouraged if, once I show you what it is, if it wasn't apparent. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+--- PAGE 142 ---
+
+142 
+ 
+ 
+ 
+This ﬁrst price swing from the ﬁrst iniƟal false breakout below the old lows and 
+consolidaƟon, once that rallied up and we gave another area where we can buy again at that 
+1.0875 level, that red area—if you will, I guess it's red—it's a measured move from that 
+same buy and it gives you an approximaƟon over here where the algorithm will reach for to 
+oﬀer price. And we see it reach up into that 1.0925 level from 1.0875, which is the measured 
+move from the iniƟal low that it ran up and created that ﬁrst red box, and then that impulse 
+price swing; the second leg in price higher is equal to that ﬁrst one. 
+ 
+ 
+ 
+ 
+ 
+
+
+--- PAGE 143 ---
+
+143 
+ 
+ 
+Also the larger price swing from that ﬁrst iniƟal buy all the way up to the intermediate term 
+high or the midpoint of the overall price swing, once we had that larger consolidaƟon and it 
+went down and traded into 1.0885, when that happened, that same measured move from 
+1.0850 up to 1.0945 or thereabouts, that same measured move from the the stop run at 
+1.0885, that gives us a projected run up to that 1.0980 level and you can see that was 
+handsomely hit. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+--- PAGE 144 ---
+
+144 
+ 
+And ulƟmately that 1.0990, as we spoke in real Ɵme at the Ɵme of this recording in the 
+mentorship, which we spoke about that 1.0990 level being directly linked to the bearish 
+order block on the daily chart. And all these things coalesce, they start to come together, 
+they dovetail beauƟfully. But understanding each individual component will help us bridge 
+that vast chasm, if you will, of what goes on past the right edge of your chart. You see a lot 
+of Ɵmes where I'll talk about things and I'll give you scenarios of what I think is going to 
+happen, but speciﬁc levels that I think is going to go and be hit. The reason I'm able to do 
+that is because I'm looking at the market just like I'm showing you here. I'm looking at how 
+the market maker is booking, how is the market maker manipulaƟng price, what side of the 
+marketplace are they working on, where are they punishing those that are less informed? 
+Okay, and if they're seeking one side of the marketplace over and over and over again, and 
+they keep expanding price away from it, in this case it's been the sell stops being ran. Every 
+Ɵme the sell stocks would be ran below a consolidaƟon, it runs higher and it goes through 
+the buy stops. It just, that's the easiest way to see if we're really in a bullish market or bullish 
+market proﬁle. It's not as easy as everyone says with the textbooks where you draw a 
+trendline, it's sloping up and just every Ɵme it touches the trend line you buy. Now, you got 
+to look at where the orders are going to be residing, and against back to that market 
+eﬃciency paradigm, by having that model in in focus when you look at price. And when you 
+see market consolidaƟons, when it breaks below that and you start seeing the market trade 
+higher, every Ɵme the market goes in consolidaƟon, they're priming the marketplace to 
+allow sell stops to below build up below those consolidaƟons. And obviously, what we 
+shown here was just for a buy side. If everything was reversed and we were seeing 
+consolidaƟons in the market, rally up taking the buy stops out and then quickly running 
+lower and then moving into a new consolidaƟon, and then market running higher, running 
+the buy stops and acceleraƟng going lower again, everything would just reverse itself in 
+terms of everything we've explained here. So I hope this has been insighƞul to you. I look 
+forward to our third month in the mentorship, so get your notebooks ready because there's 
+going to be a lot more informaƟon by way of price acƟon, and we're going to be focusing in 
+on detailed concepts that has been shown in the free mentorship, free members area on my 
+website and on the videos. But all the gaps that I leŌ in that free area of teaching I'm gonna 
+
+
+--- PAGE 145 ---
+
+145 
+ 
+I'm gonna ﬁll that in as we go forward. So with that guys, I wish you good luck and good 
+trading. 
+ 
+ 

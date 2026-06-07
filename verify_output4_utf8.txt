@@ -1,0 +1,46 @@
+Loading AUDUSD and Synthetic DXY data...
+Calculating Swings and SMT Divergence (ALL 4 ICT Scenarios)...
+VERIFICATION: DEDUPLICATION [date]
+Total raw signals before dedup: 52
+Total signals after strict alternation: 35
+Signals discarded: 17
+Signal sequence: ['L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L']
+VERIFICATION: DEDUPLICATION [date]
+Total raw signals before dedup: 55
+Total signals after strict alternation: 31
+Signals discarded: 24
+Signal sequence: ['H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H']
+
+--- ICT Video 5: All SMT Scenarios ---
+Scenario A (Asset-led Bullish)  :   1 ΓÇö Asset Lower Low, DXY fails Higher High
+Scenario B (Asset-led Bearish)  :   3 ΓÇö Asset Higher High, DXY fails Lower Low
+Scenario C (BM-led Bearish)     :   1  ΓÇö DXY Lower Low, Asset fails Higher High
+Scenario D (BM-led Bullish)     :   1  ΓÇö DXY Higher High, Asset fails Lower Low
+Symmetrical Bullish Confirm     :   7  ΓÇö DXY LL + Asset HH (trend continues up)
+Symmetrical Bearish Confirm     :   4  ΓÇö DXY HH + Asset LL (trend continues down)
+--------------------------------------
+Total SMT Signals               :   6
+Total Trend Confirmations       :  11
+VERIFICATION: DEDUPLICATION [date]
+Total raw signals before dedup: 55
+Total signals after strict alternation: 31
+Signals discarded: 24
+Signal sequence: ['H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H']
+VERIFICATION: DEDUPLICATION [date]
+Total raw signals before dedup: 55
+Total signals after strict alternation: 31
+Signals discarded: 24
+Signal sequence: ['H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H', 'L', 'H']
+
+[SUCCESS] Generated SMT visualization: ICT_MONTH3_VIDEO5_SMT_DIVERGENCE.html
+
+--- GAP 1: FVG Void Close-In Confirmation ---
+SMT signals with FVG void confirmed (OB+void+close-in): 3
+SMT signals WITHOUT FVG void confirmation (sucker plays filtered): 14
+
+--- GAP 2: SMT Bias Filter (p.226 Execution Layer) ---
+Total Bearish OBs (raw)                 : 0
+Bearish OBs passing SMT BEARISH bias    : 0  ΓåÉ short entries
+Total Bullish OBs (raw)                 : 1
+Bullish OBs passing SMT BULLISH bias    : 0  ΓåÉ long entries
+Signal noise reduction                  : 100.0% filtered out

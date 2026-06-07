@@ -1,0 +1,206 @@
+--- Page 169 ---
+169 
+ 
+ 
+Month 3: 
+Video 2: InsƟtuƟonal Order Flow - What Makes It Easy To Know: 
+ 
+Okay folks, welcome back. This is lesson two of November or the third month of the ict 
+mentorship. We’re going to talk about insƟtuƟonal order ﬂow and what makes it easy to see. 
+And we’re going to be building a liƩle bit on what we just menƟoned in the previous lesson 
+and we’ll be using that EURUSD example. 
+And here’s that orderblock(the one the red arrow points to in the screenshot above) we 
+showed earlier in lesson one. The idea is if we see what we are seeing on the monthly chart, 
+we can go into the marketplace and anƟcipate an ideal scenario to unfold in the area marked 
+with the yellow-like color as show in the screenshot right below: 
+ 
+ 
+
+
+--- Page 170 ---
+170 
+ 
+As we menƟoned in lesson one, we discussed that there was going to be a high probability 
+of stops resƟng below the lows at point 1. 
+What i want you to focus on at point 1 is to look at how the bodies of the candles basically 
+merge at that same general area. I want you to ignore the wicks.  
+And by having that in mind, all below the lows in here at point 1, there’s going to be a large 
+pocket of liquidity in the form of sell stops. 
+Now if we’re looking at the monthly chart like this and we think that there’s going to be a 
+high level of sensiƟvity up there because price comes back to point 2 and the market is most 
+likely going to trade lower and seek the liquidity below the lows at point 1. 
+Now again, when we’re looking at insƟtuƟonal orderﬂow, the idea is thinking like the market 
+eﬃciency paradigm. You are the market maker and so what you are looking for is where the 
+maximum level of liquidity in relaƟonship to where markets have traded from and where 
+they are presently. 
+Well, the market has traded higher to point 2, so from point 2, where is the highest level of 
+liquidity? If it’s going to go higher, it would be above point 0 but we had this void between 
+points 0 and 1 which we closed in so the market has now rebalanced from a point at which 
+they sold ﬁrst, it moved quickly away and came back up and closed in that range that 
+created by all those down black candles. 
+Next, we have a run down to point 3 clearing the stops at point 1. The market will run up 
+from point 3 because it’s already absorbed all the liquidity down there at point 1 and yes, for 
+completeness sake, it returned back to a bullish orderblock (the one the cursor points to at 
+point 4 as shown in screenshot below): 
+ 
+ 
+So the market is going to seek the liquidity on the upside so where does that reside 
+next? 
+ 
+
+
+--- Page 171 ---
+171 
+ 
+Answer: The up candle prior to the down movement at point 2,that’s where they sold 
+the last Ɵme and look, we created another liquidity void. 
+ 
+So there has to be the market oﬀering on the buyside. They oﬀered on the sell side 
+so that balanced it. It has to be green candles or up candles in this case. 
+ 
+Now obviously we always look at the middle of the up candle(mean threshold) and you can 
+see how the bodies of the candles respect that as shown in screenshot below: There’s 
+always going to be that extra liƩle outrun on price with the wicks and I’ve menƟoned this in 
+many many instances over the last six and a half years teaching forex. 
+ 
+ 
+From point 5, where do we then expect to see price go to next? Well, the largest 
+area of liquidity was going to be resƟng below the low at point 3. Look closely, just as we 
+showed at point 1 with the bodies of the candles, we’re going to look at the bodies of the 
+
+
+--- Page 172 ---
+172 
+ 
+candles at point 3: 
+ 
+ 
+So classic technical analysis will say the the longest wick(at point 3) is the low and what I 
+teach is it’s the bodies of the candles where all the volume is(the insƟtuƟonal 
+volume).There’s a diﬀerence now,the wick is always going to be directly related to retail. 
+Because we’re looking at a retail plaƞorm, most instances you are going to see the wick is 
+generally comprised of retail pricing. So we allow the wicks to provide us a erroneous price 
+delivery or extreme price delivery but we want to do most of our analysis around the bodies 
+of the candles. 
+So that means if you have the bodies of the candles deﬁned at point 3 as the real low and 
+allowing the wick to be viewed as retail, if we scrub that over to the right side at point 6(as 
+shown in screenshot below): 
+
+
+--- Page 173 ---
+173 
+ 
+You can see how price trades just below the bodies of the candle as it would in terms of 
+seeking the truest form of volume from an insƟtuƟonal order ﬂow standpoint. 
+The point of what I’m showing here is once you understand where the market will most 
+likely reach for, and this is the monthly chart. 
+ 
+NOTE: AT POINT 6, PRICE GOES THROUGH THE BODIES OF THE CANDLES AT POINT 3 AND 
+NOT THE WICKS. IT STABS THROUGH IT TO GO BELOW THE BODIES OF THE CANDLES,IT 
+DOESN’T NECESSARILY HAVE TO GO THROUGH THE WICKS. WE ONLY NEED IT TO GO BELOW 
+THE BODIES OF THE CANDLE. 
+ 
+So if we have a set up like this on the monthly chart: 
+ 
+ 
+
+
+--- Page 174 ---
+174 
+ 
+All we have to do is break the market down into a weekly: 
+  
+ 
+So now we have the price shown in weekly basis, the red boxes show areas of bearish 
+market condiƟons and the blue boxes show areas of bullish market condiƟons. 
+So now what we’ve done is we’ve mapped out this enƟre EURUSD from mid 2008 all the way 
+to mid 2012 just by understanding what the monthly levels on insƟtuƟonal order ﬂow will 
+give us. And understand those points of reference I showed you in September. What to focus 
+on, because that’s the recipe for all the trading you’re ever going to want to do. 
+You’ve to ﬁnd them on a higher Ɵmeframe and arrive at where the higher Ɵmeframe charts 
+are going to seek liquidity because this is where the large funds have their money and where 
+the large money is found on the fund level. That’s where the banks are going to reprice to, 
+it’s not for the retail people because you’re too small. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+--- Page 175 ---
+175 
+ 
+STUDY THOROUGHY THE WEEKLY CHART BELOW AND SEE POSSBLE AREAS WE COULD HAVE 
+TRADED FROM AND WHICH LEVELS WE COULD HAVE TAKEN OUR PROFITS AT, WHERE STOPS 
+ARE TAKEN,ETC.: 
+ 
+ 
+ 
+So if you start with your monthly chart and you break down into the weekly chart,we can go 
+down into the daily chart now, you’ll see a lot more deﬁniƟon on the daily chart. See how 
+price respects the marked weekly and monthly levels on the daily Ɵmeframes as shown in 
+screenshots right below: 
+
+
+--- Page 176 ---
+176 
+ 
+ 
+ 
+
+
+--- Page 177 ---
+177 
+ 
+
+
+--- Page 178 ---
+178 
+ 
+ 
+ 
+So what you’re doing is what insƟtuƟonal order ﬂow is. It’s the seeking of large insƟtuƟonal 
+liquidity and that’s going to be found on the monthly and the weekly and you see that being 
+traded into on the daily. That’s why I tell you on the daily chart and again this is what we’re 
+looking at daily.The daily chart will always seek the fund level insƟtuƟonal order ﬂow, in 
+other words the stops that are found on the monthly and weekly charts, you are going to 
+have all your signals to have the greatest magnitude and biggest moves that always take 
+place are going to be found on that monthly and weekly basis because that’s where all the 
+large whales are. Okay, when I say whales, I'm talking about big funds, large funds. Okay, and 
+when they have money at risk, that's where the market's going to go, because that's orders 
+that they can counterparty with. The banks cannot counterparty with you and I. We're just 
+not big enough. Even collecƟvely, we're not big enough. But the funds, because they're 
+controlling billions and billions of dollars, and they're—that's where the money's at. So if you 
+can ﬁnd the levels on the monthly, weekly chart, keep them on your on your daily chart, 
+
+
+--- Page 179 ---
+179 
+ 
+you'll be able to see all these major shiŌs in price that someƟmes jump oﬀ at you aŌer the 
+fact and you wish you would have known they were coming. Now you know how to see 
+them by transposing them from the monthly to weekly into your daily chart. If you do your 
+trading around these levels, you will see every signiﬁcant price swing that they ever 
+transpires on price. You'll see them coming before they get there, and you'll also know 
+relaƟve to insƟtuƟonal order ﬂow where the stops or liquidity is above the marketplace. 
+When you're ready to buy it or when you expect a bullish scenario to unfold, you'll already 
+know where the market should be reaching for, should it take oﬀ and start trading higher. 
+When it goes up to a level of resistance or some kind of bearishness, before you even sell 
+short, you're going to know where it's going to be reaching for, which is the sell stops below 
+the recent lows or a bullish order block. And by having that idea how the market will 
+conƟnuously look and seek liquidity—it's not our liquidity, it's not our stops it's looking for, 
+it's looking for the stops found on the monthly and the weekly and daily—because that's 
+where the whales reside. That's where the large funds reside, and that's what pushes price 
+around. Understanding that, that's why the market will go to these levels, because it's 
+wanƟng to take those parƟcipants either out of the marketplace or draw them in as 
+counterparƟes to their intended purpose, either being a buyer counterparty to sell stops or 
+to be a seller counterparty to buy stops. And that's the nature of insƟtuƟonal order ﬂow. So 
+with that, guys, I wish good luck and good trading. 
+

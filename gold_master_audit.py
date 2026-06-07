@@ -72,7 +72,7 @@ def run_gold_master_audit():
                             line=dict(color="rgba(255, 255, 255, 0.2)", width=1, dash="dot"), row=2, col=1)
 
     for _, row in m15_obs.tail(10).iterrows():
-        fig.add_shape(type="rect", x0=row['ts'], x1=df_15m.index[-1], y0=row['low'], y1=row['high'], fillcolor="rgba(255, 0, 255, 0.1)", line_width=0, row=2, col=1)
+        fig.add_shape(type="rect", x0=row.name, x1=df_15m.index[-1], y0=row['low'], y1=row['high'], fillcolor="rgba(255, 0, 255, 0.1)", line_width=0, row=2, col=1)
     
     if daily_ote:
         uz, lz = max(daily_ote['62'], daily_ote['79']), min(daily_ote['62'], daily_ote['79'])
