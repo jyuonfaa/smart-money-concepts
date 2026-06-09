@@ -1865,7 +1865,6 @@ def _market_protraction(ohlc, threshold_pips=0.0005):
                 post_high = float(post_window['high'].max())
                 if post_high < (sweep_extreme + required_retrace):
                     continue   # insufficient retracement — sucker play, skip
-
             result.loc[anchor_bar, 'protraction_anchor'] = anchor_name
             result.loc[anchor_bar, 'protraction_dir']    = direction
             result.loc[anchor_bar, 'protraction_mag']    = magnitude
@@ -1880,3 +1879,704 @@ def _market_protraction(ohlc, threshold_pips=0.0005):
 smc.market_protraction = _market_protraction
 
 
+def _filter_quarterly_swings(swings_df, min_days=60):
+    """
+    Enforce the ICT Quarterly Shift Constraint.
+    Filter swing_highs_lows_v4 output to only keep pivots that are at least
+    `min_days` calendar days apart. This simulates a 3-4 month macro lookback.
+    """
+    if swings_df.empty:
+        return swings_df
+    
+    filtered = [swings_df.iloc[0]]
+    for i in range(1, len(swings_df)):
+        days_apart = (swings_df.iloc[i]['ts'] - filtered[-1]['ts']).days
+        if days_apart >= min_days:
+            filtered.append(swings_df.iloc[i])
+    
+    import pandas as pd
+    return pd.DataFrame(filtered).reset_index(drop=True)
+
+
+def _macro_bond_bias(zn_df, zb_df, dxy_df=None):
+    """
+    ICT Video 6: Macro Economic To Micro Technical (Bond SMT)
+    Calculates Macro Regime (3-4 Month Shift) and Micro Execution Triggers.
+
+    Layer 1: Macro Regime via ZB vs DXY inverse SMT (60-day quarterly filter).
+             Forward-filled but expires after 130 trading days (~6 months per ICT).
+    Layer 2: Micro Execution Triggers via ZN vs ZB positive SMT (unfiltered).
+             Bearish bond divergence (ZN HH, ZB fails HH) = interest rates rising = USD Bullish.
+    Layer 3: Alignment gate — trigger's USD directional effect must match active regime.
+             Triple-instrument simultaneous pivot = manipulation spike, discarded.
+
+    Returns a DataFrame with columns:
+        'regime': +1 Bullish USD, -1 Bearish USD, 0 Neutral (capped at 130 days)
+        'signal': +1 Long USD execution, -1 Short USD execution
+    """
+    import pandas as pd
+
+    df_out = pd.DataFrame(index=zn_df.index)
+    df_out['regime'] = 0
+    df_out['signal'] = 0
+
+    if dxy_df is None:
+        return df_out
+
+    # =========================================================================
+    # LAYER 1: MACRO REGIME (Quarterly Shift)
+    # ZB vs DXY Inverse Correlation with 60-day quarterly filter
+    # =========================================================================
+    zb_swings_raw = smc.swing_highs_lows_v4(zb_df)
+    zb_swings_macro = _filter_quarterly_swings(zb_swings_raw, min_days=60)
+
+    smt_macro = smc.smt_divergence(zb_df, dxy_df, zb_swings_macro, correlation="inverse")
+
+    regime_series = pd.Series(0, index=zn_df.index)
+    if 'smt_bullish_div' in smt_macro.columns:
+        # ZB HH while DXY fails LL → bonds rising but dollar not falling → Bullish USD
+        regime_series[smt_macro['smt_bearish_div'] == True] = 1
+        # ZB LL while DXY fails HH → bonds falling but dollar not rising → Bearish USD
+        regime_series[smt_macro['smt_bullish_div'] == True] = -1
+
+    # FIX GAP 4: Forward-fill regime but expire after 130 trading days (~6 months per ICT)
+    MAX_REGIME_DAYS = 130
+    filled = []
+    current_val = 0
+    days_held = 0
+    for val in regime_series:
+        if val != 0:
+            current_val = val
+            days_held = 0
+        elif days_held >= MAX_REGIME_DAYS:
+            current_val = 0
+        days_held += 1
+        filled.append(current_val)
+    df_out['regime'] = filled
+
+    # =========================================================================
+    # LAYER 2: MICRO EXECUTION TRIGGERS (Short-Term Timing)
+    # ZN vs ZB Positive Correlation — Unfiltered native swings
+    # =========================================================================
+    zn_swings = smc.swing_highs_lows_v4(zn_df)
+    smt_micro = smc.smt_divergence(zn_df, zb_df, zn_swings, correlation="positive")
+
+    # FIX GAP 2: Map each trigger type to its USD directional effect.
+    # ICT (p233): ZN HH + ZB lower high = both bonds declining = interest rates rising = USD Bullish.
+    # In positive-correlation smt_divergence:
+    #   smt_bearish_div = Asset(ZN) HH, Benchmark(ZB) fails HH → bond weakness → USD effect = +1
+    #   smt_bullish_div = Asset(ZN) LL, Benchmark(ZB) fails LL → bond strength → USD effect = -1
+    trigger_usd_effect = pd.Series(0, index=zn_df.index)
+    if 'smt_bearish_div' in smt_micro.columns:
+        trigger_usd_effect[smt_micro['smt_bearish_div'] == True] = 1
+        trigger_usd_effect[smt_micro['smt_bearish_div_bm'] == True] = 1
+        trigger_usd_effect[smt_micro['smt_bullish_div'] == True] = -1
+        trigger_usd_effect[smt_micro['smt_bullish_div_bm'] == True] = -1
+
+    # =========================================================================
+    # LAYER 3: ALIGNMENT & MANIPULATION FILTER
+    # =========================================================================
+    dxy_swings_raw = smc.swing_highs_lows_v4(dxy_df)
+    zn_dates = set(zn_swings['ts'])
+    zb_dates = set(zb_swings_raw['ts'])
+    dxy_dates = set(dxy_swings_raw['ts'])
+    manipulation_dates = zn_dates.intersection(zb_dates).intersection(dxy_dates)
+
+    for dt, effect in trigger_usd_effect[trigger_usd_effect != 0].items():
+        # Discard false break manipulation (all 3 instruments pivoting same day = news spike)
+        if dt in manipulation_dates:
+            continue
+        # Fire when the trigger's USD directional effect agrees with the Macro Regime
+        active_regime = df_out.at[dt, 'regime']
+        if active_regime != 0 and active_regime == effect:
+            df_out.at[dt, 'signal'] = effect
+
+    return df_out
+
+smc.macro_bond_bias = _macro_bond_bias
+
+
+def _macro_pair_bias(macro_bias_series, pair_name):
+    """
+    GAP 1: Currency Pair Classification Engine
+    Translates the USD Macro Bias into an actionable LONG/SHORT bias for a specific pair.
+    
+    Pairs starting with USD (USDCAD, USDCHF, USDJPY) are directly correlated.
+    Pairs ending with USD (EURUSD, GBPUSD, AUDUSD, NZDUSD) are inversely correlated.
+    
+    Returns a Series of +1 (LONG), -1 (SHORT), or 0 (NEUTRAL).
+    """
+    import pandas as pd
+    
+    pair_upper = pair_name.upper()
+    is_usd_first = pair_upper.startswith('USD')
+    
+    pair_bias = pd.Series(0, index=macro_bias_series.index)
+    
+    if is_usd_first:
+        pair_bias = macro_bias_series.copy()
+    else:
+        # Inverse correlation
+        pair_bias = macro_bias_series * -1
+        
+    return pair_bias
+
+smc.macro_pair_bias = _macro_pair_bias
+
+
+def _macro_ob_alignment(zb_df, dxy_df, swing_length=3):
+    """
+    ICT Video 6 (p230): Detects the 'Prime Setup' confluence:
+    - DXY price has TAPPED INTO a Daily Bullish Order Block (price <= OB Top)
+    - ZB price has TAPPED INTO a Daily Bearish Order Block (price >= OB Bottom)
+    Both conditions must be True simultaneously.
+
+    FIX GAP 1: swing_length=3 required for daily data (default was too large).
+    FIX GAP 3: Check price-in-zone tap, not just OB existence.
+    """
+    import pandas as pd
+    import numpy as np
+
+    # FIX GAP 1: Use swing_length=3 — produces meaningful OBs on daily chart
+    zb_swings_ob  = smc.swing_highs_lows(zb_df,  swing_length=swing_length)
+    dxy_swings_ob = smc.swing_highs_lows(dxy_df, swing_length=swing_length)
+    zb_ob  = smc.ob(zb_df,  zb_swings_ob)
+    dxy_ob = smc.ob(dxy_df, dxy_swings_ob)
+
+    alignment = pd.Series(False, index=dxy_df.index)
+
+    if 'OB' not in zb_ob.columns or 'OB' not in dxy_ob.columns:
+        return alignment
+    if 'Top' not in dxy_ob.columns or 'Bottom' not in zb_ob.columns:
+        return alignment
+
+    for i, dt in enumerate(dxy_df.index):
+        dxy_close = dxy_df['close'].iloc[i]
+        zb_close  = zb_df['close'].iloc[i] if dt in zb_df.index else np.nan
+        if pd.isna(zb_close):
+            continue
+
+        # Find most recent active DXY Bullish OB (OB == 1)
+        dxy_ob_slice = dxy_ob.iloc[:i+1]
+        active_dxy_bull = dxy_ob_slice[dxy_ob_slice['OB'] == 1]
+        if active_dxy_bull.empty:
+            continue
+        last_dxy_ob = active_dxy_bull.iloc[-1]
+        dxy_ob_top    = last_dxy_ob['Top']
+        dxy_ob_bottom = last_dxy_ob['Bottom']
+
+        # FIX GAP 3: DXY price must have RETRACED INTO the Bullish OB zone
+        dxy_tapping_ob = (dxy_ob_bottom <= dxy_close <= dxy_ob_top)
+        if not dxy_tapping_ob:
+            continue
+
+        # Find most recent active ZB Bearish OB (OB == -1)
+        zb_idx = zb_df.index.get_indexer([dt], method='nearest')[0]
+        zb_ob_slice = zb_ob.iloc[:zb_idx+1]
+        active_zb_bear = zb_ob_slice[zb_ob_slice['OB'] == -1]
+        if active_zb_bear.empty:
+            continue
+        last_zb_ob = active_zb_bear.iloc[-1]
+        zb_ob_top    = last_zb_ob['Top']
+        zb_ob_bottom = last_zb_ob['Bottom']
+
+        # FIX GAP 3: ZB price must have RALLIED INTO the Bearish OB zone
+        zb_tapping_ob = (zb_ob_bottom <= zb_close <= zb_ob_top)
+        if not zb_tapping_ob:
+            continue
+
+        alignment.iloc[i] = True
+
+    return alignment
+
+smc.macro_ob_alignment = _macro_ob_alignment
+
+
+
+def _trendline_phantoms(ohlc, swings):
+    """
+    Detects False Trendline (Phantom) Traps from Month 3 Video 7.
+
+    Returns a DataFrame with columns:
+    - trap_interim  : price of the high/low between touches 2 and 3
+    - trap_point2   : price of the 2nd touch (retail stop cluster)
+    - trap_touch3   : price of the 3rd touch (for limit-order entry, Gap 7)
+    - trap_p1_ts    : timestamp of Point 1 (for FVG target lookup)
+    - trap_fvg_top  : top of the FVG left by Point 1 impulse (Gap 8)
+    - trap_fvg_bot  : bottom of the FVG left by Point 1 impulse (Gap 8)
+    - trap_ts       : timestamp when trap became active (after 3rd touch)
+    - trap_type     : 1 for Bullish Trap, -1 for Bearish Trap
+    """
+    import pandas as pd
+    import numpy as np
+
+    result = pd.DataFrame(index=ohlc.index)
+    result['trap_interim'] = np.nan
+    result['trap_point2']  = np.nan
+    result['trap_touch3']  = np.nan
+    result['trap_p1_ts']   = pd.NaT
+    result['trap_fvg_top'] = np.nan
+    result['trap_fvg_bot'] = np.nan
+    result['trap_ts']      = pd.NaT
+    result['trap_type']    = 0
+
+    highs = swings[swings['type'] == 'HIGH'].copy()
+    lows  = swings[swings['type'] == 'LOW'].copy()
+
+    def _find_p1_fvg(p1_ts, direction):
+        """Return (fvg_top, fvg_bot) of the FVG at Point 1 impulse, or (nan, nan)."""
+        try:
+            idx = ohlc.index.get_loc(p1_ts)
+        except KeyError:
+            return np.nan, np.nan
+        if idx + 1 >= len(ohlc):
+            return np.nan, np.nan
+        c0 = ohlc.iloc[idx]
+        c1 = ohlc.iloc[idx + 1]
+        if direction == 'bearish':
+            if c1['high'] < c0['low']:
+                return float(c0['low']), float(c1['high'])
+        else:
+            if c1['low'] > c0['high']:
+                return float(c1['low']), float(c0['high'])
+        return np.nan, np.nan
+
+    # Bullish Traps: 3 consecutive Lower Highs
+    if len(highs) >= 3:
+        for i in range(len(highs) - 2):
+            h1 = highs.iloc[i]
+            h2 = highs.iloc[i+1]
+            h3 = highs.iloc[i+2]
+            if h1['p'] > h2['p'] > h3['p']:
+                t1 = h1['ts']
+                t2 = h2['ts']
+                t3 = h3['ts']
+                mask   = (ohlc.index >= t2) & (ohlc.index <= t3)
+                window = ohlc[mask]
+                if not window.empty:
+                    fvg_top, fvg_bot = _find_p1_fvg(t1, 'bearish')
+                    result.loc[t3, 'trap_interim'] = float(window['low'].min())
+                    result.loc[t3, 'trap_point2']  = float(h2['p'])
+                    result.loc[t3, 'trap_touch3']  = float(h3['p'])
+                    result.loc[t3, 'trap_p1_ts']   = t1
+                    result.loc[t3, 'trap_fvg_top'] = fvg_top
+                    result.loc[t3, 'trap_fvg_bot'] = fvg_bot
+                    result.loc[t3, 'trap_ts']      = t3
+                    result.loc[t3, 'trap_type']    = 1
+
+    # Bearish Traps: 3 consecutive Higher Lows
+    if len(lows) >= 3:
+        for i in range(len(lows) - 2):
+            l1 = lows.iloc[i]
+            l2 = lows.iloc[i+1]
+            l3 = lows.iloc[i+2]
+            if l1['p'] < l2['p'] < l3['p']:
+                t1 = l1['ts']
+                t2 = l2['ts']
+                t3 = l3['ts']
+                mask   = (ohlc.index >= t2) & (ohlc.index <= t3)
+                window = ohlc[mask]
+                if not window.empty:
+                    fvg_top, fvg_bot = _find_p1_fvg(t1, 'bullish')
+                    result.loc[t3, 'trap_interim'] = float(window['high'].max())
+                    result.loc[t3, 'trap_point2']  = float(l2['p'])
+                    result.loc[t3, 'trap_touch3']  = float(l3['p'])
+                    result.loc[t3, 'trap_p1_ts']   = t1
+                    result.loc[t3, 'trap_fvg_top'] = fvg_top
+                    result.loc[t3, 'trap_fvg_bot'] = fvg_bot
+                    result.loc[t3, 'trap_ts']      = t3
+                    result.loc[t3, 'trap_type']    = -1
+
+    for col in ['trap_interim','trap_point2','trap_touch3','trap_fvg_top','trap_fvg_bot']:
+        result[col] = result[col].ffill()
+    result['trap_ts']    = result['trap_ts'].ffill()
+    result['trap_p1_ts'] = result['trap_p1_ts'].ffill()
+    result['trap_type']  = result['trap_type'].replace(0, np.nan).ffill().fillna(0)
+
+    return result
+
+smc.trendline_phantoms = _trendline_phantoms
+
+
+def _phantom_signals(ohlc, phantoms, ob_df, htf_bias=None):
+    """
+    Full 3-Phase Market Maker Trap Execution Engine (Month 3, Video 7).
+
+    Phase 2 Entry Triggers at the Interim Extreme:
+      A. Turtle Soup       -- price sweeps below/above the interim level
+      B. Limit at 3rd Touch -- price touches the 3rd-touch trendline level (Gap 7)
+      C. OB Tap            -- price taps an Order Block at the interim level
+      D. Breaker           -- price breaks a prior swing in the trap direction (Gap 6)
+
+    Phase 2 Target        : trap_point2 (retail stop cluster)
+    Secondary Target      : trap_fvg_top / trap_fvg_bot (FVG from Point 1, Gap 8)
+
+    Phase 3 Reversal (after Point 2 is swept):
+      Signal  : opposite direction
+      Target  : trap_interim (deep liquidity pool)
+
+    signal column  : 1=Buy, -1=Sell
+    trigger_type   : identifies which phase and entry type fired
+    target_price   : primary Take Profit
+    secondary_target: FVG-based secondary Take Profit (Gap 8)
+    """
+    import pandas as pd
+    import numpy as np
+
+    signals = pd.DataFrame(index=ohlc.index)
+    signals['signal']           = 0
+    signals['trigger_type']     = ""
+    signals['target_price']     = np.nan
+    signals['secondary_target'] = np.nan
+
+    if htf_bias is None:
+        htf_bias = pd.Series(1, index=ohlc.index)
+
+    consumed_traps = set()
+    phase2_fired   = set()
+
+    # Pre-compute Breaker flags (Gap 6)
+    # Bearish Breaker: close breaks above prior bar high (retail trapped long -- we sell)
+    # Bullish Breaker: close breaks below prior bar low  (retail trapped short -- we buy)
+    breaker_up   = ohlc['close'] > ohlc['high'].shift(1)
+    breaker_down = ohlc['close'] < ohlc['low'].shift(1)
+
+    for i in range(len(ohlc)):
+        ts = ohlc.index[i]
+
+        trap_type = phantoms['trap_type'].iloc[i]
+        if trap_type == 0:
+            continue
+
+        trap_ts = phantoms['trap_ts'].iloc[i]
+        if pd.isna(trap_ts) or trap_ts in consumed_traps:
+            continue
+
+        bias = htf_bias.iloc[i]
+        if pd.isna(bias) or trap_type != bias:
+            continue
+
+        low   = ohlc['low'].iloc[i]
+        high  = ohlc['high'].iloc[i]
+
+        trap_interim = phantoms['trap_interim'].iloc[i]
+        trap_point2  = phantoms['trap_point2'].iloc[i]
+        trap_touch3  = phantoms['trap_touch3'].iloc[i]
+        trap_fvg_top = phantoms['trap_fvg_top'].iloc[i]
+        trap_fvg_bot = phantoms['trap_fvg_bot'].iloc[i]
+
+        ob_top    = ob_df['Top'].iloc[i]    if 'Top'    in ob_df.columns else np.nan
+        ob_bottom = ob_df['Bottom'].iloc[i] if 'Bottom' in ob_df.columns else np.nan
+        ob_type   = ob_df['OB'].iloc[i]     if 'OB'     in ob_df.columns else 0
+
+        def _fvg_secondary(direction):
+            if direction == 'bull':
+                return float(trap_fvg_top) if not pd.isna(trap_fvg_top) else np.nan
+            return float(trap_fvg_bot) if not pd.isna(trap_fvg_bot) else np.nan
+
+        # ============================================================== #
+        # BULLISH TRAP  (3 Lower Highs -- retail sells, we buy)          #
+        # ============================================================== #
+        if trap_type == 1:
+            swept_point2  = high >= trap_point2
+            swept_interim = low  <= trap_interim
+            at_touch3     = high >= trap_touch3
+            breaker_fired = bool(breaker_up.iloc[i]) and high >= trap_interim
+
+            if trap_ts in phase2_fired and swept_point2:
+                # Phase 3: buy-stops at Point 2 purged -- Market Maker SELLS
+                signals.loc[ts, 'signal']            = -1
+                signals.loc[ts, 'trigger_type']      = "Phase 3 SELL -- Point2 High Swept"
+                signals.loc[ts, 'target_price']      = trap_interim
+                signals.loc[ts, 'secondary_target']  = _fvg_secondary('bear')
+                consumed_traps.add(trap_ts)
+
+            elif swept_interim and trap_ts not in phase2_fired:
+                # Phase 2-A: Turtle Soup at Interim Low
+                signals.loc[ts, 'signal']            = 1
+                signals.loc[ts, 'trigger_type']      = "Phase 2 BUY -- Turtle Soup"
+                signals.loc[ts, 'target_price']      = trap_point2
+                signals.loc[ts, 'secondary_target']  = _fvg_secondary('bull')
+                phase2_fired.add(trap_ts)
+
+            elif at_touch3 and trap_ts not in phase2_fired:
+                # Phase 2-B: Limit Order at 3rd Touch (Gap 7)
+                signals.loc[ts, 'signal']            = 1
+                signals.loc[ts, 'trigger_type']      = "Phase 2 BUY -- Limit at 3rd Touch"
+                signals.loc[ts, 'target_price']      = trap_point2
+                signals.loc[ts, 'secondary_target']  = _fvg_secondary('bull')
+                phase2_fired.add(trap_ts)
+
+            elif breaker_fired and trap_ts not in phase2_fired:
+                # Phase 2-D: Bearish Breaker near Interim (Gap 6)
+                signals.loc[ts, 'signal']            = 1
+                signals.loc[ts, 'trigger_type']      = "Phase 2 BUY -- Bearish Breaker"
+                signals.loc[ts, 'target_price']      = trap_point2
+                signals.loc[ts, 'secondary_target']  = _fvg_secondary('bull')
+                phase2_fired.add(trap_ts)
+
+            elif (ob_type == 1 and not pd.isna(ob_top)
+                  and low <= ob_top
+                  and not pd.isna(ob_bottom)
+                  and ob_bottom <= trap_interim <= ob_top
+                  and trap_ts not in phase2_fired):
+                # Phase 2-C: OB Tap at Interim Low
+                signals.loc[ts, 'signal']            = 1
+                signals.loc[ts, 'trigger_type']      = "Phase 2 BUY -- OB Tap"
+                signals.loc[ts, 'target_price']      = trap_point2
+                signals.loc[ts, 'secondary_target']  = _fvg_secondary('bull')
+                phase2_fired.add(trap_ts)
+
+        # ============================================================== #
+        # BEARISH TRAP  (3 Higher Lows -- retail buys, we sell)          #
+        # ============================================================== #
+        elif trap_type == -1:
+            swept_point2  = low  <= trap_point2
+            swept_interim = high >= trap_interim
+            at_touch3     = low  <= trap_touch3
+            breaker_fired = bool(breaker_down.iloc[i]) and low <= trap_interim
+
+            if trap_ts in phase2_fired and swept_point2:
+                # Phase 3: sell-stops at Point 2 purged -- Market Maker BUYS
+                signals.loc[ts, 'signal']            = 1
+                signals.loc[ts, 'trigger_type']      = "Phase 3 BUY -- Point2 Low Swept"
+                signals.loc[ts, 'target_price']      = trap_interim
+                signals.loc[ts, 'secondary_target']  = _fvg_secondary('bull')
+                consumed_traps.add(trap_ts)
+
+            elif swept_interim and trap_ts not in phase2_fired:
+                # Phase 2-A: Turtle Soup at Interim High
+                signals.loc[ts, 'signal']            = -1
+                signals.loc[ts, 'trigger_type']      = "Phase 2 SELL -- Turtle Soup"
+                signals.loc[ts, 'target_price']      = trap_point2
+                signals.loc[ts, 'secondary_target']  = _fvg_secondary('bear')
+                phase2_fired.add(trap_ts)
+
+            elif at_touch3 and trap_ts not in phase2_fired:
+                # Phase 2-B: Limit Order at 3rd Touch (Gap 7)
+                signals.loc[ts, 'signal']            = -1
+                signals.loc[ts, 'trigger_type']      = "Phase 2 SELL -- Limit at 3rd Touch"
+                signals.loc[ts, 'target_price']      = trap_point2
+                signals.loc[ts, 'secondary_target']  = _fvg_secondary('bear')
+                phase2_fired.add(trap_ts)
+
+            elif breaker_fired and trap_ts not in phase2_fired:
+                # Phase 2-D: Bullish Breaker near Interim (Gap 6)
+                signals.loc[ts, 'signal']            = -1
+                signals.loc[ts, 'trigger_type']      = "Phase 2 SELL -- Bullish Breaker"
+                signals.loc[ts, 'target_price']      = trap_point2
+                signals.loc[ts, 'secondary_target']  = _fvg_secondary('bear')
+                phase2_fired.add(trap_ts)
+
+            elif (ob_type == -1 and not pd.isna(ob_bottom)
+                  and high >= ob_bottom
+                  and not pd.isna(ob_top)
+                  and ob_bottom <= trap_interim <= ob_top
+                  and trap_ts not in phase2_fired):
+                # Phase 2-C: OB Tap at Interim High
+                signals.loc[ts, 'signal']            = -1
+                signals.loc[ts, 'trigger_type']      = "Phase 2 SELL -- OB Tap"
+                signals.loc[ts, 'target_price']      = trap_point2
+                signals.loc[ts, 'secondary_target']  = _fvg_secondary('bear')
+                phase2_fired.add(trap_ts)
+
+    return signals
+
+smc.phantom_signals = _phantom_signals
+
+
+def _false_hns_patterns(ohlc, swings, max_neckline_slope_pct=0.005):
+    """
+    Detects False Head and Shoulders Traps (Month 3 Video 8).
+    """
+    # Clean swings
+    swing_arr = swings[~swings['type'].isna()].copy()
+    # Ensure ts column is always proper pd.Timestamp (not numpy datetime64)
+    swing_arr['ts'] = pd.to_datetime(swing_arr['ts'])
+
+    # Store detected patterns
+    patterns = []
+
+    # Iterate through swings in chunks of 5
+    for i in range(len(swing_arr) - 4):
+        window = swing_arr.iloc[i:i+5]
+        types  = window['type'].values
+        prices = window['p'].values
+        # Convert numpy datetime64 → pd.Timestamp for safe comparison later
+        timestamps = [pd.Timestamp(t) for t in window['ts'].values]
+        
+        # Bullish Trap: Standard H&S (H, L, H, L, H)
+        if (types[0] == 'HIGH' and types[1] == 'LOW' and 
+            types[2] == 'HIGH' and types[3] == 'LOW' and 
+            types[4] == 'HIGH'):
+            
+            ls = prices[0]
+            l1 = prices[1]
+            t1 = timestamps[1]
+            
+            head = prices[2]
+            
+            l2 = prices[3]
+            t2 = timestamps[3]
+            rs = prices[4]
+            
+            # Constraints
+            neckline_diff = abs(l1 - l2) / min(l1, l2)
+            
+            # Head must be highest
+            if head > ls and head > rs and neckline_diff <= max_neckline_slope_pct:
+                patterns.append({
+                    'trap_type': 1, # Bullish trap
+                    'trap_ts': timestamps[4],
+                    'p1': l1,
+                    't1': t1,
+                    'p2': l2,
+                    't2': t2,
+                    'target_1': rs,
+                    'target_2': head
+                })
+                
+        # Bearish Trap: Inverted H&S (L, H, L, H, L)
+        elif (types[0] == 'LOW' and types[1] == 'HIGH' and 
+              types[2] == 'LOW' and types[3] == 'HIGH' and 
+              types[4] == 'LOW'):
+              
+            ls = prices[0]
+            h1 = prices[1]
+            t1 = timestamps[1]
+            
+            head = prices[2]
+            
+            h2 = prices[3]
+            t2 = timestamps[3]
+            rs = prices[4]
+            
+            # Constraints
+            neckline_diff = abs(h1 - h2) / min(h1, h2)
+            
+            # Head must be lowest
+            if head < ls and head < rs and neckline_diff <= max_neckline_slope_pct:
+                patterns.append({
+                    'trap_type': -1, # Bearish trap
+                    'trap_ts': timestamps[4],
+                    'p1': h1,
+                    't1': t1,
+                    'p2': h2,
+                    't2': t2,
+                    'target_1': rs,
+                    'target_2': head
+                })
+                
+    return pd.DataFrame(patterns) if patterns else pd.DataFrame(columns=['trap_type', 'trap_ts', 'p1', 't1', 'p2', 't2', 'target_1', 'target_2'])
+
+def _hns_signals(ohlc, patterns, htf_bias=None, htf_poi_top=None, htf_poi_btm=None):
+    """
+    Executes trades on the diagonal neckline sweep.
+    """
+    signals = pd.DataFrame(index=ohlc.index)
+    signals['signal'] = 0
+    signals['trigger_type'] = pd.Series(dtype='object')
+    signals['target_1'] = np.nan
+    signals['target_2'] = np.nan
+    
+    if patterns.empty:
+        return signals
+        
+    if htf_bias is None:
+        htf_bias = pd.Series(0, index=ohlc.index)
+    if htf_poi_top is None:
+        htf_poi_top = pd.Series(np.nan, index=ohlc.index)
+    if htf_poi_btm is None:
+        htf_poi_btm = pd.Series(np.nan, index=ohlc.index)
+        
+    consumed_traps = set()
+    
+    for i, (ts, row) in enumerate(ohlc.iterrows()):
+        bias = htf_bias.loc[ts] if ts in htf_bias.index else 0
+        if bias == 0:
+            continue
+            
+        high = row['high']
+        low = row['low']
+        
+        poi_t = htf_poi_top.loc[ts] if ts in htf_poi_top.index else np.nan
+        poi_b = htf_poi_btm.loc[ts] if ts in htf_poi_btm.index else np.nan
+        
+        # We MUST have a valid POI defined
+        if pd.isna(poi_t) or pd.isna(poi_b):
+            continue
+            
+        # We also MUST have a directional bias (not 0)
+        if bias == 0.0:
+            continue
+        
+        # Get active patterns up to this point
+        active = patterns[patterns['trap_ts'] < ts]
+        
+        for _, trap in active.iterrows():
+            trap_ts = trap['trap_ts']
+            if trap_ts in consumed_traps:
+                continue
+                
+            trap_type = trap['trap_type']
+            if trap_type != bias:
+                continue
+                
+            t1 = trap['t1']
+            t2 = trap['t2']
+            p1 = trap['p1']
+            p2 = trap['p2']
+            target_1 = trap['target_1']
+            target_2 = trap['target_2']
+            
+            if trap_type == 1:
+                # Bullish Trap (Standard H&S)
+                # ICT entry: Turtle Soup — buy the sweep of the EQUAL LOWS (sell stops below the neckline)
+                # The two neckline lows (p1, p2) are the equal lows retail sells break below
+                equal_lows_level = min(p1, p2)
+                
+                # Invalidate if Head (highest high) is violated upward first — trap is gone
+                if high >= target_2:
+                    consumed_traps.add(trap_ts)
+                    continue
+                    
+                # Trigger: wick sweeps BELOW the equal lows (into the sell stops)
+                if low <= equal_lows_level:
+                    signals.loc[ts, 'signal'] = 1
+                    signals.loc[ts, 'trigger_type'] = "H&S Equal-Lows Sweep BUY (Turtle Soup)"
+                    signals.loc[ts, 'target_1'] = target_1   # Right shoulder (first partial)
+                    signals.loc[ts, 'target_2'] = target_2   # Head (highest high — buy stops above)
+                    signals.loc[ts, 't1'] = t1
+                    signals.loc[ts, 'p1'] = p1
+                    signals.loc[ts, 't2'] = t2
+                    signals.loc[ts, 'p2'] = p2
+                    consumed_traps.add(trap_ts)
+                    
+            elif trap_type == -1:
+                # Bearish Trap (Inverted H&S)
+                # ICT entry: sell the sweep of the EQUAL HIGHS (buy stops above the neckline)
+                # The two neckline highs (p1, p2) are the equal highs retail buys break above
+                equal_highs_level = max(p1, p2)
+                
+                # Invalidate if Head (lowest low) is violated downward first — trap is gone
+                if low <= target_2:
+                    consumed_traps.add(trap_ts)
+                    continue
+                    
+                # Trigger: wick sweeps ABOVE the equal highs (into the buy stops)
+                if high >= equal_highs_level:
+                    signals.loc[ts, 'signal'] = -1
+                    signals.loc[ts, 'trigger_type'] = "Inv H&S Equal-Highs Sweep SELL (Turtle Soup)"
+                    signals.loc[ts, 'target_1'] = target_1   # Right shoulder (first partial)
+                    # Gap 4: secondary target = sell stops BELOW the head (lowest low)
+                    signals.loc[ts, 'target_2'] = target_2   # Head (lowest low — sell stops below)
+                    signals.loc[ts, 't1'] = t1
+                    signals.loc[ts, 'p1'] = p1
+                    signals.loc[ts, 't2'] = t2
+                    signals.loc[ts, 'p2'] = p2
+                    consumed_traps.add(trap_ts)
+                    
+    return signals
+
+smc.false_hns_patterns = _false_hns_patterns
+smc.hns_signals = _hns_signals

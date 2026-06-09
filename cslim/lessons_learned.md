@@ -43,3 +43,20 @@ During the institutional development of this suite, we solved several critical b
 *   **The Bug:** `smc.retracements()` was calculating all values correctly but had a missing return statement at the end of its definition. All callers were receiving `None` silently, with no error raised.
 *   **The Lesson:** After any new function is added to `smc.py`, verify the return value is not `None` before using it downstream. Add a one-line smoke test: `assert result is not None` after every `smc.*` call in diagnostic scripts.
 
+---
+
+### Category F — Hallucinated Filters Suppressing Valid Signals (M3V8)
+
+*   **The Bug:** Three constraints were injected by Antigravity during an over-engineering phase that had no basis in the ICT notes:
+    1.  `shoulder_diff <= max_shoulder_diff_pct` (0.5% symmetry tolerance) — removed from `_false_hns_patterns`
+    2.  `is_in_poi` spatial straddle check — removed from `_hns_signals`
+    3.  `has_fvg or is_sweep` gate on `pending_bias` entry — removed from `verify_video8.py`
+    All three silently suppressed valid signals (execution count dropped to 0 at worst, 1 at best, vs the correct 3).
+*   **The Lesson:** When signal count drops to zero or near-zero after a code change, suspect invented filters before suspecting the core topology. Audit each filter individually against exact ICT note quotes. If no quote supports it, it does not exist. The correct audit sequence: (1) read raw notes, (2) produce ASCII diagram from notes only, (3) compare code against diagram line by line, (4) delete any line with no note backing.
+
+---
+
+### Category G — Future Quality Filter (M3V8, do NOT build now)
+
+*   **Observation:** Sell 1 on Nov 4 14:00 had only ~12 pips between right shoulder and head. Technically valid by current detection criteria (neckline slope tolerance only). Practically, this is very limited risk-reward.
+*   **Future Action:** A minimum pattern depth filter (head-to-neckline distance > X pips) would improve quality. Must be derived from ICT notes before implementation. Do not build until an explicit ICT quote supports the minimum depth value.

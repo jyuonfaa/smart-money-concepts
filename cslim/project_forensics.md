@@ -167,6 +167,9 @@ As Antigravity, you must always maintain these rules:
 | Month 3, Video 3 | ✅ Locked |
 | Month 3, Video 4 | ✅ Locked |
 | Month 3, Video 5 | ✅ Locked |
+| Month 3, Video 6 | ✅ Locked |
+| Month 3, Video 7 | ✅ Locked |
+| **Month 3, Video 8** | ✅ **Locked (June 2026)** |
 
 ---
 
@@ -327,9 +330,60 @@ Pattern 9 — Conflating the Sovereign Engine hysteresis with Turtle Soup cooldo
     *   Directional accuracy on prime setups confirmed at 100% (sweep simulation proved all losses were exactly target-bound sweeps, averaging 28 pips beyond the 0-pip wick stop before reversing).
 *   **Gatekeeper Verify:** ✅ Locked.
 
+### Month 3, Video 4: Monthly/Weekly Range & Profiling
+*   **Core Concepts:** Monthly Range expansion, Weekly directional bias, identifying accumulation/distribution phases across macro timeframes.
+*   **The Problem Solved:** Executing exclusively on the 15M/1H charts without mapping the weekly profile results in trading against the macro algorithm's monthly objective.
+*   **The Technical Model:**
+    *   `visualize_month3_video4.py`: A dedicated dashboard combining the Monthly, Weekly, and Daily charts.
+    *   Visualizes the structural boundaries (highs/lows) across all three timeframes to ensure macro alignment before any micro-execution is considered.
+*   **Gatekeeper Verify:** ✅ Locked.
+
+### Month 3, Video 5: SMT Divergence
+*   **Core Concepts:** Correlated pairs (e.g., EURUSD vs GBPUSD), Symmetrical Trend Divergence, the "Void" confirmation (FVG), Liquidity Pool sweep alignments.
+*   **The Problem Solved:** Standard divergence indicators lag and paint false signals in trending markets. ICT SMT divergence isolates institutional footprint decoupling across correlated assets at key liquidity levels.
+*   **The Technical Model:**
+    *   **Dynamic Synchronization:** `smt_divergence` replaced hardcoded 3-day windows with a dynamic structural lookaround (`lookaround_bars=5`) to perfectly align matching price action legs across both assets.
+    *   **The "Void" Confirmation:** `smt_confirmed` algorithm checks if the divergence is immediately followed by a Fair Value Gap (the "Void") in the reversal direction.
+    *   **Liquidity Pool Context:** `smt_at_liquidity` logic ensures the divergence occurred specifically during a sweep of an old high or low (Point 5), filtering out random noise.
+    *   **Symmetrical Trend Detection:** Suppresses contra-trend signals when the benchmark asset (e.g., DXY) remains strongly trending without diverging.
+*   **Audit Results:** `verify_month3_video5.py` verified all four macro ICT SMT scenarios cleanly against golden master benchmarks.
+*   **Gatekeeper Verify:** ✅ Locked.
+
 
 ## 14. Lessons Learned (Month 3 Video 5)
 - smt_bias_event must be kept in the return — dropping it silently breaks the verify script
 - BM-led scenarios (C, D, Symmetrical from DXY swings) must use _set() helper — DXY timestamps may not exist in the AUDUSD index; df.loc[dxy_ts] creates spurious rows
 - smc.ob() requires swing_highs_lows as second argument since M3V2 — any verify script written before that update needs patching
 - Windows PowerShell with cp1252 encoding will crash on Unicode characters in print statements; run with $env:PYTHONIOENCODING='utf-8'
+
+---
+
+### Month 3, Video 6: Macro Flow & Session Bias
+*   **Gatekeeper Verify:** ✅ Locked.
+
+---
+
+### Month 3, Video 7: Phantom Signals & False Flag Traps
+*   **Gatekeeper Verify:** ✅ Locked.
+
+---
+
+### Month 3, Video 8: Market Maker Trap (Head & Shoulders)
+*   **Core Concepts:** False Head & Shoulders as institutional trap geometry. ICT reads both the Standard H&S (bullish trap, buy the equal-lows sweep) and the Inverted H&S (bearish trap, sell the equal-highs sweep) as Turtle Soup setups backed by a confirmed Daily Order Block.
+*   **The Complete ICT Model:**
+
+| Pattern | HTF Bias | Equal Level | Trigger | Entry | TP1 | TP2 |
+|---|---|---|---|---|---|---|
+| Standard H&S | Daily Bullish OB | Equal lows (neckline) | Wick sweeps below equal lows | Long (Turtle Soup) | Right Shoulder high | Head (highest peak) |
+| Inverted H&S | Daily Bearish OB | Equal highs (neckline) | Wick sweeps above equal highs | Short (Turtle Soup) | Right Shoulder low | Head (lowest low) |
+
+*   **Functions added to `smc.py`:**
+    *   `smc.false_hns_patterns(ohlc, swings, max_neckline_slope_pct=0.005)` — detects the five-swing topology (H-L-H-L-H or L-H-L-H-L) with head dominance and neckline equality checks.
+    *   `smc.hns_signals(ohlc, patterns, htf_bias, htf_poi_top, htf_poi_btm)` — executes bar-by-bar Turtle Soup triggers against confirmed daily OB zones.
+*   **HTF Engine (verify_video8.py):** Zero-lookahead Daily OB state machine. All OBs enter `pending_bias` unconditionally on formation day. They only promote to `active_bias` when a subsequent daily close confirms beyond the OB extreme. The `current_bias` recorded at the top of each loop day represents yesterday's state — price can never use today's OB as a signal gate today.
+*   **Gatekeeper Results:** EURUSD Oct-Nov 2022 — 3 executions from 8 detected patterns. 1 Buy (Oct 25, TP1 hit Oct 26, TP2 hit Nov 8). 2 Sells (Nov 4 — losing, macro CPI reversal event, Layer 4 absence). Golden Master: HRR 471, LRR 37, 11 transitions — unchanged.
+*   **Gatekeeper Verify:** ✅ Locked (June 2026).
+
+*   **Future quality filter (do NOT build now):** Sell 1 on Nov 4 14:00 had ~12 pips between right shoulder and head. Technically valid by current detection criteria. A minimum pattern depth filter (head-to-neckline distance > X pips) would improve quality. Must be derived from ICT notes before implementation.
+
+*   **Known Layer 4 gap:** Signals that fire with a valid Daily OB but against the Weekly/Monthly macro trend will lose. This is expected and correct behaviour for a system without Layer 4 (MTF Alignment). Do NOT patch detection logic to solve this — build Layer 4.

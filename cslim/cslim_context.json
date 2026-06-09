@@ -12,7 +12,7 @@
     "expected_lrr_count": 37,
     "expected_transitions": 11,
     "last_regression_status": "PASSED",
-    "video8_status": "FAILED",
+    "video8_status": "PASSED",
     "month2_video2_status": "PASSED",
     "month2_video3_status": "PASSED",
     "month2_video4_status": "PASSED"
