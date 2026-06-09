@@ -1688,29 +1688,65 @@ def _smt_divergence(
     return df
 
 
-def triad_divergence(usdx_ohlc, triad_ohlcs, usdx_swings, lookaround_bars=5):
+def triad_divergence(usdx_ohlc, triad_ohlcs, usdx_swings, lookaround_bars=5, usdx_pois=None):
     """
     ICT Month 4 Video 1: Interest Rate Triad Divergence
-    
+
     Detects macro SMT divergence between the USDX and the Interest Rate Triad
     (30Y Bond, 10Y Note, 5Y Note futures).
 
+    --- Resolution Note (Gap 1 Fix) ---
+    ICT demonstrated this concept on 90-minute charts spanning ~15-18 days
+    (pages 265-266 of the mentorship notes). This function is resolution-agnostic:
+    pass intraday OHLC and intraday swings to replicate ICT's exact methodology.
+    Passing daily data is an acceptable approximation but may miss intraday failure
+    swings that are clearly visible on the 90-minute chart.
+
+    --- POI Gate (Gap 2 Fix) ---
+    Per the ICT Action Plan slide (page 270) and the live example (pages 267-268),
+    the Triad is ONLY evaluated when the USDX swing is at a known institutional POI
+    (Order Block, Liquidity Pool, or Fair Value Gap). A divergence on a random
+    mid-range swing has NO ICT-defined significance and must be ignored.
+    When usdx_pois=None the gate is disabled (exploration mode only).
+
     Parameters:
-    - usdx_ohlc: DataFrame containing USDX OHLC data.
-    - triad_ohlcs: dictionary of DataFrames for the triad assets. e.g. {'ZB': df, 'ZN': df}
-    - usdx_swings: DataFrame output of smc.swing_highs_lows_v4() on usdx_ohlc.
+    - usdx_ohlc     : DataFrame containing USDX OHLC data (any resolution).
+    - triad_ohlcs   : dict of DataFrames for the triad assets e.g.
+                      {'ZB': df, 'ZN': df, 'ZF': df}
+    - usdx_swings   : DataFrame output of smc.swing_highs_lows_v4() on usdx_ohlc.
     - lookaround_bars: int, bars either side of a swing to search for extremes.
+    - usdx_pois     : Optional DataFrame of USDX POI zones with columns
+                      'top' and 'bottom' (or 'Top'/'Bottom'). When provided,
+                      only swings whose price falls inside a POI zone are evaluated.
 
     Returns:
-    DataFrame indexed like usdx_ohlc with columns indicating triad divergence.
+    DataFrame indexed like usdx_ohlc with columns:
+        triad_bullish_div     : bool — bullish triad divergence at a POI
+        triad_bearish_div     : bool — bearish triad divergence at a POI
+        triad_diverging_assets: str  — comma-separated names of diverging assets
+        triad_at_poi          : bool — True when the swing was inside a POI zone
     """
     df = pd.DataFrame(index=usdx_ohlc.index)
-    df['triad_bullish_div'] = False
-    df['triad_bearish_div'] = False
+    df['triad_bullish_div']      = False
+    df['triad_bearish_div']      = False
     df['triad_diverging_assets'] = ''
+    df['triad_at_poi']           = False
 
     if len(usdx_swings) < 2 or not triad_ohlcs:
         return df
+
+    # ── POI lookup helper ────────────────────────────────────────────────────
+    def _is_at_poi(swing_price):
+        """Return True if swing_price falls inside any USDX POI zone."""
+        if usdx_pois is None or len(usdx_pois) == 0:
+            return True  # gate disabled — allow all swings (exploration mode)
+        for _, poi in usdx_pois.iterrows():
+            top    = poi.get('top',    poi.get('Top',    np.nan))
+            bottom = poi.get('bottom', poi.get('Bottom', np.nan))
+            if pd.notna(top) and pd.notna(bottom):
+                if bottom <= swing_price <= top:
+                    return True
+        return False
 
     def _win_extreme(target, ts, extreme_type):
         try:
@@ -1725,49 +1761,63 @@ def triad_divergence(usdx_ohlc, triad_ohlcs, usdx_swings, lookaround_bars=5):
         except Exception:
             return np.nan
 
+    # ── Bearish Triad Divergence ─────────────────────────────────────────────
+    # USDX makes a Higher High → Bonds should make Lower Lows.
+    # If any bond fails to make a lower low at a USDX POI → divergence confirmed.
     usdx_highs = usdx_swings[usdx_swings['type'] == 'HIGH']
     for i in range(1, len(usdx_highs)):
         curr_swing = usdx_highs.iloc[i]
-        prev_swing = usdx_highs.iloc[i-1]
-        
-        # USDX made a Higher High (Bearish tone for DXY, expect bonds to make Lower Lows)
-        if curr_swing['p'] > prev_swing['p']:
-            diverging = []
-            for name, triad_df in triad_ohlcs.items():
-                curr_bond_low = _win_extreme(triad_df, curr_swing['ts'], 'low')
-                prev_bond_low = _win_extreme(triad_df, prev_swing['ts'], 'low')
-                
-                if pd.notna(curr_bond_low) and pd.notna(prev_bond_low):
-                    # Bond failed to make a lower low
-                    if curr_bond_low >= prev_bond_low:
-                        diverging.append(name)
-            
-            if diverging:
-                if curr_swing['ts'] in df.index:
-                    df.loc[curr_swing['ts'], 'triad_bearish_div'] = True # Bearish for DXY
-                    df.loc[curr_swing['ts'], 'triad_diverging_assets'] = ','.join(diverging)
+        prev_swing = usdx_highs.iloc[i - 1]
 
+        if curr_swing['p'] <= prev_swing['p']:
+            continue  # not a Higher High — skip
+
+        # Gap 2: Only evaluate when the USDX swing is at a known POI
+        if not _is_at_poi(curr_swing['p']):
+            continue
+
+        diverging = []
+        for name, triad_df in triad_ohlcs.items():
+            curr_bond_low = _win_extreme(triad_df, curr_swing['ts'], 'low')
+            prev_bond_low = _win_extreme(triad_df, prev_swing['ts'], 'low')
+            if pd.notna(curr_bond_low) and pd.notna(prev_bond_low):
+                if curr_bond_low >= prev_bond_low:  # failed to make lower low
+                    diverging.append(name)
+
+        # ICT: "you just need one to break that pattern" (page 263)
+        if diverging and curr_swing['ts'] in df.index:
+            df.loc[curr_swing['ts'], 'triad_bearish_div']      = True
+            df.loc[curr_swing['ts'], 'triad_diverging_assets'] = ','.join(diverging)
+            df.loc[curr_swing['ts'], 'triad_at_poi']           = True
+
+    # ── Bullish Triad Divergence ─────────────────────────────────────────────
+    # USDX makes a Lower Low → Bonds should make Higher Highs.
+    # If any bond fails to make a higher high at a USDX POI → divergence confirmed.
     usdx_lows = usdx_swings[usdx_swings['type'] == 'LOW']
     for i in range(1, len(usdx_lows)):
         curr_swing = usdx_lows.iloc[i]
-        prev_swing = usdx_lows.iloc[i-1]
-        
-        # USDX made a Lower Low (Bullish tone for DXY, expect bonds to make Higher Highs)
-        if curr_swing['p'] < prev_swing['p']:
-            diverging = []
-            for name, triad_df in triad_ohlcs.items():
-                curr_bond_high = _win_extreme(triad_df, curr_swing['ts'], 'high')
-                prev_bond_high = _win_extreme(triad_df, prev_swing['ts'], 'high')
-                
-                if pd.notna(curr_bond_high) and pd.notna(prev_bond_high):
-                    # Bond failed to make a higher high
-                    if curr_bond_high <= prev_bond_high:
-                        diverging.append(name)
-            
-            if diverging:
-                if curr_swing['ts'] in df.index:
-                    df.loc[curr_swing['ts'], 'triad_bullish_div'] = True # Bullish for DXY
-                    df.loc[curr_swing['ts'], 'triad_diverging_assets'] = ','.join(diverging)
+        prev_swing = usdx_lows.iloc[i - 1]
+
+        if curr_swing['p'] >= prev_swing['p']:
+            continue  # not a Lower Low — skip
+
+        # Gap 2: Only evaluate when the USDX swing is at a known POI
+        if not _is_at_poi(curr_swing['p']):
+            continue
+
+        diverging = []
+        for name, triad_df in triad_ohlcs.items():
+            curr_bond_high = _win_extreme(triad_df, curr_swing['ts'], 'high')
+            prev_bond_high = _win_extreme(triad_df, prev_swing['ts'], 'high')
+            if pd.notna(curr_bond_high) and pd.notna(prev_bond_high):
+                if curr_bond_high <= prev_bond_high:  # failed to make higher high
+                    diverging.append(name)
+
+        # ICT: "you just need one to break that pattern" (page 263)
+        if diverging and curr_swing['ts'] in df.index:
+            df.loc[curr_swing['ts'], 'triad_bullish_div']      = True
+            df.loc[curr_swing['ts'], 'triad_diverging_assets'] = ','.join(diverging)
+            df.loc[curr_swing['ts'], 'triad_at_poi']           = True
 
     return df
 
