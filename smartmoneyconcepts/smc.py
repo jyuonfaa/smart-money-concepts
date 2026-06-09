@@ -1688,7 +1688,7 @@ def _smt_divergence(
     return df
 
 
-def triad_divergence(usdx_ohlc, triad_ohlcs, usdx_swings, lookaround_bars=5, usdx_pois=None):
+def triad_divergence(usdx_ohlc, triad_ohlcs, usdx_swings, lookaround_bars=5, usdx_pois=None, neutral_tolerance_pct=0.001):
     """
     ICT Month 4 Video 1: Interest Rate Triad Divergence
 
@@ -1781,9 +1781,11 @@ def triad_divergence(usdx_ohlc, triad_ohlcs, usdx_swings, lookaround_bars=5, usd
             curr_bond_low = _win_extreme(triad_df, curr_swing['ts'], 'low')
             prev_bond_low = _win_extreme(triad_df, prev_swing['ts'], 'low')
             if pd.notna(curr_bond_low) and pd.notna(prev_bond_low):
-                if curr_bond_low >= prev_bond_low:  # failed to make lower low
-                    diverging.append(name)
-
+                diff_pct = abs(curr_bond_low - prev_bond_low) / abs(prev_bond_low)
+                if diff_pct <= neutral_tolerance_pct:
+                    pass  # Asset is flat/neutral (Gap 3 Fix)
+                elif curr_bond_low > prev_bond_low:
+                    diverging.append(name)  # true failure swing
         # ICT: "you just need one to break that pattern" (page 263)
         if diverging and curr_swing['ts'] in df.index:
             df.loc[curr_swing['ts'], 'triad_bearish_div']      = True
@@ -1810,9 +1812,11 @@ def triad_divergence(usdx_ohlc, triad_ohlcs, usdx_swings, lookaround_bars=5, usd
             curr_bond_high = _win_extreme(triad_df, curr_swing['ts'], 'high')
             prev_bond_high = _win_extreme(triad_df, prev_swing['ts'], 'high')
             if pd.notna(curr_bond_high) and pd.notna(prev_bond_high):
-                if curr_bond_high <= prev_bond_high:  # failed to make higher high
-                    diverging.append(name)
-
+                diff_pct = abs(curr_bond_high - prev_bond_high) / abs(prev_bond_high)
+                if diff_pct <= neutral_tolerance_pct:
+                    pass  # Asset is flat/neutral (Gap 3 Fix)
+                elif curr_bond_high < prev_bond_high:
+                    diverging.append(name)  # true failure swing
         # ICT: "you just need one to break that pattern" (page 263)
         if diverging and curr_swing['ts'] in df.index:
             df.loc[curr_swing['ts'], 'triad_bullish_div']      = True
