@@ -28,5 +28,6 @@ def fetch_data(ticker, filename):
 if __name__ == "__main__":
     fetch_data("ZN=F", "ZN_Daily_2016.csv")
     fetch_data("ZB=F", "ZB_Daily_2016.csv")
+    fetch_data("ZF=F", "ZF_Daily_2016.csv")
     fetch_data("DX-Y.NYB", "DXY_Daily_2016.csv")
     fetch_data("EURUSD=X", "EURUSD_Daily_2016.csv")

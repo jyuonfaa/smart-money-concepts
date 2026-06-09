@@ -1688,6 +1688,89 @@ def _smt_divergence(
     return df
 
 
+def triad_divergence(usdx_ohlc, triad_ohlcs, usdx_swings, lookaround_bars=5):
+    """
+    ICT Month 4 Video 1: Interest Rate Triad Divergence
+    
+    Detects macro SMT divergence between the USDX and the Interest Rate Triad
+    (30Y Bond, 10Y Note, 5Y Note futures).
+
+    Parameters:
+    - usdx_ohlc: DataFrame containing USDX OHLC data.
+    - triad_ohlcs: dictionary of DataFrames for the triad assets. e.g. {'ZB': df, 'ZN': df}
+    - usdx_swings: DataFrame output of smc.swing_highs_lows_v4() on usdx_ohlc.
+    - lookaround_bars: int, bars either side of a swing to search for extremes.
+
+    Returns:
+    DataFrame indexed like usdx_ohlc with columns indicating triad divergence.
+    """
+    df = pd.DataFrame(index=usdx_ohlc.index)
+    df['triad_bullish_div'] = False
+    df['triad_bearish_div'] = False
+    df['triad_diverging_assets'] = ''
+
+    if len(usdx_swings) < 2 or not triad_ohlcs:
+        return df
+
+    def _win_extreme(target, ts, extreme_type):
+        try:
+            i = (target.index.get_loc(ts) if ts in target.index
+                 else target.index.get_indexer([ts], method='nearest')[0])
+            start_i = max(0, i - lookaround_bars)
+            end_i = i + lookaround_bars + 1
+            if extreme_type == 'high':
+                return target.iloc[start_i:end_i]['high'].max()
+            else:
+                return target.iloc[start_i:end_i]['low'].min()
+        except Exception:
+            return np.nan
+
+    usdx_highs = usdx_swings[usdx_swings['type'] == 'HIGH']
+    for i in range(1, len(usdx_highs)):
+        curr_swing = usdx_highs.iloc[i]
+        prev_swing = usdx_highs.iloc[i-1]
+        
+        # USDX made a Higher High (Bearish tone for DXY, expect bonds to make Lower Lows)
+        if curr_swing['p'] > prev_swing['p']:
+            diverging = []
+            for name, triad_df in triad_ohlcs.items():
+                curr_bond_low = _win_extreme(triad_df, curr_swing['ts'], 'low')
+                prev_bond_low = _win_extreme(triad_df, prev_swing['ts'], 'low')
+                
+                if pd.notna(curr_bond_low) and pd.notna(prev_bond_low):
+                    # Bond failed to make a lower low
+                    if curr_bond_low >= prev_bond_low:
+                        diverging.append(name)
+            
+            if diverging:
+                if curr_swing['ts'] in df.index:
+                    df.loc[curr_swing['ts'], 'triad_bearish_div'] = True # Bearish for DXY
+                    df.loc[curr_swing['ts'], 'triad_diverging_assets'] = ','.join(diverging)
+
+    usdx_lows = usdx_swings[usdx_swings['type'] == 'LOW']
+    for i in range(1, len(usdx_lows)):
+        curr_swing = usdx_lows.iloc[i]
+        prev_swing = usdx_lows.iloc[i-1]
+        
+        # USDX made a Lower Low (Bullish tone for DXY, expect bonds to make Higher Highs)
+        if curr_swing['p'] < prev_swing['p']:
+            diverging = []
+            for name, triad_df in triad_ohlcs.items():
+                curr_bond_high = _win_extreme(triad_df, curr_swing['ts'], 'high')
+                prev_bond_high = _win_extreme(triad_df, prev_swing['ts'], 'high')
+                
+                if pd.notna(curr_bond_high) and pd.notna(prev_bond_high):
+                    # Bond failed to make a higher high
+                    if curr_bond_high <= prev_bond_high:
+                        diverging.append(name)
+            
+            if diverging:
+                if curr_swing['ts'] in df.index:
+                    df.loc[curr_swing['ts'], 'triad_bullish_div'] = True # Bullish for DXY
+                    df.loc[curr_swing['ts'], 'triad_diverging_assets'] = ','.join(diverging)
+
+    return df
+
 def _smt_apply_bias_filter(signal_df, smt_df, signal_type):
     """
     ICT Month 3, Video 5, p.226 — Execution Layer Bias Wiring.
