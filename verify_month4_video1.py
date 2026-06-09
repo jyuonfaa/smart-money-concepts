@@ -15,6 +15,9 @@ def run_triad_analysis():
         zn = pd.read_csv("tests/test_data/MACRO/ZN_Daily_2016.csv")
         zn['date'] = pd.to_datetime(zn['date'])
         zn.set_index('date', inplace=True)
+        zf = pd.read_csv("tests/test_data/MACRO/ZF_Daily_2016.csv")
+        zf['date'] = pd.to_datetime(zf['date'])
+        zf.set_index('date', inplace=True)
     except FileNotFoundError as e:
         print(f"Error loading data: {e}")
         return
@@ -24,8 +27,8 @@ def run_triad_analysis():
     
     triad = {
         '30Y Bond (ZB)': zb,
-        '10Y Note (ZN)': zn
-        # 5Y Note (ZF) omitted due to data fetch failure, function handles dynamic lengths
+        '10Y Note (ZN)': zn,
+        '5Y Note (ZF)': zf
     }
 
     print("Analyzing Triad Divergence...")
