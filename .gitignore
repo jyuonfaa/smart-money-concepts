@@ -1,28 +1,3 @@
-build
-dist
-smartmoneyconcepts.egg-info
-.DS_Store
-__pycache__
-.venv
-
-# Raw data directories (too large for git)
-HISTDATA_COM_ASCII_AUDUSD_M12016/
-
-# Extracted image directories
-pdf_images/
-vid7_images/
-month3_video4_images/
-month3_video7_images/
-month3_video8_images/
-
-# Loose extracted page images
-page_*.png
-page_*.jpg
-page_*.jpeg
-
-# Output files
-*.html
-
-# Source documents (binary, too large)
-*.docx
-*.pdf
+ICT MENTORSHIP 2016.docx
+~$*.docx
+~*.tmp
