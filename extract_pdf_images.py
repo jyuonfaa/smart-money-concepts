@@ -1,26 +1,18 @@
-import pypdf
-import os
+import fitz
+import sys
 
-def extract_images_from_pdf():
-    pdf_path = "ict mentorship.pdf"
-    output_dir = r"C:\Users\ESTHER\.gemini\antigravity\brain\747166f1-bd8e-4dfd-9717-20967047e27e"
-    
-    print(f"Opening {pdf_path}...")
-    reader = pypdf.PdfReader(pdf_path)
-    
-    # Page indices are 0-based. Page 46 is index 45, Page 50 is index 49.
-    for page_num in range(45, 51):
-        print(f"Scanning Page {page_num + 1}...")
-        page = reader.pages[page_num]
-        
-        for image_file_object in page.images:
-            image_name = f"video8_page_{page_num + 1}_{image_file_object.name}"
-            image_path = os.path.join(output_dir, image_name)
-            
-            with open(image_path, "wb") as fp:
-                fp.write(image_file_object.data)
-                
-            print(f"Extracted: {image_name} ({len(image_file_object.data)} bytes)")
+def pdf_to_images(pdf_path, start_page, end_page):
+    try:
+        doc = fitz.open(pdf_path)
+        for i in range(start_page - 1, end_page):
+            page = doc.load_page(i)
+            # Render page to an image
+            pix = page.get_pixmap(dpi=150)
+            img_path = f"page_{i+1}.png"
+            pix.save(img_path)
+            print(f"Saved {img_path}")
+    except Exception as e:
+        print(f"Error extracting images: {e}")
 
-if __name__ == "__main__":
-    extract_images_from_pdf()
+if __name__ == '__main__':
+    pdf_to_images('ict mentorship.pdf', 227, 238)
