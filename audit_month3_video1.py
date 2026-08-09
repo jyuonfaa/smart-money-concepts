@@ -74,7 +74,7 @@ ob_daily = check("Daily Order Blocks",
 
 # Validate columns returned
 if ob_daily is not None:
-    expected = {'OB', 'Top', 'Bottom', 'OBVolume', 'Percentage', 'MitigatedIndex'}
+    expected = {'OB', 'Top', 'Bottom', 'OBVolume', 'Percentage', 'MitigatedIndex', 'MeanThreshold'}
     missing = expected - set(ob_daily.columns)
     if missing:
         fails.append(f"[FAIL] Daily OB missing columns: {missing}")

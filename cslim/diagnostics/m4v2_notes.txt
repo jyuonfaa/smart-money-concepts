@@ -1,0 +1,586 @@
+
+--- PAGE 271 ---
+271 
+ 
+Month 4: 
+Video 2: Reinforcing Liquidity Concepts & Price Delivery
+ 
+Okay folks, welcome back. This is module two of December 2016's teachings for the ICT 
+mentorship. We were talking about reinforcing liquidity concepts and price delivery. 
+ 
+Okay, first on the menu today is going to be external range liquidity. The current trading 
+range will have buy side liquidity above the range high. The current trading range will have 
+sell side liquidity below the range low. Runs on liquidity seek to pair orders with pending 
+order liquidity, which is in the form of a liquidity pool. 
+ 
+External range liquidity runs can be low resistance or high resistance in nature. You as a 
+trader want your trades to be in low resistance conditions. In other words, you don't want to 
+have any resistance in your path of profitability. 
+ 
+Secondly, we have internal range of liquidity. When the current trading range is likely to 
+remain, liquidity voids will fill in, and this is associated with gap risk. And when the current 
+trading range is likely to remain, fair value gaps will also fill in, and this is attributed to gap 
+risk. Now, gap risk is nothing more than simply when the market quickly reprices to a level 
+where there was very little or no trading. In other words, when we see a liquidity run to 
+close in a range where there's only like one candle, a real long candle, usually that's a gap fill. 
+And whenever you're in a long and you have a big gap underneath you, that's gap risk. So 
+the market sometimes will many times reprice aggressively to close in those ranges, and 
+that's what usually stops you out. As a trader, we look for them as opportunities. Order 
+blocks inside the trading range will be populated with new buys and or sells. Market maker 
+buy and sell models will form inside trading ranges. 
+ 
+
+--- PAGE 272 ---
+272 
+ 
+Okay folks, let's take a look at external range liquidity and internal range liquidity and the 
+difference between the two and how we can utilize both. 
+Considering the screenshot right below: 
+ 
+We have an old high back at point 1. We also have an old area of consolidation or 
+equilibrium(circled area) which is about halfway from the low(point 2) up to this high(point 
+3). Price sweeps above the high at point 1 and that will be a form of external range liquidity 
+because it’s outside the range from this high(point 1) in the lowest form, so that was the 
+range(marked by the two red horizontal lines as shown in the screenshot right below) prior 
+to the new breakout above this high(point 1) seen at point 3; 
+ 
+
+--- PAGE 273 ---
+273 
+ 
+ So price at this point we know we have equilibrium(in the circled area) but more 
+importantly we have clean lows(as marked in the screenshot right below) right below there: 
+ 
+So we would look for a move that could potentially come down to to that level. 
+ 
+Price starts to drop (as seen in screenshot right above ). Now, what it’s doing is pulling back 
+inside all these up candles(from 2 to 2A). So once it clears an old high,we would expect some 
+measure of retracement and when that retracement occurs,what we are looking is the most 
+logical area for it to pull back down into. 
+
+--- PAGE 274 ---
+274 
+ 
+Check the screenshot right below: 
+ 
+Now if you take a look at the candle the arrow points to(in the screenshot right above),we 
+have a previous up candle,rather large candle. The candle the arrow points to have a wick so 
+at one point the candle opened,traded lower so there was a pass through on the range 
+between both these candles(the one the arrow points to and the previous up candle by its 
+left side). So the delivery price was on the up move(from the previous up candle to the left 
+side of the candle the arrow points to) and then down on this one(the one the arrow points 
+to) even though it’s an up close. It was offered twice all through that range. 
+So at the top of this candle here(the previous up candle to the left of the one an arrown 
+points to) and it’s open on the next one.That’s where I would expect to see a measure of 
+short term bounce: 
+ 
+
+--- PAGE 275 ---
+275 
+ 
+Let’s move on to see what price does next: 
+ 
+Price trades to the point where a short term bounce was expected, stalls a little and goes 
+right through it. 
+ 
+Price comes back up to retest the same level(as seen in screenshot right above) and 
+ultimately comes back down to clear out the equal lows. 
+Now what I want to look for is at this moment right here in price, where is the next level of 
+liquidity? In reference to the low here(point 1B in screenshot right above) and the high up 
+here(point 3) which we now have to redefine is that high. The stops below the equal 
+lows(would that be represented as external range liquidity or internal range liquidity?) in the 
+context from this high(point 3) to this low(point 1B), it’s internal range liquidity but from this 
+low(point 2B) to this high(point 3), it’s external range liquidity because it’s piercing it down. 
+In other words we created a range from this low(point 2B) to this high(point 3) so we expect 
+this range to be given up and run the stops out (below point 2B). 
+
+--- PAGE 276 ---
+276 
+ 
+Once that’s done, if we are going to go higher and bounce higher or trade higher or you 
+make a new high(we don’t ever know that). We look for the areas of liquidity. So we know 
+there’s an up candle here(the up candle prior to the down candle that took out the low at 
+point 2B in screenshot above) so we can reference the low of that up candle. 
+What else do you see in the chart?Check it out below: 
+ 
+In between the two wicks(the orange shaded area),price was only delivered on the 
+downside so we have a fair value gap. So if we want to trade higher, we can expect to see 
+the market want to reach up into that 106.50 level. If it trades through this green candle(the 
+green candle prior to the black candle that took out the low at point 2B), it’s going to want 
+to reach up into fair value gap we have delineated. 
+ 
+Now the range we are trading in is this low(at point 4) and this high(at point 3) as delineated 
+in screenshot right above. So if we see price trade up from its current position, we would 
+expect it to reach up into 106.25. If it gets through the up candle(the one the arrow points to 
+in the screenshot right above),we would be expecting it to trade up into the fair value gap 
+
+--- PAGE 277 ---
+277 
+ 
+closing that range and then ultimately it could trade as high as this candle’s low(the candle 
+the cursor points to in the screenshot right below): 
+ 
+The low comes in at 118.86 so we’ll call it 118.85 to 118.90. 
+ 
+So inside the range from point 3 to point 4,we would be aiming for internal range liquidity. 
+
+--- PAGE 278 ---
+278 
+ 
+Let’s see the new price movement in screenshot down below: 
+ 
+Price trades all the way up right into the shaded area(fair value gap). 
+Now, because we’re looking at a monthly chart of the Japanese yen, we’re going to drop 
+down into a weekly timeframe and we’re going to see how those levels affect the price 
+action in the delivery. 
+Check out weekly chart right below: 
+ 
+So we have that fair value gap a little bit more refined, we can see the wicks forming the fair 
+value gap on the weekly chart so we can adjust that and refine that a little more so that we 
+can have the exact area which price will look to fill in. It’s only on this down candle(the one 
+the cursor points to in the screenshot right below) price is delivered on the sell side. No 
+
+--- PAGE 279 ---
+279 
+ 
+upside is been offered until now we’re starting to see it. 
+ 
+So every time the market creates a trading range going lower,you want to mark off the 
+previous high and the new low and when price trades back up, you’re trading inside that 
+range. So if you trade short at a bearish order block(which is the last up candle),that’s going 
+to be a return to internal range liquidity but you’re going to be looking for external range 
+liquidity to exit on(which is the stop below the low). Price runs down and hits that, that’s 
+where you look to exit. 
+Predominantly, my ranges are internal range liquidity entries with exits at external range 
+liquidity. In other words, I am buying inside the range and selling it outside the range once it 
+breaks it. If I am in sync with the marketplace and I know what direction it wants to go and 
+we’re framing based on the monthly chart here so you’re going to see the benefits of doing 
+what I’m doing here. If I'm looking for it to go higher relative to the monthly chart, anytime 
+that the market comes down below a short-term low, I can be a buyer of that on short term 
+external range liquidity or buying up stops, but the expectations of the range will continue 
+going higher seeking monthly internal range liquidity in the form of this fair value gap. 
+ 
+And I'm probably confusing some of you that are listening, very technically I'm sure, but the 
+point is once you understand on a higher time frame where the market wants to go, you'll be 
+able to frame your trade setups as we drop down into a daily. 
+
+--- PAGE 280 ---
+280 
+ 
+Okay, so the daily chart is shown below: 
+ 
+Market creates small area of institutional order flow(the little shaded portion in the 
+screenshot above),comes down and hits the same order block and rallies.  
+Now, watch what happens, in the grand scheme of things in the monthly range we are 
+trading, every time we create a new high, that’s a run on external range liquidity on this 
+timeframe being the daily but on the monthly chart, it’s still internal range liquidity because 
+you’re just inside of a larger monthly range. 
+ 
+When we understand where the monthly and the weekly are trying to trade to, when we 
+look at daily setups like this, this creates the recipe, if you will, low resistance liquidity runs, 
+because you're trading in sync with the monthly where the monthly will most likely want to 
+see price go up into. So every time a run above an old high is expected, that's going to be 
+framed as a low resistance liquidity run. 
+
+--- PAGE 281 ---
+281 
+ 
+ 
+Every time we see this(a run above an old high), you can see how price reacts to it—very 
+little resistance on the part of price to get through these levels because it has an agenda. It 
+wants to get to a specific price level relative to a higher time frame because the funds trade 
+on the monthly and the weekly basis. So if we can keep that in context and frame our trades 
+with this idea, we will always be able to classify a trade whether if it's a high resistance or a 
+low resistance liquidity run. 
+ 
+So if we drop down into a four-hour chart(as shown right below): 
+We can see the highs being ran out. Every high has very little difficulty getting through it 
+because it's framed on low resistance liquidity runs based on the higher time frame monthly. 
+You can't even see the range at which the monthly has that fair value gap in. 
+ 
+ 
+
+--- PAGE 282 ---
+282 
+ 
+This high(point 6) is broken through, no problem. This high(point 5) is broken through, no 
+problem.  This high(point 4) is broken through,no problem. 
+ Now it's a small little consolidation, but ultimately it runs aggressively and it's going to reach 
+for these highs here(at points 1,2 and 3). 
+I get questions so many times about how I know where the market's going to be reaching for 
+for specific buy stops when we do our live session. This is how I do it: I use the higher time 
+frame institutional order flow to frame out where internal range liquidity is and where 
+external range liquidity is, where is the buy stops, and what kind of stop or what kind of 
+entry am I using and how is it aligned with the higher time frame? 
+Looking at then updated screenshot right below: 
+ 
+ 
+ 
+The market trades down(to point 8), clears out some stops in here(at point 7), gaps down 
+below on the election, closes in this range(point 6A to 6B) back down to a previous bullish 
+order block, rallies through, and hits the old high over here. All these highs(at points 2 and 3) 
+are cleared out there, and ultimately takes off and runs out another old high(at point 1). 
+View it the screenshot below: 
+
+--- PAGE 283 ---
+283 
+ 
+Let’s  zoom out in a moment: 
+ 
+See, okay, all through here, and ultimately trades up into that monthly fair value gap. Once 
+we cleared these highs(the highs the arrows point to), we came back and created a gap(the 
+red-bordered rectangle), came down and closed in the gap, and then ultimately aggressively 
+ran right up into that monthly fair value gap. 
+So what I want you to look at is every single time the market—all through here(from point 9 
+to the shaded fair value gap), every single time it gave a retracement. 
+ 
+This is a four-hour chart, so we're going to go down into a 15-minute chart unless it's about 
+these days. Okay, and I want you to look at how price responds when it gives you a new 
+range. 
+
+--- PAGE 284 ---
+284 
+ 
+The 15-minute chart: 
+ 
+Okay, got a low here(at point 1) and a high(at point 2). Price trades down(to point 3) into 
+bullish order block, where's external range liquidity? Here(point 2). So you're buying an 
+internal range liquidity(at point 3). 
+   What's the expectation? You're going to see price move to the outside of the range created 
+by this little move here(from point 1 to point 2), so that's your range of trading in for the 
+setup. It exits here(point 2) but do you collapse your entire trade? No, you're looking for the 
+ranges to take out highs; ie all these highs in here(4,5,6 and 7). 
+we get another rally(from point 3A to 3B) and then retracement. Okay, so it's the last down 
+candle right before the up move. Price trades back down into it, they populate more buys on 
+that order block. Where's the external range liquidity at? Above this high(point 3B) here and 
+over here(point 7). It runs through it. Then we see a small consolidation, we rally away, 
+comes back down into the down candle(the arrow points to in the screnshot above), we 
+populate more buy orders. What's it going to run for? That monthly fair value gap. Look at 
+the reaction once it gets up in there, lots of profit taking, lots of it, right in here(3C to 3D). It 
+ultimately comes back and starts to trade a little bit higher. I think it's indicative of probably 
+seeing a little bit more rally when we open up on Sunday. 
+ 
+But going back even further, you can see every single time the market creates a nice impulse 
+price swing. We have a nice impulse price swing here, comes back down, bullish order block, 
+external range liquidity comes down and hits this order block again here, rallies through, 
+comes back, consolidation, it eventually presses through, clearing out the external range 
+liquidity here or the buy stops above the highs. The range that's created from this low up to 
+this high, the down candle, it trades back into it here, rallies away. Now all this is what you 
+have to sit in if you're a position trader. Well, ultimately if you give it time, all it's going to do 
+is it's going to return back to a previous order block here like it did here, and recapitalize 
+more buy orders because it's a long-term objective to get up to here. So they're going to 
+have to buy some here, buy some more here, let some time go by, and come back down to it 
+
+--- PAGE 285 ---
+285 
+ 
+again, buy more of it again, and one more time, and then ultimately runs away because they 
+have their position built, averaging around 113.50 to 113.25 in that area. 
+ 
+Many, many examples of low resistance liquidity runs on the dollar Yen. We have a low, price 
+rallies up, comes back down, previous order block, run from this low to where external range 
+liquidity buy stops runs above here. Same thing here: we have a low, price runs away from 
+this consolidation. Well, I'm not using this low, Michael, because this is a consolidation in 
+here. Price moves away from that, comes back down, hits the previous order block here, 
+rallies away. What's it going to run for? External range liquidity here, running up. Okay, 
+you're looking to buy with internal range liquidity or a bullish order block inside a previous 
+range, and trying to take profit at an old high or above it, while you're in sync with a higher 
+time frame directional bias based on institutional order flow, like we described earlier with 
+the monthly ranges and looking for this fair value gap on the monthly chart, because just like 
+any other time frame, the market's going to want to efficiently deliver price. 
+ 
+If there's no price trading up in this fair value gap that's been shown on the monthly chart 
+that we have shaded up here in lit—I guess it's like an orange-red color—they're going to 
+want to drive price up to that level. So anytime they can create a new buying opportunity, 
+they're going to build more of a position on. We have a nice liquidity void in here, price 
+comes down, fills that in aggressively, runs away. The range here from this low up to this 
+high comes back down, retrades back into the bullish order block on internal range liquidity 
+or low order block, with the expectation of unloading it at external range liquidity above the 
+range high here. Price trades above it here. 
+ 
+Many, many examples, almost two or three a week, where you can see the setups. They 
+offer us an opportunity. And even on a pair I don't even like to trade, the Dollar Yen, we have 
+a range here from low up to this high, trades back down to previous bullish order block. You 
+can buy here with the expectation of seeing a range expansion to exit on an external range 
+liquidity or buy stop, because we're looking for buys only. We're going to be looking for any 
+type of impulse price going up, then a retracement back down into a previous order block. If 
+we don't see any ranges that create new buying opportunities, we can target lows. So you 
+can go through the marketplace and find all of the swing lows and wait for price to trade 
+through them on the downside, and when they do that, they're doing what? Picking up 
+orders to accumulate new longs. Like you see here, right here, right here. And the other time 
+it's a rally away, comes back to the previous bullish order block, rallies away, comes back to 
+the previous order block, it rallies down into a previous order block, more consolidation, 
+takes the stops, and then runs above. Claim these equal highs out. I don't need to draw this 
+one, it's already there. Equal lows, takes the stops, rallies away. 
+ 
+So the type of trader you're going to be is going to be based on what you see easily in the 
+charts. You're going to see either turtle soups and you're going to be looking for buying of 
+sell stops or selling of buy stops, or you're going to be looking for a return back to fair value 
+
+--- PAGE 286 ---
+286 
+ 
+where you're looking to trade inside the range or buying internal range liquidity. And by 
+framing the marketplace in either one of those two disciplines, you'll have no problem going 
+in and finding setups. It's not that you have to find a setup every single day, but you will find 
+a setup once a week. That's all you're looking for, you're looking for one setup per week. 
+ 
+So I'm going to zoom out to the hourly. I want to scroll back from the time at which price did 
+trade up into the objective based on the monthly chart. We had a nice buying opportunity 
+here on Monday and it was a Thursday buy as well. We have a Monday buy, a nice looks like 
+a crossover into Tuesday, nice buying opportunity here, definitely a Wednesday buy in the 
+previous order block here. Um, nice buy on Tuesday here on this week, nice buy on Tuesday 
+here and on Thursday. This is the election, so we're not going to talk about that one. We 
+were on the sidelines for that period, so we would not have been looking for anything on 
+that. 
+ 
+Okay, so we have a nice little buy on Monday, turn back to the previous bullish order block, 
+and then we have a Wednesday buy scenario in here as well, running the stops here on a 
+Wednesday. So think about this: if you know your higher time frame monthly chart is calling 
+for a run higher on price, and we talked about this months ago when the dollar being bullish 
+and dollar Yen should be going higher, and if we know that there's a retracement taking 
+place or a correction, if you will, the market's trading lower, our mind shifts to, okay, where 
+are the sell stops that they're reaching for? Because underlying the market pendings are 
+bullish for a Dollar Yen. So if the market's predisposed to go higher but it's dropping, we 
+don't say, okay, well, I'm not looking at that pair or I'm not looking at that market. What you 
+should be dealing is, okay, I'm going to be looking for external range liquidity. On the time 
+frame I'm using right now is the hourly chart, you'll be looking for anytime the market's 
+trading lower. If it's trading lower, where's the lows it's trying to breach? Where is it going 
+below? Here and here. 
+ 
+So if we know that they're going to be expecting what? A reaction there. Quick reaction 
+away, not just hang down there and just, you know, meander around. We want to see it go 
+down there and then show willingness to go back away from it. When it does that, it's 
+tipping your hand. Then you just wait for a bullish order block. It won't always happen right 
+away. Like this one gave one that's pretty nice: it came, created a down candle, it was 
+created what? This came up, breaching this candle's high, so now this down candle becomes 
+a bullish order block. So anytime we trade back down into the range, which is here, we can 
+be a buyer. But this new down candle here, okay, gives us another opportunity to expect 
+another return back to this candle, which it never does here, but it creates another down 
+candle here, eventually hits it here. So there's a buy. So you have to wait a little bit and not—
+it's only hours, each one of these candles is an hour. So the very next day, you get another 
+buy here. 
+ 
+
+--- PAGE 287 ---
+287 
+ 
+Then here we see price go below this low, runs the stops out. It runs the stops. Okay, does it 
+stay down there? No, it quickly runs away. Okay, now we wait. When we wait for a price to 
+come back down to the last down candle here, you look for the return back to that range. 
+Does it want to run it after it takes this low? Certainly. Once it runs it, it runs higher, and 
+every time it takes out a new high it's showing willingness to go higher. It's giving us a 
+confirmation that there's underlying strength in this pair, even if there's going to be like 
+declines like this. This is all on the heels going into the election. Again, I can't stress this 
+enough: that's the reason why I was on the sidelines the entire first two weeks of November. 
+I just didn't want to be trading because of the potential fallout or the uncertainty, and that's 
+okay with me. I have no problem with you being on the sidelines for a short period of time. 
+It allows me clarity. 
+ 
+Um, we had a really nice buy here on Wednesday of that week. I'm just pulling out the 
+salient price swings that took place each week. Uh, we had a nice buy on Wednesday here, 
+and we have a nice buy on Friday for a position entry. Nice retracement here, real aggressive 
+retrace. Now, watch: we don't know what's over here yet, but when price dove down like 
+this, down into the 120s, what's it looking for to the left? What's over there? It's returning 
+back to this level over here, right there. Trying to see that full shoulder block, does it show? 
+Someone rally up. 
+ 
+So every week there's been one setup in here. We saw price rally away, it comes back down 
+to the previous order block, and rallies through. It's not that you're trying to capture every 
+piece of the weekly range. That's not what I mean, that's not being illustrated here. What 
+I'm showing you is how you can find one setup per week. It doesn't require you to have the 
+full entire weekly range. I will go into discussions about how you get the weekly range, but 
+for this teaching here, I want you to think about how you can frame the larger time frame 
+where the market should be going and then how it helps you define what a low resistance 
+liquidity run would be versus a high resistance equilibrium run. 
+ 
+All of this area down here is where the market traded down into on a monthly chart, 
+clearing out that equal low. I'm going to leave that little area there on the chart. It's all down 
+in here, once you clear all this out, all these lows were cleared out in here, and price rallied 
+up aggressively. 
+ 
+Okay, so when we take these ideas from the higher time frame and we transpose them onto 
+the lower time frames, every time we expect to see the market rally, what we're looking for 
+is a willingness to have very little resistance because the underlying market pinnings that are 
+bullish on the higher time frame. So if the monthly chart's bullish, there's going to be no 
+problem at all trying to smash through short-term highs because the market's going to be 
+really driven by a higher-end money. So the monthly chart being the key player in your 
+trades on framing low resistance liquidity runs: where is the marketplace seeking to go on 
+the monthly chart? If you can't ascertain where the market's going on a monthly, you just 
+
+--- PAGE 288 ---
+288 
+ 
+simply drop down into a weekly chart. And by dropping down into weekly, you can still see 
+these areas at which the market should be inclined to trade up into the close-in because 
+again, they only offered price on the downside. We saw a price breaking short-term highs 
+here, then this high was broken here. So we have a potential market maker buy profile 
+where it's going to want to go back up into areas of institutional order flow over here in this 
+consolidation, but there's a fair value gap before you get to that point, right in here. And 
+that's where you saw price trade right up into that, that 115.25 to 115.75, uh, reasonable 
+upside objective all through here, all the way through here, for dollar-based pairs that have 
+the dollar on the front of their name like Dollar Yen or Dollar Swissy. Okay, those pairs should 
+have been seen strength because of the underlying strength in the dollar. 
+ 
+So in summary, to make it a little bit more easier to understand because I was a very broad 
+brush with a lot of the ideas, but I want you to study this because it helps you get to why I 
+look at certain trades as low resistance liquidity runs, and that way if you understand what a 
+low resistance liquidity run is, you will know what your trades are not in terms of a high 
+resistance liquidity run. You don't want that to be a trade you're trying to take. You want to 
+be trading with the least resistance. So every time we look to be a buyer on a retracement 
+back to a previous order block, we want to see that high being taken out. But if we're trading 
+against a higher time frame and there's no real reason to see the funds move the 
+marketplace to those levels, it's not going to be a low resistance liquidity run. It's going to be 
+a high resistance liquidity run, and they're the types of trades that you sit in too long or they 
+don't pan out right away or they turn right around on you and bite you in the rear end and 
+stop you out. 
+ 
+So in simple terms, let's give you a little cheat sheet list here. Okay, you want to be looking at 
+a monthly chart or weekly chart and determine where is the market more likely to go to. 
+And by having that idea, if we're bullish on the monthly or weekly, then we'll be looking for 
+buy signals on the lower time frame like the daily, the four-hour, to one-hour, and we would 
+be looking for bullish order blocks or turtle soup longs with the expectation that any short-
+term highs on those time frames, that's where the objective is. Now let's assume for a 
+moment that you're looking at an hourly chart and your underlying asset direction bias is 
+bullish on the monthly and weekly, or or one or the other, but either one of them has to give 
+you that directional bias. If the directional bias is bullish and you see an hourly chart give 
+you a return back to what would be otherwise seen as a bullish order block, but the high in 
+between the range low and the high that retraced from, if it's only 20 pips, is that a trade 
+that would be viewed as something that you would take? In my opinion, no, because the 
+range is only 20 pips when it returns back to the previous order block. For instance, if this is 
+say an hourly chart or uh maybe a 15-minute time frame, and this is the range you're looking 
+at here, this retracement, if the range is only from the order block where you would be 
+buying up to the high in between, if that's only 20 pips, are you going to be taking that type 
+of trade? My opinion would be no, I wouldn't personally take that trade. But if I saw a swing 
+like say this low here and up to this high here, and there was an order block that allowed me 
+to get into it down in this point here, if I could take that trade and say this was 40 pips, that 
+would be a trade I want to take, because if that's 40 pips from where the high is and where 
+
+--- PAGE 289 ---
+289 
+ 
+the order block entry would be, that means I could potentially have 40 pips in profit because 
+I'm going to try to get out with a run above that high and exiting where the buy stops would 
+be in the form of a low resistance liquidity run. 
+ 
+Because I'm trading inside of the monthly and weekly range, that would be viewed as 
+internal range liquidity, which has very little resistance on the trade on a lower time frame. 
+Many folks would see that as resistance, so that it's going to hold back price, but on the 
+monthly and the weekly chart it's indicating they want to go higher, so it's going to have very 
+little difficulty getting through it. But the precursor is you want to look at price swings that 
+offer about 40 pips. If you can see anything at 40 pips or higher in looking for a retracement 
+to go long on that, that gives you a reasonable first profit objective. Now obviously if you go 
+out to a larger time frame, okay, and use bigger price swings, that gives you a lot more depth 
+in terms of what you can pull out in terms of pips. So if you're looking for say you're a trader, 
+you want to have nothing less than 50 pips, okay, well that's great, use a 30-minute or 60-
+minute chart and dial in looking at your marketplace for buy signals that set up those price 
+swings. So in order to get impulse price swing like this, and say this was an hourly chart, 
+okay, this in this range would be from this high down to that low, if that was 50 pips or more, 
+that would be a wonderful opportunity for you to get your classic 50 pips or more setup. 
+ 
+So if you have a weekly objective, let's just say you've done the numbers, you've worked it 
+out where you want to make 10 a month, and you figured out that to get 10 a month you 
+need to make 50 pips on whatever equity base you have, okay? And you figure out how 
+many pips you have to have, what your stop loss has to be, blah, blah, ends up you just want 
+to hit that number and 50 pips will get you there. So what you do is you want to look for 
+ranges that have 50 pips or more, preferably about 75 to 80 pips is perfect, because even if it 
+doesn't even break the range and go up above this old high, it still gives you the opportunity 
+to get that 50 pips. So don't think just because I'm saying that we have to be a buyer down 
+here and looking for exit above the old high that you can't get all of your objective and your 
+goal inside the range, because again, that's the beauty of trading price action, because you 
+don't need the range to break if you frame the right swing. You don't need the range that 
+you're trading in to break to be, you know, wildly profitable. You don't need it to move well 
+beyond the range high either if you're looking for the break. In other words, if you just want 
+to see it—like you didn't need it to do all this. If you were buying down here in the range 
+from this high down to the low where you're trying to buy, let's say 100 pips, you could 
+handsomely take 75 pips out of that and not even get the full range. But you can't do that if 
+you try to do every entry on every 30-pip price swing for 25 price point, because you're 
+trying to get in right now and you're looking for anything to get you in. If you're much more 
+selective in your setups, you're going to trade a lot less, but your setups are going to be a lot 
+more choice. They're going to be more potent, they're going to have a lot more likelihood of 
+panning out for you in your favor. 
+ 
+But you can't do that, okay, if you trade every single setup in every time frame. You got to 
+pick a time frame that fits what your model is. If you're trying to get, you know, 250 pips 
+
+--- PAGE 290 ---
+290 
+ 
+over a course of two weeks or so, okay, you're not going to get that trading on a five-minute 
+chart and looking for those types of price swings. You need to be living on a four-hour chart 
+or a daily chart and trading those price swings and looking for those levels, and that'll give 
+you, you know, those types of objectives and returns. But to give us multiple examples on a 
+day-by-day basis, I use a 15-minute time frame intraday to show you how many times you 
+can see something setting up. And while it won't always deliver five-to-one or three-to-one 
+even, sometimes it will deliver a lot of price action study. And then we move out to a higher 
+time frame where we're only working off of an hourly chart. It'll give us a great more 
+opportunity to talk about how the moves that take place that move a lot more than 30, 40, 
+50 pips. We can get into the range of 100, 150 pips. Okay, those types of setups, they're 
+more fun, but you have to sit on your hands and wait a little bit more. It's not much more 
+than sit and wait. 
+ 
+But that framing the ideas with the higher time frame monthly and weekly and determining 
+where they want to go, keeping that perspective in mind, every time we look at an old high, 
+more bullish on these lower time frames, what that's going to do is it's going to build a 
+model where we can see clearly that it's a low resistance liquidity run when we buy. And we 
+don't have any fear of looking at that as a resistance level or this is a resistance level. We will 
+see the market want to draw up to those levels because there's buy stops above that. That's 
+why the market's wanting to go there. You see how quickly it tries to get to that level here. 
+And then once this high has taken place, what does it do? It doesn't waste any time, it 
+quickly gets up there above this high and it alternatingly runs aggressively. And this high 
+here, if we were bearish on the monthly chart or weekly chart, we will be looking for the 
+opposite. We would be looking for retracements higher and making low resistance liquidity 
+runs to break below a swing low, and we would look for price swings of 40 pips or more as a 
+high opportunity, high-odds opportunity for a day trade or a short-term trade. If we use an 
+hourly chart, we could have a little bit more potential range in terms of pips, potentially 75 
+to 100 pips or so, and that'll give you the ideal setups that you'll be looking for if that's your 
+objective. 
+ 
+So a lot of folks that are in this mentorship, and those that are even outside the mentorship, 
+you know, my email box gets littered with, can you tell me how to make 100 pips a week? 
+Okay, that's easy. What you need to do is you need to trade a four-hour or one-hour chart, 
+nothing less. That's it, that's all you're gonna do. And you wait and you look for scenarios 
+across all the majors, and you'll find a hundred-pips price swing every single week. But that 
+has to be your model. It can't be because I just said it and you go out there and start trying 
+to force it to happen. If you don't have the, uh, psyche to do that, it's not going to work. But 
+having these higher time frame charts and give you that directional bias where it's going to 
+go, it helps you frame whether the trade you're going to be taking is in fact really a low 
+resistance liquidity run or is it really a high resistance liquidity run. If you develop your skill 
+sets on the higher time frames, it's the same thing we do in the lower time frame, but 
+focusing primarily on what the directional bias is going to be on these higher time frame 
+monthly and weekly, it will help you resist the urge to do those many times where you could 
+go in there and you you do a trade because you get impulsive, or you just did, I don't even 
+
+--- PAGE 291 ---
+291 
+ 
+know why you did it, because I've done it too. You're looking at the chart and say, ah, I'll buy 
+it now or I'll sell it now, and you didn't take any consideration into what the higher time 
+frame charts are telling you, and all of a sudden it just rockets the other way. And then you 
+look back, you know, weekly and said, oh, there it was, it was hindsight perfect 2020. I 
+should have did this opposite. 
+ 
+If you stay in the directional bias that the monthly, weekly tell you that you should be doing, 
+every trade that you frame has a higher odds of being a low resistance liquidity run. That's 
+all we do with a market maker perspective. We go in looking for that because they're driving 
+price to where the orders are, and it's not random where these orders are. They're logical 
+locations. When it's bullish, the market's going to go above short-term highs. How far over? 
+What when's the last high? We never knew that. We just know each time this is a range from 
+this high down to this low, it trades through it. Okay, so now what's the new range? This low, 
+this high. Well, it broke that. What's the new range? Okay, well this low to this high up here, 
+and then this fair value gap, if it trades on through, we know we're looking for return back to 
+this up candle here and then maybe these highs here and ultimately above 125.77. We don't 
+ever try to call a high in the marketplace. That's not what we're trying to do. This was a 
+logical area on the monthly chart to trade to and it did so. After it did that, we now have to 
+evaluate: does it have more willingness to keep going higher or would it be real more 
+prudent for it really to go into a consolidation here? And I think logically it should, but you 
+know, the market's going to do what it's going to do. But in this module, the aim was to get 
+your mindset on a monthly or weekly capacity. And that way when you go into the lower 
+time frames, every trade setup you trade with in that directional bias on the monthly and or 
+weekly will help you find the low resistance liquidity runs that you're looking for. They are 
+the high probability setups. They're the ones that have the immediate payouts. They're the 
+ones that give you the immediate responsiveness to your entries and has very little 
+drawdown, and that's your goal as a trader. You want to be trading in that environment. So 
+with that, guys, I wish you good luck and good trading. 
+ 
+ 

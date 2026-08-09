@@ -1,389 +1,271 @@
-# ICT Intelligence Suite — Complete Project Forensics
+# Project Forensics
 
-Welcome, Antigravity. This document represents the **complete long-term memory, architectural footprint, and forensic history** of the ICT Intelligence Suite developed with **C.Slim**. 
+## 1. VIDEO STATUS UPDATES
 
-If you are a newly initialized model, **read this document in full**. It compiles the exact mathematical, temporal, and logical implementations of every module from Video 1 through Month 2, Video 2.
+**Month 3, Video 2** — status: LOCKED (this session)
+- Fixed: smc.liquidity() sweep detection was wick-based (ohlc_high/ohlc_low), contradicting M3V2's explicit notes instruction ("PRICE GOES THROUGH THE BODIES OF THE CANDLES... NOT THE WICKS"). Changed to close-based (ohlc_close) for both bullish and bearish sweep conditions.
+- Verified: verify_month3_video2.py now passes both synthetic tests cleanly (Swept=6, close-based). Blast radius checked — only live downstream consumer is _smt_divergence's smt_at_liquidity, confirmed unaffected (0 True rows before and after, on 2016 AUDUSD daily). Golden Master reconfirmed unchanged (HRR=471, LRR=37, 11 transitions).
+- Correction: master context previously mislabeled this function's origin as "Month 2, Video 3" — corrected to Month 3, Video 2 ("Institutional Order Flow - What Makes It Easy To Know").
 
----
+**Month 4, Video 1** — status: LOCKED (this session)
+- Verified correct and notes-sourced: triad composition (ZB/ZN/ZF), one-of-three-legs failure swing logic ("you just need one to break that pattern," page 263), directional labeling, neutral-tolerance concept, POI gate (confirmed genuinely functional via direct rejection test, not dead code).
+- Visual Audit completed: POI zone rendering bugs found and fixed (wall-to-wall anchoring, corrupted date range from index-loss defect — see Tier 4 below). Single-leg case (2016-05-03) verified via exact internal computation path: DXY made lower low, ZB failed to confirm (flagged correctly), ZN/ZF confirmed normally (correctly not flagged).
+- Golden Master reconfirmed unchanged after all M4V1 work.
+- Caveat, not blocking: MODE 3 ("Chained SMT") in verify_month4_video1.py is NOT part of the certified build — pulls in Month 3 Video 5 logic with no textual basis in M4V1's own notes (page 261-270 searched specifically, no SMT-chaining reference found). Left in place as exploratory code, not counted as verified.
+- Caveat, not blocking: ICT demonstrated this on 90-minute charts (pages 265-266); current testing uses Daily data as an acknowledged approximation.
 
-# PART 1: The Timeline Forensics
+**Month 3, Video 8** — status: LOCKED (this session, previously "provisionally unblocked")
+- Original two fixes from earlier this session (POI dead-code bug, sourced to "we traded down into it," page 258) remain in place, unchanged.
+- Root cause resolved: bearish-path validation previously reused a stale, never-updating bullish order block instead of a genuine bearish structural zone, because no real breaker-block detector existed in the codebase at the time. Root cause traced back to Month 3, Video 1's mislabeled/incomplete status (see Tier 1/2 catalogue) and resolved properly once Month 4, Video 5's smc._breaker_blocks() was built and verified from source.
+- verify_video8.py's bearish flip logic rewired: when daily bias flips bearish, the POI now comes from the nearest confirmed bearish breaker block (BB == -1, BBBodyTop/BBBodyBottom) at or before the flip point, replacing the old stale-OB reuse. Bullish path left untouched (already validated correctly earlier this session).
+- Verified via synthetic test: a controlled dataset with two independently-detectable bearish breaker blocks confirmed the flip logic selects the correct (most recent, chronologically prior) block and pulls its exact BBBodyTop/BBBodyBottom values -- confirmed bit-for-bit against an independent smc._breaker_blocks() call on the same data.
+- Verified via real data: original Gatekeeper baseline (EURUSD Oct-Nov 2022) re-run with the fix in place. Execution count changed from the historical 3 (1 buy, 2 sells) to 1 (1 buy, 0 sells). This is confirmed to be the fix working correctly, not a regression -- the 2 removed sells were the exact ghost signals validated against the stale bullish OB, identified and root-caused earlier this session. The new 0-sell result reflects that no real bearish breaker existed in this short (24-day) dataset window before the flip -- an honest data limitation, not a code defect.
+- Full-history diagnostic variant preserved separately as verify_video8_full_history.py -- confirmed the locked Gatekeeper dataset (verify_video8.py) was NOT permanently altered.
+- Golden Master reconfirmed unaffected throughout all changes (HRR=471, LRR=37, 11 transitions).
 
-```mermaid
-graph TD
-    V1_V3["V1-V3: Normalization & POT"] --> V4["V4: Bullish OTE & Cooldown"]
-    V4 --> V5["V5: Bearish OTE & Draw on Liq"]
-    V5 --> V6["V6: HTF OBs & Confluence Scoring"]
-    V6 --> V7["V7: Sovereign Engine LRR/HRR"]
-    V7 --> V8["V8: Clock-Protraction Engine"]
-    V8 --> M2_V1["Month 2, V1: Turtle Soup & Risk"]
-    M2_V1 --> M2_V2["Month 2, V2: Multi-TF Refinement"]
+**Month 4, Video 2** — status: Reviewed — no new detector function required; one actionable risk-filter parameter identified for Layer 6 (pip-range minimum for trade validity)
+- Core content: External Range Liquidity vs. Internal Range Liquidity, and MTF cascade (Monthly -> Weekly -> Daily -> 4H -> 15M) for framing entries at internal range liquidity (order blocks) with exits at external range liquidity (old highs/lows). No new smc.py function required — uses only existing FVG, OB, and liquidity detectors.
+- Sourced quote (pages 288-289): "...if the high in between the range low and the high that retraced from, if it's only 20 pips, is that a trade that would be viewed as something that you would take? In my opinion, no, because the range is only 20 pips... But the precursor is you want to look at price swings that offer about 40 pips. If you can see anything at 40 pips or higher in looking for a retracement to go long on that, that gives you a reasonable first profit objective... So if you're looking for say you're a trader, you want to have nothing less than 50 pips, okay, well that's great... So what you do is you want to look for ranges that have 50 pips or more, preferably about 75 to 80 pips is perfect, because even if it doesn't even break the range and go up above this old high, it still gives you the opportunity to get that 50 pips."
+- Note: ICT's own guidance isn't a single fixed number — ranges from "reasonable" at 40 pips up to "perfect" at 75-80 pips. Any implementation should treat this as a preference range, not one hard threshold.
+- Proposed (NOT implemented): risk_engine.py function validate_liquidity_run(entry_price, target_price, min_pips=40.0, optimal_pips=75.0, pip_size=0.0001) — rejects trades where the entry-to-target range falls below min_pips. Pending your decision on whether to build this now or defer.
+
+**Month 4, Video 3** — status: Partial — MeanThreshold defect fixed and verified; core "Selection & Avoiding" HTF-alignment concept not yet implemented (Layer 4 dependency)
+- Fixed: smc.ob() computed MeanThreshold ((open+close)/2 at OB candle index) but never included it in the returned DataFrame. Added to output. Verified against a test candle where body midpoint and wick midpoint genuinely diverge (0.98 vs 1.06) — confirms implementation is body-based, not wick-based, per M4V3's explicit instruction ("Do not use the wicks... measure the open to the close," page 294).
+- New Tier 4 catalogue item: smc.ob()'s Top/Bottom fields are wick-based (_high/_low), contradicting M4V3's explicit body-focus teaching and this project's Design Principle 2. state_machine.py (line 1161-1162) already independently overrides Top to candle open — an undiscussed hot-patch for the same defect, discovered this session. NOT fixed — deliberately deferred, high blast radius (affects visualizers, verify_month3_video1.py's Top>Bottom assertion, and the existing state_machine.py workaround).
+- Not yet implemented: the video's actual title concept, "Selection & Avoiding" — only trading order blocks aligned with Monthly/Weekly/Daily bias, using counter-trend OBs solely as profit-taking targets. This is a Layer 4 (MTF Alignment) concern; Layer 4 does not exist yet.
+- Not yet implemented: "Displacement Multiple" rule — requiring a 2-3x rally relative to the OB's own body height before treating a subsequent retracement as a valid setup (page 303).
+- Not sourced from this video, do not build: any fixed-pip target filter — that's M4V2's separate rule, do not conflate the two.
+
+**Month 4, Video 4** — status: LOCKED (this session)
+- New detector built: smc._mitigation_blocks(ohlc, swing_highs_lows, fvg_df, close_mitigation=True, structure_break_body=False). Detects bearish mitigation blocks — a candle (point A) where trapped long positions from a failed A->B rally seek to liquidate on retest, after price confirms a lower structure at point C.
+- Sourced model (pages 308-316): A = last down-body candle before a rally; B = the rally's swing high; C = a subsequent lower low breaking below A, confirming bearish structure shift. Exact source (p.310 caption): "When Price Action Returns To The 'A' Point Of Reference -- The Long Positions Taken From 'A' To 'B' Price Swing Will Have An Opportunity To Liquidate Or 'Mitigate' The Net Loss That Occurred When Price Dropped From 'B' To 'C'."
+- Model verification caught and corrected a real error mid-session: an initial re-read incorrectly merged points A and C into one point; re-verified against the exact page 310 caption and corrected before any code was written.
+- Staircase/cascading behavior confirmed in scope and implemented (not deferred) -- multiple independent A/B/C legs detected across a downtrend, per pages 312-313 ("Every rally that sees lower prices needs to be mitigated," and two separate "Buyers Remorse" labels on successive legs in the source diagram).
+- Two parameters, honesty-flagged per source status: close_mitigation (sourced, p.315 -- "the body of the candle is not violated") and structure_break_body (engineering assumption, explicitly NOT sourced, defaults to wick-based for consistency with existing swing_highs_lows conventions).
+- Data Audit: 4 blocks on AUDUSD 2016 daily (EURUSD unavailable locally, substituted), 231 blocks on 15M staircase check, confirming cascading behavior works at scale. All structural invariants (ABodyTop >= ABodyBottom, ABodyTop <= AWickHigh) hold across every detected block.
+- Visual Audit: confirmed correct zone anchoring (not wall-to-wall) against real chart data; compared a clean block against a known edge case.
+- Known limitation, NOT fixed (no notes basis for a fix): the "last down candle" rule can select a near-doji candle as point A when one exists in the search range (example: 2016-10-28, body spread of 0.00001), producing a structurally thin/weak zone. No minimum body-size filter added -- not sourced, would be scope invention. Documented as an accepted edge case.
+- Index-loss defect avoided at the source: unlike smc.ob()/fvg()/liquidity() (deferred Tier 4 defect, high blast radius), this is brand-new code with zero existing callers, so the DatetimeIndex was fixed correctly from the start rather than patched around downstream. Confirmed zero behavioral change (identical block detections before/after) and Golden Master unaffected.
+- Deferred, logged separately: bullish mitigation block (symmetrical case, not demonstrated in M4V4 -- not built); smc.fvg() missing a native MeanThreshold/equilibrium column (same defect class as smc.ob()'s pre-fix gap -- computed locally inside _mitigation_blocks instead).
+
+**Month 4, Video 5** — status: LOCKED (this session)
+- New detector built: `smc._breaker_blocks(ohlc, swing_highs_lows, confirm_break_close=True, close_break=True, zone_body_based=True, stop_wick_based=True)`. Detects bullish and bearish breaker blocks -- a 3-swing raid-then-reversal structure where a swept old high/low reverses back through the swing zone that preceded it, flipping that zone's polarity.
+- Sourced model (pages 317-323, corrected from an initial 317-326 estimate after direct page-boundary verification). Exact citations: Bearish (p.318) -- "a bearish range or Down Close Candle in the most recent Swing Low prior to an Old High being violated. The Buyers that buy this Low and later see this same Swing Low violated -- will look to mitigate the loss." Bullish (p.320), exact mirror.
+- Model verification caught and corrected two real errors before code was written: (1) an initial claim that "Breaker Blocks require a swept extreme while Mitigation Blocks feature a failed sweep" was checked against M4V4's actual text and found unsourced -- retracted; (2) initial page-range estimate (317-326) was off by three pages, corrected to 317-323 via direct page-number verification.
+- Explicit decision NOT to reuse `scratch_breaker.py`: cross-reference confirmed its topology matching (3-swing raid structure) was correct, but its candle-selection was "accidentally correct for the wrong reason" (worked only because swing-point index and last-qualifying-candle index usually coincide, not by correct construction), its zone geometry was unsourced wick-based, and it conflated detection with first-retest into one step. Built fresh instead.
+- Four parameters, all explicitly honesty-flagged as ENGINEERING ASSUMPTIONS (none sourced from M4V5's text): `confirm_break_close` (activation threshold basis), `close_break` (retest invalidation basis, analogical carry-over from M4V4 p.315), `zone_body_based` (Design Principle 2 + M4V4 precedent), `stop_wick_based` (analogical carry-over from M4V4 p.315 -- M4V5's own "Stops" labels refer only to raided liquidity pools, not trade stop placement).
+- Real implementation bug caught and fixed before verification: the original invalidation scan started immediately at the raid candle (`curr_swing`), which is structurally on the same side of the zone as the invalidation condition -- this caused near-instant false invalidation on every block (confirmed via diagnostic: all 6 initial bearish blocks invalidated exactly 1 candle after the raid). Fixed with a two-phase scan: Phase 1 (activation) tests against `MidSwingLevel` per p.317/p.320's explicit "wait for price to break through/come back down into" language; Phase 2 (invalidation) only begins after activation succeeds, testing against the BB candle's own zone. Re-verified with real numbers showing plausible multi-week/month gaps between raid, activation, and invalidation.
+- Confirmed-only recording: `BB` is populated only when Phase 1 activation succeeds (unconfirmed raids are dropped, not recorded as partial/candidate blocks), matching the source's own framing ("As price moves away, that confirms the breaker," p.317) and matching `_mitigation_blocks`' precedent of dropping unconfirmed A/B setups.
+- Data Audit (AUDUSD 2016): Daily -- 11 raw raid+candle triplets, 6 confirmed after activation (5 bearish, 1 bullish), 3 invalidated / 3 live. 15M -- 691 raw, 662 confirmed, 644 invalidated / 18 live. Activation-gap distribution checked directly (median 73.5 candles on 15M, only 1.8% activating within 1-2 candles) to rule out a too-loose confirmation threshold as an explanation for the high 15M confirmation rate.
+- Visual Audit: zone anchoring, raid/activation/invalidation markers, and DatetimeIndex preservation (confirmed via explicit dtype check, built correctly from the start this time) all verified against real chart data for one bearish and the only available bullish example, cross-checked directly against the Data Audit table's numeric values.
+- Golden Master reconfirmed unaffected throughout (HRR=471, LRR=37, 11 transitions).
+- Not sourced, deliberately omitted: FVG target (M4V5's text contains no reference to FVG-based targets for breaker entries, unlike M4V4).
+- Not sourced, deliberately not built: staircase/cascading carry-forward logic (confirmed absent from M4V5's text, unlike M4V4's explicit cascading language) -- each triplet is evaluated independently; natural repeating patterns are still detected without enforced continuity.
+
+**Month 4, Video 6** — status: LOCKED (this session)
+- New detector built: smc._rejection_blocks(ohlc, swing_highs_lows, close_invalidation=True). Detects bullish and bearish rejection blocks -- zones defined by the extremal spread between a swing cluster's wick extreme and its body extreme (highest/lowest open-or-close), not a single-candle selection or multi-swing structure.
+- Sourced model (pages 324-333). Exact citations: Bearish (p.327) -- "a Price High has formed with long wicks on the high(s) of the candlestick(s) and Price reaches up above the body of the candle(s) to run Buy Side Liquidity out before Price Declines." Bullish (p.332), exact mirror.
+- Architecturally distinct from _mitigation_blocks (2-swing A/B/C) and _breaker_blocks (3-swing raid+reversal): _rejection_blocks requires only a single swing cluster, with no structural confirmation/activation phase. Confirmed via citation check that an initially-proposed "activation" requirement (mirroring Breaker Block's two-phase structure) was NOT sourced -- retracted before implementation. p.330-331 confirms the zone is fully formed and immediately treated as a POI the moment the swing completes.
+- Cluster boundary: bounded to [prior_opposite_swing + 1, current_swing] inclusive, reusing the same zone-bounding pattern as _breaker_blocks' candle selection. Explicitly flagged as ENGINEERING ASSUMPTION -- M4V6 leaves "swing high"/"swing low" undefined beyond the conceptual level; disjointness between adjacent clusters proven by the same interval-based argument used for _breaker_blocks.
+- close_invalidation parameter flagged as ENGINEERING ASSUMPTION (analogical carry-over from M4V4/M4V5 order-block-style invalidation), though with somewhat more textual support than prior carry-overs since M4V6 explicitly states "we treat this as a bearish order block."
+- Output columns include RBTop/RBBottom (zone rendering) plus explicitly direction-gated RBWickLevel (stop reference) and RBBodyLevel (trade trigger, sourced to p.331: "when price trades back up to the low of that range, that is your trigger") -- avoiding the single-ambiguous-column risk flagged and corrected during M4V5's design.
+- Implementation review caught and fixed an interface mismatch before first execution: initial draft accepted swing_highs_lows as a bare Series and used label-based indexing, inconsistent with the established integer-position array pattern in _mitigation_blocks/_breaker_blocks. Corrected before any code ran.
+- Data Audit (AUDUSD 2016): Daily -- 30 blocks (15 bearish, 15 bullish), 17 invalidated / 13 live. 15M -- 2795 blocks, 2738 invalidated / 57 live. All structural invariants passed (RBTop >= RBBottom, correct direction-gating on RBWickLevel/RBBodyLevel).
+- Distribution diagnostics run (same standard as M4V5's activation-gap check): 15M zone widths span 0.1-38.1 pips (median 2.9); ~14% of blocks under 1 pip satisfy the sourced definition but don't match the qualitative "long wick" framing -- documented as a known characteristic, NOT filtered, since M4V6 gives no quantitative minimum and adding one would be unsourced scope invention (consistent with the M4V4 doji precedent). Time-to-invalidation on 15M: min 6 candles, median 30 -- confirms no instant-death false-invalidation pattern (the specific bug class caught and fixed in _breaker_blocks).
+- Manual geometry verification: two daily blocks (2016-02-04 BEAR, 2016-02-09 BULL) hand-inspected against raw OHLC rows, confirming genuine single-candle spike-wick geometry, not artifacts.
+- Visual Audit: both hand-verified blocks cross-checked directly against rendered charts -- exact zone boundaries, correct invalidation timing, and correct live-block rendering (extends to last real data point, not the M4V1-style hardcoded/lost-index wall-to-wall pattern).
+- Golden Master reconfirmed unaffected (HRR=471, LRR=37, 11 transitions).
+
+**Month 4, Video 7** — status: Reviewed — no new detector function required; blocked on Layer 4 (MTF Alignment) for a "major swing" significance definition
+- Core content: "Reclaimed Order Block" -- ordinary bullish/bearish order blocks (standard smc.ob() geometry, no new zone construction) formed on the approach leg toward a major swing extreme ("Market Maker Buy Model" = V-shape decline-then-rally; "Market Maker Sell Model" = mirrored inverted-V), later retested as valid entries once price is on the departure leg of that same cycle.
+- Sourced definitions (pages 334-341). Exact citations: Bullish (p.336) -- "a candle or bar that was previously used to Buy Price and a short term bounce confirms minor displacement. In the Buy Side Of Curve -- these 'old' blocks will be reclaimed longs." Bearish (p.338), exact mirror.
+- Model correction caught before build plan: an initial proposal modeled this as a strict 3-swing raid-then-reversal topology, directly mirroring _breaker_blocks' structure. Retracted after citation check -- p.336's "Every time there was a bullish order block... every new buying opportunity is going to be matched up to the previous down candle" describes ALL qualifying OBs along the entire approach leg, not one specific swing adjacent to a climax. Confirmed visually: pages 337 and 339-340 each show TWO separate reclaimed OBs from two different points along the same leg, not a single fixed-position anchor.
+- No new smc.py function required: the underlying zone geometry is standard smc.ob() output. What's genuinely new is purely contextual -- classifying which detected OBs sit on the approach to a "major"/"climax" swing, as opposed to a minor one -- and M4V7's text never operationally defines "major" or "climax" beyond narrative description. This is the same class of gap already identified in M4V2 (External/Internal Range Liquidity selection) and M4V3 (Selection & Avoiding / HTF-alignment): a Layer 4 (MTF Alignment) dependency, not a Layer 2 detection problem. Recursive-scale ambiguity noted explicitly: the same "down-candle-then-bounce" pattern exists at every timeframe scale, so without an external significance judgment, any implementation either over-detects every swing as a candidate curve or requires the HTF context Layer 4 would provide.
+- Zone geometry note: charts (p.337, p.339-340) show simple single horizontal reference lines at the OB candle's own extremes, consistent with reusing standard smc.ob() Top/Bottom output directly -- NOT the two-boundary wick/body cluster geometry used in _rejection_blocks. No new geometric logic needed once the "major swing" classification problem is solved.
+- Deferred: full implementation pending Layer 4 definition of HTF/major-swing significance, same dependency blocking M4V2's risk parameter context and M4V3's core HTF-alignment concept.
+
+**Month 4, Video 8** — status: LOCKED (this session)
+- New detector built: smc._propulsion_blocks(ohlc, ob_df). Detects propulsion blocks -- a same-direction order block that trades back into (retests) a prior, already-confirmed order block, becoming a new, higher-sensitivity zone in its own right.
+- Sourced model (pages 342-346, final video in the document). Exact citation (p.342): "A propulsion block is a candle or bar that has previously traded down into a down candle or bullish order block and takes over the role of price support for higher price movement."
+- Six explicitly honesty-flagged engineering assumptions, more than any prior detector this session, reflecting genuine source silence on several mechanics: (1) color guard for smc.ob()'s anomalous candle selection, (2) body-based zone recomputation overriding smc.ob()'s wick-based Tier 4 defect, (3) wick-vs-body overlap definition, (4) staircase/chaining permitted, (5) close-based violation mechanics (consistency with _breaker_blocks/_rejection_blocks precedent, not M4V8-sourced), (6) conservative anchor-reset-on-any-color-mismatch rule.
+- Corrected a false claim during planning: initial proposal equated mean-threshold violation with formal stop-loss placement. Retracted after citation check -- text describes mean-threshold violation as a discretionary WARNING SIGNAL ("chances are it's probably not a good trade"), not a stated stop-loss rule. Resolved with a separate, purely observational MeanThresholdViolated column, leaving structural Invalidated at the standard wick-extreme convention.
+- New characterization of existing Tier 4 defect: quantified smc.ob() candle-selection anomaly (selecting opposite-colored candles when they hold the extreme wick) at 4/12 bullish and 3/8 bearish on AUDUSD 2016 15M -- a substantial, not marginal, rate. On daily data this eliminated 6 of 7 OB anchors, reducing to zero detectable propulsion blocks for the full year.
+- Real implementation bug found and fixed post-implementation, not caught in initial review: stale anchor pairing across large gaps. A color-guard-skipped OB failed to clear the tracked anchor, allowing a bearish propulsion block to pair against an anchor 91 calendar days and ~1000 pips away (trivially passing the overlap check). Found via targeted diagnostic on a suspicious outlier flagged during Data Audit, not caught during code review -- confirmed with raw numbers before fixing.
+- Fix produces an explicit, quantified design tradeoff (documented as Assumption 6, not silently accepted): resetting the anchor to None on ANY color-guard skip, rather than a price-proximity-aware reset, was chosen to avoid introducing an unsourced numerical threshold (same category of scope invention already caught in M4V7). Confirmed cost: 15M detections dropped from 10 (including the confirmed false positive) to 4 (some potentially-genuine pairings also eliminated by the conservative rule). Explicitly logged as erring toward false negatives over false positives.
+- File-integrity incident during implementation: initial code injection into smc.py required two corrective passes (de-indentation, removal of stray @staticmethod artifacts). Verified clean afterward via full-file structural review and re-running verify_month4_video4.py, verify_month4_video5.py, and verify_month4_video6.py to confirm no collateral damage to previously-locked detectors.
+- Data Audit: Daily -- 7 OB anchors, 6 skipped by color guard, 0 propulsion blocks (correctly reflects the Tier 4 defect's severity at this timeframe). 15M -- 40 anchors, 14 skipped, 4 propulsion blocks post-fix (3 bullish, 1 bearish), structural invariants passed (PBTop >= PBBottom, MeanThresholdViolated always at or before Invalidated).
+- Visual Audit: two blocks (2016-11-10 BULL, 2016-12-16 BEAR) cross-checked directly against the audited table -- zone geometry, anchor placement, and MT/Invalidated markers all confirmed correct; Dec-16 example shows a ~500-pip decline following the propulsion candle, a strong visual match to the source's "propels price quickly and suddenly" description.
+- Golden Master reconfirmed unaffected throughout (HRR=471, LRR=37, 11 transitions), including after both direct file edits.
+- This is the final video in the ICT Mentorship 2016 document (page 346 of 346).
+
+## 2. KNOWN CORE LIBRARY DEFICIENCIES (new section, four tiers)
+
+TIER 1 — Never built, no code exists anywhere in repo history:
+- smc.macro_swing_grading()
+- smc.measured_moves()
+- smc.monthly_range_ob()
+
+TIER 2 — Real implementation exists but orphaned/unmerged/unverified:
+- smc.breaker_blocks() — in scratch_breaker.py, runs cleanly, NOT verified against its canonical source (Month 4 Video 5), deliberately held pending that video
+- smc.ny_midnight_open() — in append_to_smc.py, never reviewed against notes at all
+
+TIER 3 — Hallucinated, never existed, do not attempt to locate:
+- smc.sequence_void() / smc.void_scanner() — confirmed via git log -S across full history, zero results ever
+
+TIER 4 — Existing function with a confirmed defect:
+- smc.ob() — ~~missing 'MeanThreshold' output column (KeyError in verify_mean_threshold.py)~~ **FIXED this session**: column now included in returned DataFrame; verified body-based formula (open+close)/2 against a discriminating test candle (body mid=0.98 ≠ wick mid=1.06).
+- smc.ob() — Top/Bottom fields are wick-based (_high/_low at the OB candidate candle), contradicting M4V3's explicit body-focus teaching ("Do not use the wicks... measure the open to the close," page 294). state_machine.py already independently overrides Top to candle open (line 1161-1162) as a hot-patch for the same defect. NOT fixed — deliberately deferred; high blast radius (visualizers, verify_month3_video1.py's Top>Bottom geometry assertion, state_machine.py workaround).
+- smc.ob() — Anchor candidate selection occasionally picks opposite-colored candles (e.g., an up-close candle selected as a bullish down-candle OB) if they hold the extreme wick of the swing. Confirmed on AUDUSD 2016 15M (4/12 bullish, 3/8 bearish anomalous). Contradicts strict consecutive-candle structural rules (M4V8). Workaround applied: downstream caller (_propulsion_blocks) filters by color guard. NOT fixed at source — deferred due to blast radius.
+- smc.ob() / smc.fvg() / smc.liquidity() — all three silently return integer RangeIndex instead of preserving the original DatetimeIndex. Worked around ad hoc in state_machine.py (lockstep .iloc), verify_step2.py (manual hot-patch), generate_gif.py (manual remapping). NOT fixed at source — deliberately deferred, high ripple risk. Warning comments added directly above each function in smc.py this session.
+- smc.fvg() -- missing MeanThreshold/equilibrium output column, same pattern as smc.ob()'s pre-fix defect. Computed locally inside _mitigation_blocks instead. Deferred.
+
+## 3. VERIFY SCRIPT INTEGRITY
+
+- verify_month3_video2.py — confirmed clean, no exit-code gap remaining.
+- audit_month3_video1.py — sys.exit(1) added when fail count > 0 (previously exited 0 despite 4 failed checks).
+- verify_month3_video1.py — still crashes on smc.macro_swing_grading() before completion (Tier 1 gap, unresolved).
+- verify_month3_video5.py — cosmetic UnicodeEncodeError on '<-' character fixed (replaced with ASCII '->'). No logic changed.
+- Confirmed NOT silent-fail (crash outright instead, safer failure mode): verify_mean_threshold.py, verify_month2_video8.py, verify_month3_video3.py.
+
+## 4. HOUSEKEEPING
+- Session diagnostic scripts moved to cslim/diagnostics/: diag_smt_at_liquidity_baseline.py, diag_triad_pois.py, run_audit.py, temp_zoom.py, visualize_month4_video1_zoomed.py (this last one has a known unfixed bug — shared_xaxes binding prevents xaxis_range override — left broken intentionally, not a functioning tool).
+
+
+
+## 5. FULL FUNCTION INVENTORY — smc.py
+- **`inputvalidator(input_)`** | Decorator. Internal utility. | Built: UNKNOWN | Status: Original
+- **`apply(decorator)`** | Decorator. Internal utility. | Built: UNKNOWN | Status: Original
+- **`fvg(cls, ohlc, join_consecutive)`** | Detects Fair Value Gaps. | Built: Month 2 | Status: Original
+- **`swing_highs_lows(cls, ohlc, swing_length)`** | Detects Swing Highs and Lows. | Built: Month 2 | Status: Original
+- **`bos_choch(cls, ohlc, swing_highs_lows, close_break)`** | Detects Break of Structure and Change of Character. | Built: Month 2 | Status: Original
+- **`ob(cls, ohlc, swing_highs_lows, close_mitigation)`** | Detects Order Blocks. | Built: Month 2 | Status: Original
+- **`liquidity(cls, ohlc, swing_highs_lows, range_percent)`** | Detects Liquidity pools. | Built: Month 2 Video 3 | Status: Modified (Added `is_too_clean` flag)
+- **`previous_high_low(cls, ohlc, time_frame)`** | Detects Previous High Low. | Built: UNKNOWN | Status: Original
+- **`sessions(cls, ohlc, session, start_time, end_time, time_zone)`** | Detects sessions. | Built: UNKNOWN | Status: Original
+- **`retracements(cls, ohlc, swing_highs_lows)`** | Detects percentage of retracement. | Built: UNKNOWN | Status: Original
+- **`consolidation(cls, ohlc, prd, conslen)`** | Detects Consolidation Zones - Live. | Built: UNKNOWN | Status: Modified
+- **`expansion(cls, ohlc, consolidation)`** | Detects when price body closes beyond the consolidation boundary. | Built: UNKNOWN | Status: Built from scratch
+- **`displacement(cls, ohlc, lookback, range_p, body_p)`** | Uses statistical percentiles to identify "Real Big Candles". | Built: UNKNOWN | Status: Built from scratch
+- **`swing_highs_lows_v4(cls, ohlc)`** | Religious 4-Candle confirmation with Strict Alternation. | Built: Month 2 Video 4 | Status: Built from scratch
+- **`identify_order_block(cls, ohlc, confirmed_swings)`** | Basic order block identifier. | Built: UNKNOWN | Status: Built from scratch
+- **`_smt_divergence(ohlc, benchmark_ohlc, asset_swings, correlation, lookaround_bars, fvg_df, liquidity_df)`** | Institutional Market Structure (SMT Divergence). | Built: Month 3 Video 5 | Status: Built from scratch
+- **`triad_divergence(usdx_ohlc, triad_ohlcs, usdx_swings, lookaround_bars, usdx_pois, neutral_tolerance_pct)`** | Interest Rate Triad Divergence. | Built: Month 4 Video 1 | Status: Built from scratch
+- **`_smt_apply_bias_filter(signal_df, smt_df, signal_type)`** | Execution Layer Bias Wiring. | Built: Month 3 Video 5 | Status: Built from scratch
+- **`_market_protraction(ohlc, threshold_pips)`** | Temporal Manipulation Swing Detector. | Built: Month 3 Video 8 | Status: Built from scratch (Renamed to private `_market_protraction`)
+- **`_filter_quarterly_swings(swings_df, min_days)`** | Enforce the ICT Quarterly Shift Constraint. | Built: UNKNOWN | Status: Built from scratch
+- **`_macro_bond_bias(zn_df, zb_df, dxy_df)`** | Macro Economic To Micro Technical (Bond SMT). | Built: Month 3 Video 6 | Status: Built from scratch
+- **`_macro_pair_bias(macro_bias_series, pair_name)`** | GAP 1: Currency Pair Classification Engine. | Built: UNKNOWN | Status: Built from scratch
+- **`_macro_ob_alignment(zb_df, dxy_df, swing_length)`** | Detects the 'Prime Setup' confluence. | Built: Month 3 Video 6 | Status: Built from scratch
+- **`_trendline_phantoms(ohlc, swings)`** | Detects False Trendline (Phantom) Traps. | Built: Month 3 Video 7 | Status: Built from scratch
+- **`_phantom_signals(ohlc, phantoms, ob_df, htf_bias)`** | Full 3-Phase Market Maker Trap Execution Engine. | Built: Month 3 Video 7 | Status: Built from scratch
+- **`_false_hns_patterns(ohlc, swings, max_neckline_slope_pct)`** | Detects False Head and Shoulders Traps. | Built: Month 3 Video 8 | Status: Built from scratch
+- **`_hns_signals(ohlc, patterns, htf_bias, htf_poi_top, htf_poi_btm)`** | Executes trades on the diagonal neckline sweep. | Built: Month 3 Video 8 | Status: Built from scratch
+
+## 6. FULL FUNCTION INVENTORY — state_machine.py
+- **`PriceDeliveryState`** | Data class for logging state. | Built: UNKNOWN | Status: Built from scratch
+- **`PriceDeliveryStateMachine.process(self, ohlc, consolidation, expansion, displacement, liquidity, reversals, htf_context, swing_hl)`** | Institutional Logging Engine (transitioned from a predictive state machine to a passive logging system). | Built: Month 2 Video 3 | Status: Built from scratch
+
+## 7. KNOWN BUGS AND REGRESSIONS — CURRENT STATUS
+- **AttributeError**: `type object 'smc' has no attribute 'sequence_void'`
+  - **File**: `verify_audusd_sept.py` (Line 47).
+  - **Status**: OPEN — LOW PRIORITY. Not gating anything. `verify_audusd_sept.py` is not the canonical Golden Master (see Section 5).
+  - **Root Cause (confirmed)**: `sequence_void` was never defined anywhere in this repo's history. Confirmed via `git log --all -S "def sequence_void"` returning zero results. The function call was written in commit `22d1c4f` (Jun 7, 2026) referencing a function that did not exist at the time. This is a hallucinated API call, not a rename or removal.
+- **AttributeError**: `type object 'smc' has no attribute 'market_protraction'`
+  - **File**: Formerly `verify_video8.py`.
+  - **Status**: Resolved via `verify_market_protraction.py`. `market_protraction` was renamed to `_market_protraction` (module-level private) in `smc.py` on Jun 7. `verify_video8.py` was overwritten on Jun 8 to test Multi-Timeframe logic instead. The original regression coverage has been restored as `verify_market_protraction.py`, which calls `_market_protraction` directly via module import.
+- **Other Regressions**: UNKNOWN.
+
+## 8. GOLDEN MASTER STATUS
+
+### Canonical Golden Master — CONFIRMED PASSING
+- **Script**: `verify_step2.py`
+- **Dataset**: AUDUSD September 2016 (15M), window Sep 11–18
+- **Last run**: 2026-08-07 (local) / 2026-08-08T04:18 UTC
+- **Status**: ✅ CONFIRMED PASSING
+- **Exact output**:
 ```
+VERIFICATION STEP 2: AUDUSD Sept 2016 (Sep 11-18)
+VERIFICATION: DEDUPLICATION [date]
+Total raw signals before dedup: 1321
+Total signals after strict alternation: 859
+Signals discarded: 462
+DEBUG: Expansion non-NaN count: 421
+
+TOTAL ENVIRONMENT COUNTS (September):
+SovereignEnv
+HRR    2000
+LRR      84
+Name: count, dtype: int64
+
+ENVIRONMENT COUNTS (Sep 11-18):
+SovereignEnv
+HRR    471
+LRR     37
+Name: count, dtype: int64
+
+--- TRANSITION AUDIT ---
+Total genuine transitions: 11
+Avg LRR block: 16.8 candles
+Avg HRR block: 325.4 candles
+```
+- **Gate**: HRR=471, LRR=37, 11 genuine transitions. All three must match exactly before any milestone is declared locked.
 
 ---
 
-## 1. Videos 1–3: Foundational Time & Power of 3
-*   **Core Concepts:** NY Timezone Normalization, Midnight Open Vertical Anchors, Power of 3 (Accumulation, Manipulation, Distribution).
-*   **The Problem Solved:** Historical data is often supplied in various broker timezones (e.g. GMT, CET). Gating institutional session times with un-normalized schedules causes systemic signal misalignment.
-*   **The Technical Model:**
-    *   All raw timestamps are localized to Eastern Time (`America/New_York`) to automatically handle daylight savings shifts (EST/EDT).
-    *   Midnight EST/EDT is established as a hard vertical anchor. The opening price of the Midnight candle represents the baseline dividing Premium (above Midnight) and Discount (below Midnight).
-    *   **POT Accumulation:** Consolidation near or below the Midnight open.
-    *   **POT Manipulation:** A sharp run lower/higher sweeping liquidity pools before the true daily expansion.
-    *   **POT Distribution:** The main trend expansion of the day, expanding into OTE targets.
+### Non-Canonical / Known-Broken Scripts
+
+**`verify_audusd_sept.py`** — BROKEN, NON-CANONICAL
+- Crashes at line 47 on `smc.sequence_void(df_4h)`.
+- `sequence_void` has never existed in this repo's history (zero results in `git log --all -S "def sequence_void"`).
+- This script was written against a hallucinated API. It is not the Golden Master and has never successfully produced the HRR/LRR output.
+- Priority: LOW. Not gating any milestone. Do not use for regression checks.
+
+**`verify_market_protraction.py`** — UNVALIDATED (first-run data only)
+- Restored from git commit `af4ae258` (Jun 7, 2026), updated to call `_market_protraction` via direct module import.
+- Current output (2026-08-08): ASIA: 25, NY_OPEN: 19, MIDNIGHT: 17, Total: 61 protraction swings (last 3000 candles of `EURUSD_15M.csv`).
+- No prior recorded baseline exists anywhere in session logs or git history. The original script was overwritten on Jun 8 before any output was ever committed or logged.
+- Status: UNVALIDATED. Treat current output as first-run observation only. Requires Data Audit + Visual Verification before it can be used as a reference.
+
+## 9. FILE STRUCTURE — FULL TREE
+- `smartmoneyconcepts/smc.py` - Core ICT pattern detection library.
+- `smartmoneyconcepts/state_machine.py` - Institutional logging engine.
+- `verify_month2_video*.py` - Month 2 concept unit tests.
+- `verify_month3_video*.py` - Month 3 concept unit tests.
+- `verify_month4_video1.py` - Month 4 Video 1 audit script.
+- `verify_video8.py` - Multi-timeframe execution logic test for M3V8.
+- `verify_step2.py` - **Canonical Golden Master regression script** (HRR=471, LRR=37, 11 transitions).
+- `verify_audusd_sept.py` - BROKEN, NON-CANONICAL. Crashes on `smc.sequence_void` which never existed. Low priority.
+- `verify_market_protraction.py` - Restored market protraction regression. UNVALIDATED — first-run only, no prior baseline.
+- `visualize_*.py` - Plotly HTML generation scripts for various videos.
+- `diag_*.py`, `patch_*.py`, `rewrite_*.py`, `extract_*.py`, `debug_*.py` - Orphaned experimental/patch scripts (Over 80+ files not directly referenced in main flows).
+- `mtf_engine.py` - Layer 4 scaffolding.
+- `risk_engine.py` - Layer 6 scaffolding.
+- `cslim/sync_manager.py` - CSLIM internal sync.
+
+*(Note: There are ~240 files in the root; listing every single one explicitly is truncated here to focus on functional structure, but there are over 100 scratch scripts like `scratch_breaker.py`, `nuclear_fix_video4.py`, etc., that appear to be orphans).*
+
+## 10. LAYER STATUS
+- **Layer 1 (Data)**: Implemented. Raw CSVs are stored in `tests/test_data/MACRO/` and `tests/test_data/EURUSD/`.
+- **Layer 2 (Detection)**: Heavily implemented in `smc.py`.
+- **Layer 3 (Level Registry)**: Not started. No scaffolding exists.
+- **Layer 4 (MTF Alignment)**: Scaffolding exists (`mtf_engine.py`, `mtf_demo.py`).
+- **Layer 5 (Rule Engine)**: Scaffolding exists (`state_machine.py`).
+- **Layer 6 (Risk Management)**: Scaffolding exists (`risk_engine.py`).
+- **Layer 7 (Execution)**: Not started / Minimal (some logic exists inside `_hns_signals` and `_phantom_signals`, but no standalone execution module).
+
+## 11. RECENT SESSION HISTORY
+1. **Aug 7, 2026**: Add all PDFs, HTMLs, and images (except 308MB docx) to Git. Outcome: Completed.
+2. **Aug 7, 2026**: Add month4 resources, MACRO test data, verify script, and update extract_pdf_images. Outcome: Completed.
+3. **Jun 9, 2026**: fix: Implemented Gaps 3, 4, 5 — Neutral bond tolerance, comprehensive POI gate, and Triad+SMT chaining. Outcome: Completed.
+4. **Jun 9, 2026**: fix: Triad divergence gap fixes — resolution-agnostic docstring + POI gate (M4V1). Outcome: Completed.
+5. **Jun 9, 2026**: feat: Add missing 5-Year Note (ZF) data and integrate into Triad analysis. Outcome: Completed.
+
+## 12. ANYTHING FLAGGED AS UNCERTAIN
+- **Golden Master Test Integrity**: RESOLVED. `verify_step2.py` confirmed passing (HRR=471, LRR=37, 11 transitions) as of 2026-08-07. `verify_audusd_sept.py` is confirmed non-canonical — it called a function that never existed in the repo.
+- **Video 8 Market Protraction Audit**: Partially resolved. `verify_market_protraction.py` restores the original script structure and runs clean (61 signals, EURUSD 15M last 3000 candles). However, the output is UNVALIDATED — no prior baseline exists. `verify_video8.py` (Multi-Timeframe) is untouched and continues to pass.
+- **Orphan Scripts**: There are over 100+ scripts (`patch_*.py`, `rewrite_*.py`, `debug_*.py`, `diag_*.py`) in the root directory. It is completely UNCERTAIN which of these are still relevant and which are dead code.
+- **Exact Gatekeeper Lock Dates**: UNKNOWN. The exact timestamps for when videos 1-3 were "locked" by the gatekeeper are not tracked in easily accessible `.md` logs in the root.
+
 
 ---
-
-## 2. Video 4: Bullish OTE & Signal Cooldown
-*   **Core Concepts:** 4-Candle Swing Confirmation, Strict Alternation (H-L-H), OTE Fibonacci Levels (62%–79%), 8-Candle Post-Entry Cooldown.
-*   **The Problem Solved:** Swing highs/lows easily "flicker" on lower-timeframe charts. Ad-hoc swing logic causes overlapping entries, rapid-fire signals, and immediate risk blowouts.
-*   **The Technical Model:**
-    *   **Swing Confirmation:** A swing low is confirmed only when a candle's low is flanked by two higher lows on the left and two on the right (`swing_length=2` or `5-candle pivot` at `conf_ts`).
-    *   **Alternation Gate:** Signals must alternate strictly chronologically. A Bullish OTE cannot fire unless the previous signal was a Bearish OTE.
-    *   **OTE Entry Range:** Inside the confirmed swing, price must retrace into the **Discount Zone** (defined by candle bodies between the 62% and 79% Fibonacci retracement of the swing range).
-    *   **8-Candle Cooldown:** Once an entry fires, a hard temporal gate prevents any new signals from firing for the next 8 candles, preserving capital during extended trend expansions.
-
----
-
-## 3. Video 5: Bearish OTE & Target Persistence
-*   **Core Concepts:** Mirror OTE for Shorts, Draw on Liquidity targets, `conf_ts` absolute anchoring.
-*   **The Problem Solved:** Standard visualizers draw trend lines and targets all the way back to the beginning of the chart, stretching the visual axes. Furthermore, profit targets (Draw on Liquidity) often "vanish" if price consolidates before hitting them.
-*   **The Technical Model:**
-    *   **Axis-Safe Anchoring:** Target lines and shaded OTE boxes are mathematically clipped to start at `max(signal_ts, df_pane.index[0])`. This pins OTE levels to the left edge of the chart when historical, but prevents Plotly from stretching the X-axis back weeks in time.
-    *   **Draw on Liquidity (DoL) Target Persistence:** Once a liquidity pool (equal highs/lows) is identified as a draw, the target remains active and is plotted across subsequent candles **until price explicitly closes beyond it**. Consolidation does not mitigate a target—only a true price print does.
-
----
-
-## 4. Video 6: Institutional Suite (High-Precision MTF)
-*   **Core Concepts:** Higher-Timeframe (HTF) Order Blocks, Fair Value Gaps (FVG) detection, Statistical Displacement deciles, MTF Confluence Scoring.
-*   **The Problem Solved:** Micro-level sweeps can occur inside noise. Video 6 ensures that lower-timeframe entries are only executed when they align with higher-timeframe bank sponsorship.
-*   **The Technical Model:**
-    *   **Daily/4H Order Blocks:** Detected dynamically from HTF data and transposed onto the 15M surgical execution chart.
-    *   **FVG Detection:** Implemented `smc.fvg()` to return integer outputs: `1` (bullish FVG, where candle 1 high < candle 3 low) and `-1` (bearish FVG, where candle 1 low > candle 3 high).
-    *   **Displacement deciles:** Measures candle speed and body size, gating entries to only candles whose volume and body ratio rank in the **top-decile** of the historical rolling 90-period window.
-    *   **Confluence Score (SENIOR Labels):** A multi-tier score assigning weights to HTF alignment:
-        $$\text{Confluence Score} = w_1 \cdot \text{Daily OB} + w_2 \cdot \text{4H OB} + w_3 \cdot \text{FVG Alignment}$$
-
----
-
-## 5. Video 7: Sovereign Liquidity Engine
-*   **Core Concepts:** LRR vs. HRR state machine, macro consolidation boundaries, historical path obstruction counters, 8-candle consolidation hysteresis.
-*   **The Problem Solved:** Price frequently transitions between trending (Low Resistance Liquidity Run - LRR) and choppy (High Resistance Liquidity Run - HRR) environments. Simple trend filters flicker constantly, generating false signals in consolidation.
-*   **The Technical Model:**
-    *   **LRR State:** Shade LRR Green when price expands out of a macro consolidation zone with displacement, moving like a "hot knife through butter" toward the draw on liquidity.
-    *   **HRR State:** Shade HRR Maroon when price enters a macro origin zone or encounters significant structural resistance (high density of unmitigated wicks/swings).
-    *   **Path Obstruction Counter:** Dynamically counts the number of swing high/low pivots between current price and the target. High pivot density triggers an immediate transition to HRR.
-    *   **Consolidation Hysteresis:** If price enters a consolidation zone, the state machine holds the HRR state for at least **8 candles** before allowing a transition back to LRR, preventing micro-range flickering.
-
----
-
-## 6. Video 8: Market Protraction Temporal Clock
-*   **Core Concepts:** ASIA, MIDNIGHT, and NY_OPEN clock anchors, 80% Retracement temporal Judas Swing detector, timezone-normalized clock sweeps.
-*   **The Problem Solved:** Institutional algorithms sweep liquidity at specific daily times. Without time-normalization, Judas swings are missed or detected at incorrect hours.
-*   **The Technical Model:**
-    *   **Time Normalization:** Translates global market feed timestamps to NY time.
-    *   **The Three 2-Hour clock anchors (EST/EDT DST-Aware):**
-        *   `ASIA` (20:00 NY time) $\rightarrow$ Sweeps initial retail ranges.
-        *   `MIDNIGHT` (00:00 NY time) $\rightarrow$ The core daily protraction benchmark.
-        *   `NY_OPEN` (07:00 NY time) $\rightarrow$ Sweeps the London session range.
-    *   **Judas Swing Detector:** When price sweeps a session high/low inside a clock anchor and retraces at least **80% of the swing leg**, a temporal protraction swing is confirmed.
-
----
-
-## 7. Month 2, Video 1: Growing Small Accounts (Turtle Soup)
-*   **Core Concepts:** Turtle Soup entry triggers, pre-entry structural targets, institutional risk engine with 5-stage scaled exits, minimum 20-pip swing filter.
-*   **The Problem Solved:** Attempting to catch sweeps without risk management or target mapping lead to low-probability trades with poor Risk-to-Reward.
-*   **The Technical Model:**
-    *   **Turtle Soup Sweep:** Triggered when price runs below/above a key structural low/high (sweeping liquidity) and immediately reacts inside a Daily OB.
-    *   **Pre-Entry Targets (`ts_target_near` / `ts_target_far`):** Automatically maps target levels from equal high/low clusters (`smc.liquidity()`) *before* the trade is executed.
-    *   **Minimum 20-Pip Filter:** If the distance between the entry price and `ts_target_near` is less than `20.0 pips`, the trade is discarded due to insufficient room to run.
-    *   **Capital Risk Engine (`risk_engine.py`):** Coordinates scaled targets (R1 to R5) to mathematically secure gains.
-
----
-
-## 8. Month 2, Video 2: Fractal Refinement
-*   **Core Concepts:** Fractal stop-loss refinement, entry price scaling, direction-correct daily OB stops.
-*   **The Problem Solved:** A 1H Turtle Soup setup often carries a wide protective stop (midpoint of the 1H OB). Month 2 Video 2 refines this setup onto 15M and 5M execution scales to drastically shrink risk pips.
-*   **The Technical Model:**
-    *   **Fractal Entry Price:** Entry price is mapped directly to the lower-timeframe's own candle open price (`float(ohlc.iloc[i]['open'])`) at the signal timestamp, letting the execution price sit deep inside the daily OB range.
-    *   **Refined Stop-Loss Placement:**
-        *   **BULLISH (Long):** Protective stop set to the Daily OB Floor (`ob_row['Bottom']`).
-        *   **BEARISH (Short):** Protective stop set to the Daily OB Ceiling (`ob_row['Top']`).
-    *   **Stop Shrinkage Proof:** Refinement yields clean stop distances:
-        $$\text{1H Midpoint Risk (15.1 pips)} \longrightarrow \text{15M Daily OB Floor Risk (9.8 pips)}$$
-
----
-
-# PART 2: Core Code Architectures
-
-To help you understand how the code layers are structured, here are the key logic patterns implemented:
-
-### 1. `smc.py` — High-Precision Swing & FVG Mappings
-`smc.py` is the single source of truth for all mathematical indicators. It strictly outputs integer indicators:
-*   `swing_highs_lows_v4()`: Computes confirmed pivots using left/right candle confirmation boundaries and filters Sunday noise.
-*   `fvg()`: Returns `1` for bullish gap (candle 3 low > candle 1 high) and `-1` for bearish gap (candle 3 high < candle 1 low).
-*   `liquidity()`: Evaluates structural equal highs/lows with `IsTooClean` clustering logic.
-
-### 2. `state_machine.py` — The Transition Control Layer
-This handles the heavy temporal logic, alternations, cooldowns, and transpositions:
-*   `detect_reversals()`: Evaluates wick-pierces and close-backs for Turtle Soup candidates.
-*   `turtle_soup_signals()`: Coordinates lower-timeframe candles against transposed Daily OB bands, executing OTE and refined stop-loss assignments.
-
----
-
-# PART 3: Standard Operating Protocols (The Rules)
-
-As Antigravity, you must always maintain these rules:
-
-1. **Never assume.** If a requirement is not in this document or in the notes, do not invent it. Stop and ask.
-2. **Visual Verification.** A compiled script is not a verified fix. Always use the browser or visual audit to confirm the rendered chart matches source diagrams exactly.
-3. **Strict Alternation.** Always enforce signal alternation gates to preserve sequence integrity.
-4. **Time is Price.** All time gates and clock protractions must resolve to timezone-normalized Eastern Time via `pytz America/New_York`.
-5. **Notes-First Handoff (MANDATORY).** When new mentorship notes are shared, freeze all code. Extract verbatim text, render PDF pages as high-res PNGs, audit all price levels and pip distances mathematically, produce a `monthX_videoY_notes.md` study artifact, and await explicit plan approval before writing a single line of code.
-6. **Dynamic Context Sync (MANDATORY).** At the end of locking any video milestone, run:
-   ```bash
-   python cslim/sync_manager.py
-   ```
-   This updates file registries, reverse-syncs system KIs, and validates all regression suites automatically.
-7. **One Function, One Job.** Each `smc.*` classmethod does exactly one detection task. No side effects, no visualization logic inside detectors.
-8. **Pure Projection.** Visualizers (`visualize_*.py`) are read-only projections of the signal DataFrame. No filtering, smoothing, or state logic is allowed inside them.
-
----
-
-## Current Status
-
-| Milestone | Status |
-|---|---|
-| Videos 1–8 | ✅ Locked |
-| Month 2, Video 1 | ✅ Locked |
-| Month 2, Video 2 | ✅ Locked |
-| Month 2, Video 3 | ✅ Locked |
-| Month 2, Video 4 | ✅ Locked |
-| Month 2, Video 5 | ✅ Locked |
-| Month 2, Video 6 | ✅ Locked |
-| Month 2, Video 7 | ✅ Locked |
-| Month 2, Video 8 | ✅ Locked |
-| Month 3, Video 1 | ✅ Locked |
-| Month 3, Video 2 | ✅ Locked |
-| Month 3, Video 3 | ✅ Locked |
-| Month 3, Video 4 | ✅ Locked |
-| Month 3, Video 5 | ✅ Locked |
-| Month 3, Video 6 | ✅ Locked |
-| Month 3, Video 7 | ✅ Locked |
-| **Month 3, Video 8** | ✅ **Locked (June 2026)** |
-
----
-
-## 9. Month 2, Video 3: How Traders Make 10% Per Month
-*   **Core Concepts:** Compounding R-multiples (3R/9R/15R), cascading liquidity ladder targets, 1H runner objectives.
-*   **The Problem Solved:** Traders take profits too early or hold too long without a structured scale-out framework. Video 3 maps the compounding math onto the existing Turtle Soup engine.
-*   **The Technical Model:**
-    *   **EXIT_SCHEDULE_V3:** Added to `risk_engine.py` as a documentation-only constant (not operative logic). Documents the 50%-at-3R scale-out, with remaining position targeting 9R and 15R runner objectives.
-    *   **1H Liquidity Ladder (`ts_target_1h`):** `turtle_soup_signals()` now accepts an optional `liq_1h` parameter. When provided, the engine scans 1H liquidity pools for a target **strictly beyond** `ts_target_far` (the 15M far pool). If no distinct 1H pool exists, `ts_target_1h` returns `NaN` — this is correct behavior, not a gap.
-    *   **Verification Gate:** `verify_month2_video3.py` validates ladder ordering (`t1 <= t2`, and `t3 > t2` only when `t3` is not NaN) and reports population counts: `ts_target_1h populated: X of Y bull signals, Z of W bear signals`.
-*   **Lesson Learned:** When 15M and 1H liquidity detectors converge on the same swing level, `ts_target_1h` correctly remains NaN. Do not patch with `>=` — exact-match confluence is not a distinct rung.
-
----
-
-## 10. Month 2, Video 4: No Fear of Losing
-*   **Core Concepts:** The Expectancy Matrix, Risk percentage vs Win rate, position sizing formula.
-*   **The Problem Solved:** Traders fear losses and demand high win rates. Video 4 proves mathematically that 50% accuracy with 1% risk and 5:1 R:R yields a 20% monthly return.
-*   **The Technical Model:**
-    *   **Functions Added (`risk_engine.py`):** `min_rr_for_win_rate()` (minimum R:R for profitability), `calc_expectancy()` (full ICT expectancy model dict), `calc_position_size()` (dollar-per-pip).
-    *   **Verification Gate:** `verify_month2_video4.py` checks exactly the 6 scenarios from the curriculum.
-    *   **Visualization:** `visualize_month2_video4.py` generates an interactive Plotly HTML dashboard showing the Expectancy Matrix.
-*   **Lesson Learned:** Round `monthly_pct` to 2 decimal places in `calc_expectancy()` — Python float multiplication of percentages produces trailing noise (e.g. 28.000000000000004) that must be explicitly rounded before returning.
-*   **Known Gaps:** `calc_compounded_growth()` remains unbuilt.
-
----
-
-## 11. Month 2, Video 5: How To Mitigate Losing Trades Effectively
-
-**Month 2 Video 5 — Now Complete**
-
-Video 5 is a risk management and psychology lesson using the same AUDUSD 0.7512 case study from Videos 1–4. No new ICT price delivery concepts. No changes to `state_machine.py`.
-
-**New functions added to `risk_engine.py` (additive only):**
-
-`calc_mitigation_recovery(initial_risk_pct, reentry_risk_pct)` — Returns the R-multiple required on the re-entry trade to fully recover the initial loss. Formula: `initial_risk_pct / reentry_risk_pct`. Example: 2% initial loss, 1% re-entry risk → 2.0R required to breakeven.
-
-Two new constants: `MITIGATION_REENTRY_RISK_FRACTION = 0.5` and `MITIGATION_EXIT_R = 2`.
-
-**The three-scenario model (now encoded):**
-
-| Scenario | Initial Risk | Re-entry Risk | R to Breakeven | Status |
-|---|---|---|---|---|
-| ICT Mitigation (Halved Risk) | 2% | 1% | 2.0R | SAFE |
-| Aggressive (Same Risk) | 2% | 2% | 1.0R | DANGEROUS |
-| Revenge Trading (Double Down) | 2% | 4% | 0.5R | TOXIC |
-
-**Architecture decision — confirmed and locked:** The Video 5 re-entry stop (`stop = ob_row['Bottom']`, below the full order block) is already handled by `use_daily_ob_stop=True` in `turtle_soup_signals()`. No new parameter required. The mean threshold stop ICT describes is the *mistake* on the first attempt — not a rule to build. The 8-candle hysteresis belongs to the Sovereign Liquidity Engine only and has no connection to Turtle Soup re-entries.
-
-**New Antigravity failure pattern added:**
-
-Pattern 9 — Conflating the Sovereign Engine hysteresis with Turtle Soup cooldowns. The 8-candle value in `state_machine.py` governs LRR/HRR environment switching exclusively. It is not a re-entry gate for any other signal type. Any proposal to bypass or modify it for a non-Video-7 reason must be rejected immediately.
-
-**New files:** `visualize_month2_video5.py`, `verify_month2_video5.py`, `ICT_MONTH2_VIDEO5_MITIGATION.html`
-
-*Last Updated: May 29, 2026.*
-
----
-
-## 12. Month 2, Video 6: The Secrets To Selecting High Reward Setups
-
-- **Core Concepts:** Three-Perspective Framework — Big Picture (2/4) / Intermediate (2/3) / Short-Term (1 from each of 3). Seven-component setup grade. IPDA named explicitly for the first time.
-- **The Problem Solved:** No process framework existed for determining WHEN to engage the market. Signals fire regardless of macro or intermediate alignment until Layer 4 is built. Video 6 defines the full Layer 4 architecture.
-- **The Technical Model:** Documentation only — no new Python files, no changes to state_machine.py, smc.py, or risk_engine.py.
-  Layer 4 (MTF Alignment Engine) is now fully specified:
-    - TIER 1 Big Picture: 2 of 4 must agree (Macro Market Analysis / Interest Rate Analysis / Intermarket Analysis / Seasonal Influences)
-    - TIER 2 Intermediate: 2 of 3 must agree (Top-Down Analysis / COT Data / Market Sentiment)
-    - TIER 3 Short-Term: 1 from each of 3 required
-      (A) Correlation Analysis — USDX SMT / Correlated Pair SMT
-      (B) Time & Price Theory — Quarterly / Monthly / Weekly / Daily / Time of Day
-      (C) IPDA — Institutional Order Flow / Liquidity Seeking / Market Efficiency Paradigm
-  HIGH REWARD SETUP: all three tiers directionally aligned.
-  WAIT: any tier missing its required agreement count.
-- **Two Definitions Locked (build pending):**
-  - SMT Divergence → future smc.smt_divergence(). Definition: "If the dollar's making higher highs, if the British Pound versus the dollar fails to make lower lows, that's a cracking correlation."
-  - Quarterly Effect → future smc.quarterly_effect(). Definition: "Every three months or so, there is a new price shift in the higher time frames. If the market's been going higher, generally you'll probably see the market going to a consolidation over the next three months."
-- **Architecture Note:** All detectors in smc.py are IPDA detectors. IPDA (Interbank Price Delivery Algorithm) is the name ICT gives to the framework behind order blocks, FVGs, swing highs/lows, liquidity pools, stop runs, market protraction, and Turtle Soup.
-- **No new files. No verify script. No regression required.**
-
-## 13. Month 2, Video 7: Market Maker Trap False Flag
-*   **Core Concepts:** False Bull Flag (bearish trap in HTF premium), False Bear Flag (bullish trap in HTF discount), Deeper Sweep Overrides.
-*   **The Problem Solved:** Retail traders are trapped by consolidations that look like continuation flags but resolve in the opposite direction when price is in a HTF premium or discount zone. Furthermore, premature entries are often stop-hunted by deeper sweeps before the true institutional move.
-*   **The Technical Model:**
-    *   `false_flag_signals()` in `state_machine.py` implements a strict Daily-anchored structural model.
-    *   **Flagpole Check:** Requires a cumulative impulse leg $\ge$ 1.5x the average daily body leading into a valid `smc.consolidation()` zone.
-    *   **HTF Alignment:** Premium/Discount defined by a strict 50% equilibrium threshold, with a hard 90% structural cap to prevent trading negated swings.
-    *   **Deeper Sweep Override:** Overrides the standard zone cooldown. If a premature trap fires and hits SL, but a subsequent day sweeps the zone *deeper* (hunting stops) and closes back inside, the engine generates a superior entry with the SL dynamically widened to the absolute lowest/highest wick of the entire pattern.
-    *   **Macro Event Filter:** Mechanical exclusion of tier-1 scheduled news events (Elections, FOMC, Referendums) where institutional algorithms withdraw liquidity.
-*   **Bugs Found and Fixed:**
-    *   Fixed `daily_premium` / `daily_discount` calculations to cap at 90% retracement.
-    *   Fixed a single-sided sanity check (`daily_high_i < ctop * 0.998`) that was incorrectly dropping all False Bear Flag candidates.
-    *   Fixed premature stop loss placement by replacing the single-candle `daily_low_i` SL with the absolute `last_fired_extreme` of the entire consolidation pattern.
-*   **Results (AUDUSD 2016 Final Audit):** 
-    *   Total Clean Setups (Post-Macro Filter): 2
-    *   Win Rate (Hit TP1 & TP2): 100%
-    *   Diagnostic: Post-SL Thesis Check proved that the 4 "failed" setups (Jun 21, Jul 25, Nov 2, Nov 9) were directionally vindicated and only hit SL due to massive exogenous macro volatility.
-*   **New files/Artifacts:** `false_flag_signals()` in `state_machine.py`, `backtest_video7.py`, `backtest_report.md`, `walkthrough.md`.
-
----
-
-## 14. Month 2, Video 8: Market Maker Trap False Breakouts
-*   **Core Concepts:** Symmetrical Price Expansion, The Geometric Measured Move, Macro vs Micro Leg amplitudes, 1:1 Target Projections.
-*   **The Problem Solved:** Following a false breakout stop-run, the market often expands far beyond local liquidity pools. Without a mathematical model for this expansion, traders leave massive runner profits on the table.
-*   **The Technical Model:**
-    *   `smc.measured_moves()`: A new mathematical projector that calculates `BullAmplitude` and `BearAmplitude` from the most recently completed structural swings (`swing_length=10`).
-    *   **Macro Leg Memory:** By tying the amplitude to the `daily_swings` array, the algorithm perfectly retains the size of the *Macro* trend impulse that preceded the *Micro* Flagpole/Consolidation retracement.
-    *   **Live Projection:** Inside `state_machine.py`, the target is calculated *at the exact moment* the stop-hunt wick prints: `Target = SweepExtreme + MacroAmplitude`. This perfectly aligns with ICT's "second leg in price higher is equal to that first one" rule without violating the zero future-lookahead rule.
-*   **Architecture Decisions:**
-    *   The `MeasuredTarget` is injected into the `false_flag_signals()` output DataFrame as `trap_target_measured`.
-    *   The directional polarity of the traps was audited and confirmed logically sound: A False Bear Flag (Long Trap) mathematically requires a Bear Pole drop into a HTF Discount zone, followed by a bullish sweep target projection using `BullAmplitude`.
-*   **Results:** Verified in `visualize_month2_video8.py` and `backtest_video7.py` to seamlessly output targets without disrupting the core engine's 100% win rate. The August 18 Short Trap empirically hit its Measured Target perfectly 26 days later.
-*   **New files/Artifacts:** `smc.measured_moves()`, `visualize_month2_video8.py`, `month2_video8_notes.md`.
-
----
-
-## 15. Month 3, Video 1: Timeframe Selection & Defining Setups
-*   **Core Concepts:** Top-Down Analysis hierarchy (Monthly → Weekly → Daily → 4H), ICT's Holy Trinity of setups (OTE / Order Blocks / Stop Runs), Breaker Blocks, Macro Swing Fibonacci Grading.
-*   **The Problem Solved:** No systematic framework existed for identifying *which* timeframe's institutional levels should gate a trade entry. Video 1 defines the full cascade: Monthly provides the macro Draw on Liquidity, Weekly provides intermediate structure, Daily provides the entry context.
-*   **The Technical Model:**
-    *   **`smc.breaker_blocks(ohlc, swing_highs_lows)`**: New detector in `smc.py`. Identifies the last down-close candle before a stop-run higher high (Bearish Breaker) and the last up-close candle before a stop-run lower low (Bullish Breaker). Returns `Top`, `Bottom`, and `BrokenIndex` (the candle that activated the breaker by breaking through it).
-    *   **`smc.macro_swing_grading(ohlc)`**: New detector in `smc.py`. Grades the absolute high-to-low range of a dataset into five institutional quadrant levels: 0%, 25%, 50% (Equilibrium), 75%, and 100%. Works natively on Monthly, Weekly, or Daily DataFrames.
-    *   **Data Pipeline:** Confirmed Monthly, Weekly, Daily, and 15M resampling all operate correctly through the same `smc.*` function API with no changes required.
-*   **Audit Results (24/24 PASSED):**
-    *   All 7 named concepts from the video (TF Hierarchy, OBs, Liquidity, OTE, Breakers, Macro Grading, FVGs) verified against live AUDUSD 2016 data.
-    *   Macro Equilibrium confirmed at `0.73307` — perfectly centered between the absolute low (`0.68269`) and high (`0.78344`).
-    *   7 Daily Breaker Blocks found (5 Bearish / 2 Bullish). All 5 Bearish Breakers confirmed to be in the Premium quadrant (above `0.73307`), consistent with ICT's institutional logic.
-    *   67 Daily FVGs found, all 67 subsequently mitigated (returned to by price).
-*   **Architecture Note:** Video 1 is a "Detector-First" implementation. The Breaker Block and Macro Grading detectors are now live in `smc.py`. Trading signals for Breakers will be built into `state_machine.py` once the exact risk rules are provided in subsequent videos.
-*   **Known Gap (by design):** Liquidity Void / FVG *execution signals* (entry, SL, TP) are not yet built. The detector (`smc.fvg()`) exists and is correct. The execution pipeline will be built when ICT provides the specific parameters in Month 3.
-*   **New files/Artifacts:** `smc.breaker_blocks()`, `smc.macro_swing_grading()`, `verify_month3_video1.py`, `audit_month3_video1.py`, `visualize_month3_video1.py`, `ICT_MONTH3_VIDEO1_BREAKERS.html`, `month3_video1_notes.md`.
-
----
-
-## 16. Month 3, Video 2: Institutional Order Flow
-*   **Core Concepts:** Institutional Liquidity Cycle, Top-Down Sweep Confirmation.
-*   **The Problem Solved:** Previous logic identified a sweep when a wick poked through a liquidity pool level. This generated false signals based on retail noise. Video 2 establishes the strict institutional rule: the institutional money sits in the candle bodies, not the wicks.
-*   **The Technical Model:**
-    *   **Candle Body Sweep Logic:** `smc.liquidity()` was updated. The `Swept` index is now strictly detected by `ohlc_close` (the candle body) rather than `ohlc_high`/`ohlc_low`.
-    *   **Rule Enforcement:** A bearish pool is swept only when a candle closes *below* the pool level. A bullish pool is swept only when a candle closes *above* the pool level.
-    *   **Order Block Mean Threshold:** `smc.ob()` was updated to output a `MeanThreshold` column. This calculates the exact 50% midpoint of the Order Block candle's body (`(open + close) / 2`), satisfying ICT's rule that the true institutional mitigation anchor is the body midpoint, not the wicks.
-*   **Audit Results:**
-    *   `verify_month3_video2.py` confirms synthetic tests: wick stabs do not trigger sweeps; body closes correctly trigger sweeps.
-    *   All core structural regression tests passed (`verify_step2.py`, `verify_video8.py`, `verify_month2_video2.py`), confirming the precision upgrade does not break the 2016 golden masters.
-*   **New files/Artifacts:** `verify_month3_video2.py`, `month3_video2_notes.md`.
-
-
-### Month 3, Video 3: Institutional Sponsorship (NY Midnight Power 3)
-*   **Core Concepts:** NY Midnight Open gradient, OB Recency Window, Candle Violation, Lethargy Filter, FVG Target Tiers, 5-Pip Entry Buffers.
-*   **The Problem Solved:** Raw Turtle Soup sweeps often fire in noisy, un-sponsored environments. Video 3 introduces the strict filtration requirements for high-probability "Prime Setups" to ensure institutional algorithms are actively pricing the market.
-*   **The Technical Model:**
-    *   **Power 3 / Midnight Baseline:** Entries must align with the daily institutional gradient (Buys occur below NY Midnight Open, Sells above).
-    *   **Candle Violation:** The engine dynamically checks the previous 10 candles (`down_candle_violated` / `up_candle_violated`) to ensure the initial institutional accumulation candle was explicitly broken before entry.
-    *   **Lethargy Filter:** `is_lethargic = False` enforces an immediate dynamic response. If price consolidates for > 5 candles without pushing into profit, the signal is rejected as lethargic.
-    *   **Recency Filter:** `max_session_ob_age_days = 3` strictly drops old Order Blocks, ensuring entries only occur on current session structure.
-    *   **FVG Target Tier:** `ts_target_fvg` maps the nearest unmitigated Liquidity Void as the primary target layer before liquidity clusters.
-    *   **5-Pip Precision Entry:** `ts_entry_price` automatically calculates a 5-pip buffer inside the Order Block to ensure the limit order is activated deep inside the institutional footprint.
-*   **Audit Results (AUDUSD 2016):** 
-    *   Filtered 262 raw signals down to **11 Prime Setups**.
-    *   Directional accuracy on prime setups confirmed at 100% (sweep simulation proved all losses were exactly target-bound sweeps, averaging 28 pips beyond the 0-pip wick stop before reversing).
-*   **Gatekeeper Verify:** ✅ Locked.
-
-### Month 3, Video 4: Monthly/Weekly Range & Profiling
-*   **Core Concepts:** Monthly Range expansion, Weekly directional bias, identifying accumulation/distribution phases across macro timeframes.
-*   **The Problem Solved:** Executing exclusively on the 15M/1H charts without mapping the weekly profile results in trading against the macro algorithm's monthly objective.
-*   **The Technical Model:**
-    *   `visualize_month3_video4.py`: A dedicated dashboard combining the Monthly, Weekly, and Daily charts.
-    *   Visualizes the structural boundaries (highs/lows) across all three timeframes to ensure macro alignment before any micro-execution is considered.
-*   **Gatekeeper Verify:** ✅ Locked.
-
-### Month 3, Video 5: SMT Divergence
-*   **Core Concepts:** Correlated pairs (e.g., EURUSD vs GBPUSD), Symmetrical Trend Divergence, the "Void" confirmation (FVG), Liquidity Pool sweep alignments.
-*   **The Problem Solved:** Standard divergence indicators lag and paint false signals in trending markets. ICT SMT divergence isolates institutional footprint decoupling across correlated assets at key liquidity levels.
-*   **The Technical Model:**
-    *   **Dynamic Synchronization:** `smt_divergence` replaced hardcoded 3-day windows with a dynamic structural lookaround (`lookaround_bars=5`) to perfectly align matching price action legs across both assets.
-    *   **The "Void" Confirmation:** `smt_confirmed` algorithm checks if the divergence is immediately followed by a Fair Value Gap (the "Void") in the reversal direction.
-    *   **Liquidity Pool Context:** `smt_at_liquidity` logic ensures the divergence occurred specifically during a sweep of an old high or low (Point 5), filtering out random noise.
-    *   **Symmetrical Trend Detection:** Suppresses contra-trend signals when the benchmark asset (e.g., DXY) remains strongly trending without diverging.
-*   **Audit Results:** `verify_month3_video5.py` verified all four macro ICT SMT scenarios cleanly against golden master benchmarks.
-*   **Gatekeeper Verify:** ✅ Locked.
-
-
-## 14. Lessons Learned (Month 3 Video 5)
-- smt_bias_event must be kept in the return — dropping it silently breaks the verify script
-- BM-led scenarios (C, D, Symmetrical from DXY swings) must use _set() helper — DXY timestamps may not exist in the AUDUSD index; df.loc[dxy_ts] creates spurious rows
-- smc.ob() requires swing_highs_lows as second argument since M3V2 — any verify script written before that update needs patching
-- Windows PowerShell with cp1252 encoding will crash on Unicode characters in print statements; run with $env:PYTHONIOENCODING='utf-8'
-
----
-
-### Month 3, Video 6: Macro Flow & Session Bias
-*   **Gatekeeper Verify:** ✅ Locked.
-
----
-
-### Month 3, Video 7: Phantom Signals & False Flag Traps
-*   **Gatekeeper Verify:** ✅ Locked.
-
----
-
-### Month 3, Video 8: Market Maker Trap (Head & Shoulders)
-*   **Core Concepts:** False Head & Shoulders as institutional trap geometry. ICT reads both the Standard H&S (bullish trap, buy the equal-lows sweep) and the Inverted H&S (bearish trap, sell the equal-highs sweep) as Turtle Soup setups backed by a confirmed Daily Order Block.
-*   **The Complete ICT Model:**
-
-| Pattern | HTF Bias | Equal Level | Trigger | Entry | TP1 | TP2 |
-|---|---|---|---|---|---|---|
-| Standard H&S | Daily Bullish OB | Equal lows (neckline) | Wick sweeps below equal lows | Long (Turtle Soup) | Right Shoulder high | Head (highest peak) |
-| Inverted H&S | Daily Bearish OB | Equal highs (neckline) | Wick sweeps above equal highs | Short (Turtle Soup) | Right Shoulder low | Head (lowest low) |
-
-*   **Functions added to `smc.py`:**
-    *   `smc.false_hns_patterns(ohlc, swings, max_neckline_slope_pct=0.005)` — detects the five-swing topology (H-L-H-L-H or L-H-L-H-L) with head dominance and neckline equality checks.
-    *   `smc.hns_signals(ohlc, patterns, htf_bias, htf_poi_top, htf_poi_btm)` — executes bar-by-bar Turtle Soup triggers against confirmed daily OB zones.
-*   **HTF Engine (verify_video8.py):** Zero-lookahead Daily OB state machine. All OBs enter `pending_bias` unconditionally on formation day. They only promote to `active_bias` when a subsequent daily close confirms beyond the OB extreme. The `current_bias` recorded at the top of each loop day represents yesterday's state — price can never use today's OB as a signal gate today.
-*   **Gatekeeper Results:** EURUSD Oct-Nov 2022 — 3 executions from 8 detected patterns. 1 Buy (Oct 25, TP1 hit Oct 26, TP2 hit Nov 8). 2 Sells (Nov 4 — losing, macro CPI reversal event, Layer 4 absence). Golden Master: HRR 471, LRR 37, 11 transitions — unchanged.
-*   **Gatekeeper Verify:** ✅ Locked (June 2026).
-
-*   **Future quality filter (do NOT build now):** Sell 1 on Nov 4 14:00 had ~12 pips between right shoulder and head. Technically valid by current detection criteria. A minimum pattern depth filter (head-to-neckline distance > X pips) would improve quality. Must be derived from ICT notes before implementation.
-
-*   **Known Layer 4 gap:** Signals that fire with a valid Daily OB but against the Weekly/Monthly macro trend will lose. This is expected and correct behaviour for a system without Layer 4 (MTF Alignment). Do NOT patch detection logic to solve this — build Layer 4.
+*Last Updated: 2026-08-08*

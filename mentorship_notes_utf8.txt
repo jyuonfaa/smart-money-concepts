@@ -1,0 +1,213 @@
+﻿
+
+	ICT MENTORSHIP 2016/2017
+
+Month 1 :
+Video 1: Elements To A Trade Setup;
+This is the first of 8 videos. When we refer to elements of a trade setup, there are really just two primary concerns and they are listed below
+Context or framework surrounding the idea:
+This is what makes the idea favorable for a trade and not simply what your indicators or support and resistance level says. There should be something that builds a reason to want to trade. We will be learning specific principles and we are going to be dealing with them in general terms and what we do in those conditions. These conditions are listed below:
+Expansion
+Retracement/pullback
+Reversal
+Consolidation
+Each one of these four gives a specific framework and a context to the marketplace that we are going to be trading in. There is going to be either one of the four conditions. 
+
+Reference Points In Institutional Order Flow
+Orderblocks
+Fair Value Gaps & Liquidity Voids
+Liquidity Pools & Stop Runs
+Equilibrium
+
+
+The Interbank Price Delivery Algorithm(Also called the interbank algo)
+It is the algorithm that controls market movement. It works with a set of rules just like any computer program. 
+
+There is going to be times where the market goes sideways(same as consolidation). When this happens, the market will be looking to do an expansion. All markets start from a consolidation and move into an expansion(thatÆs an impulse price swing). After that impulse swing,it either goes to a consolidation again or it goes to a retracement. When a retracement happens,it goes back down into another level of expansion or after expansion, it can go to a reversal pattern, after the reversal pattern, it will see another retracement then back to potentially consolidation. These four conditions interchange throughout the marketplace. You are only going to get one of these four conditions. You just need to know where the market is at right now, where it is likely to go and where it came from. Throughout the course, you are going to learn a lot about where the market is going next and thatÆs going to fill in a lot of gaps. 
+
+The main thing, the consolidation begins with everything. All the moves that take place in the marketplace start with a measure of consolidation. ThatÆs where the market builds orders. The market maker keeps market in a tight range or defined range until there is enough money on both parts of the upper and lower ends of the range is being defined by the consolidation. Whichever one has the highest amount of money to be absorbed, thatÆs the direction it is going to move in. We donÆt always know what that is but we wait for the expansion, when the expansion occurs, thatÆs when we get the clue as to what the market is most likely going to be doing and wait for a retracement or another consolidation or reversal.We always wait for the first expansion which gives us all the insights that we need to make a decision. Sometimes it may expand so far that we canÆt do anything with it that we have to wait for the retracement or the next consolidation. There is nothing wrong with that, it is all normal,you are not going to catch every move. The main thing is understanding these four individual characteristics to a trade setup because price is delivered by one of these four conditions. It canÆt be any other way.
+
+
+What is Expansion?
+Expansion is when price moves quickly from a level of equilibrium. Expansion couples directly with the tool of an order block. 
+The Importance of Expansion; When price leaves a level quickly, this indicates a willingness on the part of the market makers to reveal their intended repricing model. Now what does that mean? Well,  if we are in a consolidation or point of equilibrium, if price wants to move up quickly, that will give us an indication of looking for a bullish orderblock, we donÆt want to chase price, we want to wait for price to come back down into the orderblock. Where is that going to occur? Well, what do we look for in price? The order block that the market makers leave near or at equilibrium price point. 
+
+As you can see here, thereÆs a consolidation in the blue shaded area. This is a very clear defined consolidation. ItÆs got a clear discernable high and low and the equilibrium price point is directly in the middle of the high and the low end of that range. You can simply take the Fibonacci tool , lay the fib on the high and the low in the general consolidation to find that midpoint. The market will eventually move outside of the consolidation. You can see that impulse move in the yellow-like shaded box. It moves away from the equilibrium price point and all we have to do is go back to the down candle right before that up move. That down candle(black candle) is the bullish order block. When the price comes back down into that and hits it thatÆs where we would be buying. Obviously you can see it hits that level and expands to the up side.
+What is Retracement?
+Retracement is when price moves back inside the recently created price range. 
+The Importance of Retracement: When price returns inside a recent price range, this indicates a willingness on the part of the market makers to reprice to levels not efficiently traded for fair value.  When we are thinking retracement, the go to is for ICT tools we are looking for liquidity gaps and liquidity voids. When we look for price when we see run ups real quick and run downs in price in other words real quick rallies up or real quick rallies down in price many times that range thatÆs created will want to come back in and close that in. Find an example below: 
+
+
+
+This is an example of a retracement. As you can see here the orange shaded area we have a real quick sudden movement away from a price level and that quick sudden movement creates what we call as a liquidity void. What weÆll do is weÆll wait as a trader, we wont chase price, we will  wait and say okay thereÆs going to be either an indication that get long and try to fill in that range or we can wait for the come all the way back to it and fill in the liquidity void. Once it hits it then it will probably resume going lower and thatÆs what weÆre looking for in terms of liquidity void. 
+
+
+
+What is Reversal? 
+Reversal is when price moves the opposite direction the current direction has taken in. So if we are looking for reversals, we are directly coupling that with an ICT tool of liquidity pools. 
+The Importance of Reversal: When the price reverses direction, it indicates the market makers have ran level of stops and a significant move should unfold in the new direction. 
+What to look for in price: The liquidity pools just above an old price high and just below an old price low.
+
+
+The screenshot above shows examples of reversals,every æxÆ indicates where stops would be and the market goes just above those levels and rejects and goes the other way or goes just below those levels where thereÆs and æxÆ and rejects and goes the other way. Look how many times thereÆs so many opportunities just on this one chart.
+
+What is Consolidation?
+  Consolidation is when price moves inside a clear trading range and shows no willingness to move significantly higher or lower. 
+The Importance of Consolidation: When price consolidates, it indicates the market makers are allowing orders to build on both sides of the market. Expect a new Expansion near term. 
+What we look for in price: We are waiting for the impulse move or impulse swing in price away from the equilibrium price level that is found exactly in the halfway point of the consolidation range. 
+
+ 
+
+We see here where weÆve identified a range defined specifically by the bodies of the candles not the wicks as you can see, price moves out in an expansive manner and then comes back to the equilibrium price point and then to the upside.By having an understanding of these specific characteristics and elements of trading a setup youÆll give yourself framework to first learn how to practice and study price action and eventually work towards understanding consistent setup discovery. 
+
+Month 1, Video 2: How Market Makers Condition the Market
+
+This is the second teaching for month 1, the image above is the market efficiency paradigm and what this generally is depicting is , we as new traders are collectively  part of the larger circle of uninformed money and whether we acknowledge it or not, there is a smart money group of traders out there. When we as new traders look as the market as new traders, we may or may not have the understanding that there is a smart money entity out there and we as the larger populace of retail minded trading, we think because of our sheer vastness we are the driver of this apparatus thatÆs called the marketplace and we tend to think of ourselves as the drive axle of what makes the markets go up and down and thatÆs the facade of supply and demand, thatÆs the facade of trendlines driving price when it touches it, thatÆs the facade of moving averages, crossovers causing price go up and down,thatÆs the facade thatÆs perpetuated and we are led to believe that thatÆs exactly what takes place either in books or in seminars or in webinars or from gurus. 
+
+The smart money consists of banks and the uninformed money consists of everybody in retail account. 
+Uninformed money think that the sheer vastness and the size of them is much more controlling in terms of where price is going to be driven higher or lower because of the buying and selling pressure thatÆs equated to their mere involvement in price and thatÆs a facade. 
+Fact is, the small little group of traders which form the smart money are the ones that influence the entire mechanism that we call the markets. This small group of traders is actually the drive shaft. It is the actual motor spinning the whole price higher or lower and not the big circle of uninformed money. Market is not efficient for uninformed money but it is efficient for smart money.  The banks drive price whether you want to accept it or not, thatÆs whatÆs going on and the sooner you get to that understanding and expectation of what it is thatÆs going on in price, itÆs not for your well-being, itÆs for the bankÆs well-being. ItÆs their business, they are the liquidity provider. Everyone else is liquidity. It is better to join smart money and by the end of course, we will be part of smart money. 
+
+
+Elements To a Trade Setup:
+
+In the first video, we learnt elements of a trade setup and the two characteristics to it:
+Context and framework around the trade
+Reference points in institutional order flow
+We have to be able to bridge the two, understanding expansion, retracement, reversal and consolidation and applying them to respectively order blocks, fair value gaps,liquidity voids,liquidity pools,stop runs,and equilibrium. 
+What does that mean for us for instance in the scope of price? How can we use these ideas and make them applicable to price?
+So letÆs look at the daily range ,suddenly expansion, retracement, reversal and consolidation mean something. Everyday starts with consolidation(Asian Range) after midnight thereÆs a manipulation that takes place and thatÆs expansion and it comes in a form of a judas swing. WhatÆs it doing? ItÆs making the higher low in London and thatÆs the London swing for a reversal , thatÆs a run on stops, there is another expansion move down into the New York Session and thereÆs going to be another consolidation, thatÆs the new York consolidation going into the 8:00-8:30 news embargo lift where there is going to be another injection of liquidity or a reversal, then there will be another expansion and we go into London close which is another reversal condition and then what happens,the market goes in consolidation for the rest of the day. So we have a way of looking at these things and applying these concepts to time of the day and repeating characteristics. 
+
+
+
+
+The Interbank Price Delivery Algorithm
+
+
+The daily range structure can be really broken down and simplified. It starts with a price equilibrium, thatÆs the Asian range, then thereÆs a manipulation and thatÆs always going to come by some news events either at the time of the manipulation or just before it, thatÆs the judas swing. Then weÆll see a range expansion, in order words after the higher low is formed, the range will start expanding. It will go down into 5:00AM New York time or go up into that time window depending upon the daily direction. WeÆre going to use the perspective itÆs a buy day,that means the Asian range had a small consolidation and then right after midnight New York time thereÆs a drop down in price, thatÆs the manipulation(making the false move for the low). ThereÆs a range expansion, then it goes into the reversal, thatÆs classic London open scenario where it shoots down, runs the stops and then expands again. There is another range expansion 5:00 in the morning new York time. Between 5:00 in the morning to 8:00 in the morning in that time window,the market will go back into consolidation, then itÆll have a retracement 8:00AM and 8:30AM new York time. Then itÆll have either a reversal in new York session or another expansion move. The range will expand and make rest of the day going up into 10:00 or 11:00 in the morning new York time where itÆll have a reversal again, thatÆs the London close, then the market will go into consolidation ending true day at 19001 Forex LTDs platform.  
+So we can see the interbank price delivery algorithm on a daily basis by studying these events and seeing over a period of time youÆll know what is most likely to happen. Now letÆs look at it a little bit further. 
+
+
+
+If we are looking at price delivery and this is the model that comes by way of my ICTÆs understanding  of having interbank feeds price to everyone. If weÆre focusing on delivery of price, we have to understand that it all starts with a consolidation. Nothing can happen until consolidation. Consolidation is when the marketÆs quiet. It is important because thatÆs when orders are building up in the marketplace. The market makers will allow orders to build up above and below the range . The next stage is always expansion. ItÆs not consolidation to retracement, it canÆt retrace if it hasnÆt moved anywhere. It canÆt go from consolidation to reversal because it has to come out of the consolidation. So when you see a consolidation or holding pattern,you got to think the next leg in price is going to be an explosive move or an impulse leg or an Impulse price swing. You need to see movement. By determining what that movement is in what direction is relative to the conditions youÆre trading in. Once we are in the expansion stage, then you have a choice. It can retrace and come back to the orderblock it just left behind and recapitalize that and then make another leg up or down relative to the direction itÆs moved, or once itÆs moved into expansion, it can reverse. Once it reverses, there will be another expansion, then it goes back to a consolidation. The main thing i want you to understand is it never goes consolidation  to retracement, it never does consolidation to reversal. ItÆs always consolidation to expansion and then from expansion it goes to either retracement or reversal.  It does not do consolidation to expansion and consolidation. It does not happen.  It does a consolidation to expansion , either retraces for another move into an order block and then recapitalize it and do the same direction it moved when it made an expansion or it goes from expansion to reversal. 
+When you understand this algorithm, the way it moves and the way it operates,itÆs very generic,itÆs very systematic. It has only a few options to go to and theyÆre time sensitive. They are day sensitive. They are intermarket related so when one market is moving real fast, if you understand the relationships that i am going to teach you over a couple months,you will know where the tradeÆs setting up because oneÆs being held and the oneÆs letting it run which is the importance of knowing what the euro pounds  doing for trading fiber or cable. 
+All these things are going to blend together and youÆll know exactly how these things are done. 
+
+There is a process that we are going to learn that is very generic, it will not break, it wonÆt stop working and when you look at the marketplace in your charts, it doesnÆt matter what timeframe you are looking at, the daily range was just used to teach how easy it is to see a repeating format. So simple, everyday you can find  an opportunity to study and see how it works. That same thing happens with a weekly range. The weekly range is the same thing, Sunday is open consolidation, then thereÆs an expansion move in Monday, then thereÆs a reversal on Tuesday or Monday and thereÆs another expansion move then it goes back to consolidation midweek and itÆs going to reverse or retrace.
+
+
+
+Month 1;
+Video 3:  What You Should Be focusing on right now:
+
+Create Daily Price Action logs with price charts: ICT said this is a non negotiable and this is strength in the development process. 
+Daily chart-You should start with the daily chart with 12 months worth of chart view, the bare minimum should be 9 months.
+4 hour chart- 3 months view
+1H chart-3 weeks view 
+15 minute chart-3 to 4 days view
+
+DonÆt try forecasting price movement right now
+Do-Note where price shown a quick movement from a specific level
+Do-Note recent highs and recent lows that havenÆt been retested or traded back to
+Do-Note areas on charts where price has left æcleanÆ highs or æcleanÆ lows:Basically that looks like two equal highs that formed in close proximity to one another. When we see a high go up and form and then it trades away from it for a little while and comes right back to it and it doesnÆt make a new high or maybe it falls just a little bit shorter or just a little bit above it. I note that as a clean high and usually buy stops will form above that and the market will usually come back up there and run through that. It doesnÆt mean it wonÆt continue through it but itÆs usually a big bullseye for price to want to go up into that area and the reverse is said for double buttoms or equal lows. When a low is formed and another low is equally formed in close proximity to the initial one, thatÆs a big area for sell stops to pull or build up underneath those lows and the market tends to have the willingness to go down and test that liquidity. That means the market will go down into that area whether it continues to go lower or if it goes down and then reverses. ThereÆs conditions that we look for to frame all that and you will know when to expect the specific conditions but for now, i want you to start practicing looking for that in your charts and having them noted on your charts. 
+
+Do- Note what days the weeky highs and the weekly lows form and you want to know what time of day it occurs in  or what killzone it forms in. Is the high and low of the week forming in London or is it forming in New York because all those are going to lend well to prognostication and what should happen going forward
+Note the daily high and the daily low every trading day and what killzones it forms in. 
+
+Examples:
+
+
+
+
+	The above screenshot is the daily chart for the USDCHF, ICT recommends we use one currency pair throughout this mentorship. 
+So what you want to first do is to mark the  the most recent highs and lows where market has shown a willingness to repel from. This is the first thing you want to note cus this is how you identify order blocks, liquidity voids, and all the beginning frameworks of that but you need to be able to note those recent highs and recent lows. ThatÆs what has been marked for you in the most recent screenshot above. 
+
+Next, you are going to drop to the 4H chart as shown in screenshot below: 
+
+Those same levels marked on the daily chart are the ones still showing here. More highs and more lows come into visibility by doing a lower timeframe perspective. So once you move from one chart to the other,already  marked levels are transposed immediately to the other timeframe and thatÆs what we see here. 
+
+Go through the 4H chart to looking for areas where itÆs 2 clean equal highs and equal lows and in close proximity to one another, these are marked in the 4H chart above. You also look at where the market has moved quickly away from a particular level. When it creates these real big candles or bars on your chart, you want to note that because they are going to be influential in your expectations of where price should go and where they should not go. 
+
+You then move down to the hourly chart as shown below: 
+
+In the hourly chart, you will be looking at individual days over a course of 1 or 2 weeks and you can get the weekly range defined with the hourly chart and you can look at the intraday highs and lows with an hour chart. The hourly chart is a good bellwether chart if you are a short term trader or a day trader thatÆs like the daily chart for the barometer whether you should be a buyer or a seller. 
+
+All these will be taught in details in this mentorship but for now, you will be taking all those levels you found on the daily chart and 4H and transposing those to an hourly chart.
+
+
+Month 1:
+Video 4: Equilibrium Vs. Discount:
+In this video, ICT is drawing our attention to looking at where markets are most likely to create buy conditions. It will help frame a context initially as a new trader. In this module, we will primarily be looking at the daily chart for our setups 
+
+The annotated swing is the biggest price swing.Between august 14th all the way up to the time of recording the video(September), there has only been one major swing higher and lower. 
+
+
+
+A Fibonacci has been put on the swing to illustrate equilibrium.
+This is the largest price range or the market range thatÆs presently being traded in now. 
+We can see some impulsive price moves, when we say impulsive price move or impulsive price swing, that is the indication that there has been displacement. Displacement is where someone with a lot of money comes in the marketplace and they have a strong conviction to move price higher. We already know that price is set by the central banks so if they are letting price run this high, they are offering at a higher price as long as thereÆs buyers coming in, they are going to keep offering that price there. As long as they keep finding buyers as they keep raising price up, they will keep expanding price higher and higher and higher until there is no longer interest for them to pair up orders participants. So they will allow price to retrace a little bit until they can get more buy stops against the marketplace. So you can see price went up to a point and then it retraced, they had already bought down there and are allowing price to be offered to the marketplace at higher prices. As that happens, all they are doing is selling off their positions they established at lower low(point 1)
+
+
+
+From point 2, the banks assume long positions, they accumulate long positions and once done, they allow price to go higher,once that price go higher and higher,it keeps going higher until their position is funded and they no longer want any more position held. So they are going to be looking for liquidation areas where they know that they are going to be willing participants to buy. 
+
+
+ThatÆs going to be the old high labelled as æOHÆ. Why would they want to take price above that old high? Because they are going to be buy stops, on a fund level, that means, big money, managed funds will have stop loss orders right above that high.
+The first thing to look for in price is impulsive price swings and since we are primarily looking for discount markets and  relative terms to equilibrium,we first have to understand what an impulse price swing is.
+
+
+
+We have one big strong impulsive price swing from point 1 to point 4, we donÆt need to know what caused the buy at point 1.
+
+
+We donÆt know price leg from point 2 to point 5 is there until it forms.
+
+
+Same chart has been zoomed in here,for the impulsive price swing form point 1-4, we only require price to start coming down off of that and it takes at least 4 candles no matter what time frame you are on. From when the market makes a low in such a rallying up, what you are going to look for is when you see a high formed. 
+The black candle with the arrow pointed to it is the highest,you can see a candle to the left of it(the green one). The one in the center should be the most highest and a lower candle to itÆs right. The next one which is the fourth candle then goes lower. When that happens, you start waiting for price to retrace back to equilibrium.
+You can see that it actually gets to equilibrium and thatÆs where the mouse pointer is,equilibrium is basically 50% of the Fibonacci level. As soon as price gets to this level and weÆre on the daily chart, we go down to the lower timeframe and we hunt buying opportunities. 
+This is context on how to discern when the market goes to discount and when itÆs at a premium. 	
+
+We have a price swing that moves from a low aggressively up and we donÆt do anything until we start seeing a down move and it has to happen after 3 candles basically making a swing high. 
+Characteristics of a swing high: 
+It has a high and a candle to the left that is lower, and a candle to the right that is lower.
+
+Once that swing high forms weÆre waiting for the fourth candle to start coming lower. In order words weÆre looking for 4 candles to start turning around. 
+When that happens, we now wait for the market to come back to equilibrium,ie the 50% level. Once youÆre on the 50% level, we know the market has now gone back to equilibrium so it is at fair value or at fair market value. 
+
+If you get something at fair market value, obviously you are not paying a premium but you are not really getting a discount either but itÆs still a neutral to bullish condition,that means you are not buying at an inflated price. So at the equilibrium, the market is offering an opportunity to be long
+
+As you can see, the price does rally from equilibrium to its old institutional order flow reference point which is the old high at point 4. It goes right above that previous high. The market then trades off again and goes lower. 
+
+This gives us a new range from point 1 to point 3(it was previously from point 1 to point 4) and so the same low is kept but the high of the Fibonacci is put on the new high. We keep the same low because that price point hasnÆt been violated. You can see another swing high formed at point 4 and market starts coming down. Note: when checking for the swing high, you donÆt factor in Sunday candles so if there is a Sunday candle, you skip it. 
+Once, price starts coming down, we do nothing, we wait for it to reach equilibrium before we go the lower timeframe to find entries.
+We are not treating entry signals yet, we are learning concept.
+As soon as we get to equilibrium, we are now at fair market value so the market is permitted to be bought. At the banking level, they would be able to buy at these levels because theyÆre are not at a premium based market.
+Anything below equilibrium is now a discount market.When price gets to equilibrium, they do not spend much time there and thereÆs usually a very dynamic price move away from that especially if the context behind the marketplace is bullish. 
+
+
+
+
+
+
+
+
+See in the screenshot above when the Fibonacci was stretched from point 1 all the way up to point 5, look at how beautifully the swing high formed(the highest candle whose wig touches the Fibonacci with a lower candle to the left and another lower to the right and the next candle to the candle at its right closed down). It beautifully retraced to equilibrium.
+
+When working in a bullish condition,all you have to do is always measure the new equilibrium point that price has created. 
+
+
+
+
+
+
+	Note, we donÆt take a trade if price doesnÆt come down to equilibrium.
+
+	
+
+
+
+	If the market is bullish and you see price go below an old low, that means it is collecting stops right below the lows and will go higher after collecting them.
+OTE means optimal trade entry and it is the midpoint of the 62% retracement level and the 79% retracement level. While the market is in a discount, the area where you have the highest probability of bullishness is between the 62% and the 79% levels.
+
+Price is fractal and what we have learnt works on all bullish swings

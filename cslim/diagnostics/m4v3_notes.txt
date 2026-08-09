@@ -1,0 +1,450 @@
+
+--- PAGE 292 ---
+292 
+ 
+Month 4: 
+Video 3: Reinforcing orderblock theory[Selection & Avoiding]: 
+Welcome back folks. This is the third teaching of eight from the December content of the ICT 
+mentorship. We'll be talking about reinforcing order block theory, selecting and avoiding. 
+And we're going to first talk about the bullish order block. Everything I say here you'll just 
+reverse for a bearish order block to save time. 
+ 
+Definition of a bullish order block is the lowest candle or price bar with a down close that 
+has the most range between open to close and is near a support level. Validation of a bullish 
+order block is when the high of the lowest down candle or price bar is traded through by a 
+later formed candle or price bar. Entry techniques using a bullish order block: when price 
+trades higher away from the bullish order block and then returns to the bullish order block 
+candle or price bar high, this is bullish and can be used for a bullish entry. Defining risk with 
+bullish order block: the low of the bullish order block is the location of a relatively safe stop 
+loss placement. Just below the 50 percent of the order block total range is also considered to 
+be a good location to raise the stop loss after price runs away from the bullish order block to 
+reduce risk when applicable. 
+ 
+Okay, let's take a look at a supposed support line. Now that can be in the form of an old low 
+on a long-term or higher time frame chart. It could be an old high where price has moved 
+above recently and now we're trading back down into it. So simple support-resistance ideas 
+are just enough here, but the main thing is you want to be using it on a higher time frame 
+charts like a monthly, weekly, or daily. And eventually you'll see price trade down into this 
+level that you identified as a support level. Once price trades down into the support level 
+and it could trade to it or just through it, doesn't make a difference, but what we're doing is 
+we're waiting for price to show us indications that smart money or a large body of big flows 
+or those individuals that are on an institutional level, they have a whole lot more collectively 
+than we do in terms of money, when they participate in a move, it'll be seen in price action. 
+
+--- PAGE 293 ---
+293 
+ 
+ 
+So when we have this down candle we have already assuming that this may be a bullish 
+order block. We don't know that yet until at a later time when another candle trades 
+through it. What are we specifically aiming for? We're identifying our focus. The down 
+candle's high when that is violated with a new candle and it trades through that high, now 
+we have a validated bullish order block. This candle validates the down candle as a bullish 
+order block. Now this moment, if we trade back down once that down candle or suspected 
+bullish order block's high is violated, we can now highlight that candle's high and even in the 
+very candle that broke that down candle's high if it trades back down to that down candle's 
+high or the bullish order block's high, that could be a re-traded price that which we could 
+day trade off of or enter our longs early. In other words, we don't have to wait for a later 
+time for it to trade back down to this level. Eventually price will run away. At this point, if you 
+didn't enter on a re-trade at the bullish order block's high, you're simply going to be waiting 
+for price to want to pull back. 
+ 
+Now we have indications that there has been displacement in the marketplace. That means 
+someone with a whole lot of money and a whole lot of interest wanting to see higher prices 
+is now in play. They are participating in the marketplace. This is the evidence in price action 
+that you have institutional sponsorship behind the move. Large flows or institutional traders 
+have the capacity to move price, whereas we as lower grade traders in terms of retail or 
+smaller traders in terms of respect of a bank or a large entity in an institutional capacity, we 
+can't move the marketplace but they as a whole collectively can. So what we do is we wait. 
+We're patiently watching price. We anticipate price start to retrade back down into that 
+down candle or bullish order block's high. At this moment, we can set alerts. We identify the 
+high on that candle. Now I'm using the bodies of the candles; you may end up using the 
+wick, but I want your focus primarily on the bodies of the candles. And when we talk about 
+wicks, I'm going to overlap order blocks with fair value gaps, because that's going to be the 
+answer to many of your questions as it relates to when do we use the wicks and when do we 
+use the bodies of the candles. But primarily, I want you focusing on the bodies of the candle 
+when we're talking about order blocks as a whole. 
+ 
+So at some point when we see that level, okay, that high of that order block when we're 
+close to it, we can now set an alert. We can set our platform to remind us with a text to our 
+phone or email us or however it is that you would be alerted by your platform. Some 
+platforms have pretty sophisticated means of contacting you; others are just simply an 
+audible alarm that goes off on your computer to draw your attention to a specific market. 
+But until then you're going to submit to time. You're waiting. Now, this is sometimes the 
+hardest thing to do as a trader. We identify what we're looking for in terms of an entry, but 
+you have to wait for price to get down there. While price is trading lower you should already 
+formulate an idea of what it is that you're going to do in terms of risk, how much you're 
+going to put on the trade when you buy long, and where you're aiming to get out of a 
+market with a profit. All those things should be factored in during this time. 
+ 
+
+--- PAGE 294 ---
+294 
+ 
+Eventually price will drive down into that down candle or bullish order block's high. At that 
+moment if you're in front of your charts, that's when you enter the market with a long 
+position. If you have a limit order you're going to add a few pips and preferably it's about five 
+pips, we like to add to a bullish candle, and that way the spread will be able to kick us in on a 
+long entry. But you don't have to always rely on a limit order; you can go and rate the market 
+as it hits that down candle. Now sometimes it'll drive a little bit deeper into that bullish 
+order block and that's okay, but for now I want you to try to key off your demo entries on the 
+down candle's body of the candle, the high, and the open in this instance. Any down candle, 
+the body is going to begin with the opening and it ends with the close. 
+ 
+What we're actually looking at is internal range liquidity. Now when we're trading inside the 
+range and that range is defined here, what we're looking for is an expansion up into a known 
+level of what? What's up there? Well, that's going to come in the form of external range 
+liquidity. The external range liquidity is where we're going to be looking to offset some or all 
+of our long position. Now we identified the buy level, we've entered the market. Before we 
+do this, what we should have had in mind is, ideally, where we're looking to take our profits; 
+that's up here above an old high and that's going to be in the form of buy stops. So if we're 
+buying or entering long inside of a known range at a bullish order block at internal range 
+liquidity, we're buying the liquidity it's offered at that level, we're going to be looking to sell 
+our position to willing buyers in the form of those individuals that hold buy stops above that 
+old high. That's all well and good for profit taking, but what do we do for risk? We take our 
+attention back down to that bullish order block because it's going to give you everything you 
+need for your trading plan. We identify the entry at the open of the down candle, that's our 
+buy point or five pips above it, but we want to focus our attention in the midway point of 
+that down candle. That's going to be in the form of the mean threshold. Ideally, the best 
+order blocks will not see price trade down below the midway point of the entire body of the 
+candle. You're going to measure the open to the close on the down candle to measure 
+where the middle of it is. Do not use the wicks, don't use the very high or the very low. 
+Measure your Fibonacci level, 50 level, or halfway point is the mean threshold only on a 
+bullish order block. It's the same thing said with a bearish order block, but you just don't 
+want to see price drive down deeper than the mean threshold by very much. It can stab 
+through it just by a little bit, but we primarily don't want to see it trade down there at all; 
+the better order blocks won't do it at all. And your protective sell stop is going to be below 
+the bullish order block's low or below the close. Now at this point, depending upon where 
+that low is, it could be the low of the wick, but primarily you're going to be looking at the 
+low formed by the close of the body of that candle. 
+ 
+Now again, focusing on what we anticipate in price, eventually price should show a 
+responsiveness and trade up and through our old high. When that happens, you're going to 
+be looking to take partial profits or all your profits depending upon how big that move was 
+and how much profitability you obtained. What you're actually trying to do is you're going to 
+be pairing your long exit with willing buy stops and that is essentially bullish order block 
+trading in a nutshell. It's been complicated by many people on the YouTube that's adopted it, 
+and those that want to use it on Twitter and on social media they've shared some several 
+
+--- PAGE 295 ---
+295 
+ 
+ideas, but I want to focus on the simplicity of them here. And then we're going to graduate 
+into more teaching later on in this month that are going to be subordinate sub-topics that 
+are going to be taught to you during the week of Christmas. So I'm going to give you actually 
+more amplified teaching with the order block. So this is not the entire treaty on order blocks 
+as it relates to buying and selling.  
+ 
+ 
+Okay, liquidity-based bias. If the monthly chart is bearish, the weekly chart is bearish, and 
+the daily chart is bearish, that will give us a wonderful opportunity to get in sync with 
+institutional order flow. Intraday charts—four hours and less—will be correcting and 
+retracing higher. Now, again, the markets are predisposed to go lower because the monthly, 
+weekly, and daily, we have arrived at a bias that we have seen price want to go lower. It's 
+been making lower lows and lower highs. Support levels are giving way. Resistance levels are 
+being formed and being respected. When you see those evidences in price along the lines of 
+the monthly, weekly, and daily, we can zero in on the four-hour and start looking for liquidity 
+on the buy side. In other words, there's going to be a premium built into the marketplace or 
+a rally. You're going to be looking to sell rallies protected by stop raids or returns to bearish 
+order blocks, or fair value gaps, and/or filling of a liquidity void, each offering a potential 
+low-resistance liquidity run. Shorting for a target under a recent low—what low would you 
+be targeting? Well, you want to be primarily looking to see what's near-term on the daily 
+chart. What liquidity is resting on that daily chart? Your trade on a short could be looking to 
+take advantage of buying back below a daily low where sell stops would be resting. If there is 
+an objective that you can see on the weekly chart, much in the same way we would have 
+identified something on the daily, we would be looking for that objective as well. Primarily, 
+you'll be trading in the direction of the monthly chart because that's where the large funds 
+and institutional order flow is going to begin. And then it moves down into the weekly chart, 
+then it moves down into the daily chart. The daily chart is the most dynamic of these three 
+time frames, and you'll see a lot more trades that actually counter long-term higher time 
+frame institutional order flow. So, that weekly chart will have a lot longer time period 
+required to change direction versus the daily chart that can go up and down multiple times 
+
+--- PAGE 296 ---
+296 
+ 
+and still maintain the bearish nature of the weekly and the monthly. And obviously, the 
+monthly takes a long time to change directions, and that's where the power of what I'm 
+going to teach you in this module will give you. 
+ 
+ 
+Okay, liquidity-based bias for a bullish monthly chart, bullish weekly chart, and a bullish daily 
+chart. Intraday charts, four hours or less, will be correcting and retracing lower. This is where 
+you anticipate the market to enter into a discount and seek sell-side liquidity to buy from, 
+and what we just showed you an example of was the bullish order block that you would use 
+in this instance. And we're actually going to go into the dollar index and actually break it 
+down, show you all this conceptually: protective sell stop raids or returns to bullish order 
+blocks or fair value gaps and/or filling of a liquidity void, each offering a potential low-risk 
+liquidity run, buying for a target above a recent high. Just like we were referring to earlier, 
+you're going to be aiming for something on the daily chart, preferably, and you're going to 
+be looking for buy stops above the marketplace on a daily high. It could be yesterday's high, 
+it could be last week's high that you can see on the daily chart, it could be last month's high, 
+it could be intra-week high. Okay, but try to find something on the daily chart to give you a 
+trade in terms of framing your idea that you want to be a buyer, and then preferably look for 
+something in the weekly chart that would support even higher because if you have 
+something higher on the weekly chart, you probably will have a lot better odds behind your 
+trade if you're looking to move into a level on the weekly chart and preferably the monthly 
+chart if it's bullish. You will be in sync with the institutional order flow that will be seen by 
+studying that time frame. So let's take a look at the monthly, weekly, and daily on the dollar 
+index and give a conceptual idea of what I'm referring to here using bullish order blocks. 
+ 
+ 
+
+--- PAGE 297 ---
+297 
+ 
+ 
+ 
+Let’s take a look at the resistance levels,we see points 1 and 3 to be equal highs. And price 
+came down and hit a level of support(point 2) and that happens at point 4. So we know that 
+there’ equal highs up here(points 1 and 3). So what’s above equal highs? That was taught to 
+you in September. It’s going to be in the form of buy stops. It’s too clean, too neat and price 
+came down and cleared out an old low(point 2) but we’re not going to talk about stop runs 
+here. We’re going to look at this as a support level. All we’re doing is classifying this as a 
+support. Price comes down and hits that(at point 4) and we’re going to wait to see if there is 
+a willingness to trade away from it and we see it happen here(the bull candle the down 
+arrow points to). When that occurs, this up candle(the bull candle the down arrow points to) 
+violates the down candle right before the level was hit at the support level.  
+So once we have that, we now have an orderblock that’s validated so now we can be a buyer 
+if price comes back down into this candle’s(the down candle preceding the bull candle with 
+the down arrow pointing to it) opening. That price level is 94.58. 
+So when price trades back down into it(at the candle next to the bull candle the down arrow 
+points to) as you can see here move a little bit more show more data. Price trades down into 
+it on this candle(the candle the up arrow points to). Now it quickly moves away from on this 
+candle here(the candle the up arrow points to) but at that moment when it hits this, the low 
+of that candle(the candle the up arrow points to) comes in at 94.07 and the level we had 
+here is 94.58, so about 50 pips thereabouts in terms of movement through the level. And 
+again, this is a monthly chart, so a little bit of flexibility is necessary. I'm looking for very easy 
+to find low resistance liquidity runs with a bullish order block. So when price hits it, this 
+particular month is August of 2016, so we could expect to see some bullishness in August:  
+
+--- PAGE 298 ---
+298 
+ 
+ 
+And I’ll let you see the rest of the data here, you can see clearly that the market did in fact 
+traded all the way up through the equal highs here (points 1 and 3) at the present time of 
+this recording(December 2016). 
+ 
+ 
+ 
+And we’re going to take another look at this down candle here(the one the yellow arrow 
+points to in the screenshot below) because this order block(the down candle preceding the 
+up candle the down arrow points to in the screenshot below) becomes another support 
+level. Remember if we anticipate bullish price here(where the up arrow preceding the yellow 
+arrow points to), doesn’t that by nature support price in the form of support and resistance 
+ideas? If we see a down candle off of 94.58,that could be a potential bullish order block as 
+
+--- PAGE 299 ---
+299 
+ 
+well. Remember it’s going to be trading down into that level and why are they doing 
+this?They are going down there to pick up more opportunities to get long at a cheaper price. 
+This candle’s high(the one the yellow arrow points to) got violated making it a bullish order 
+block, price returned to it and then went higher. 
+ 
+So what we’re going to do is we are going to drop down into a weekly chart and we’re going 
+to start looking at this month here and we’re going to put a vertical line line there 
+delineating everything to the right of this vertical line. 
+ 
+So now we are going to drop down into a weekly chart and we’ll see how this gives us a 
+weekly bias as well: 
+ 
+Here we go, price trades down into that level(where the cursor points to in the screenshot 
+right above), price rallies away. When price rallies away like that, we’re going to be looking 
+for an objective to go long on this level in here(where the cursor points to in the screenshot 
+
+--- PAGE 300 ---
+300 
+ 
+right below): 
+ 
+So how many times did price move away from this down candle (the one the level pointed to 
+in the screenshot right above originated from)? To be best identified again, refer back to the 
+monthly chart: 
+ 
+Prices validated that orderblock(the one the arrow points to in the screenshot right above) 
+in May. 
+
+--- PAGE 301 ---
+301 
+ 
+Okay so we’re going to move over into May(for the weekly timeframe) as shown below: 
+ 
+And that’s the orderblock level on the monthly chart(the cursor points to it in screenshot 
+right above). 
+Check the screenshot right below: 
+ 
+And price trades down into it here(at point 5 in screenshot right above) and we wait to see if 
+price wants to rally away. This(the red vertical line in screenshot right above) is the level you 
+have to be identifying because it’s the bullish order block on the monthly level. And then 
+price is trading down into that (at point 5 in screenshot right above) so what are we waiting 
+for? We’re waiting for evidence to support the idea that the large traders want to send price 
+higher.  
+Price does that using the candle the green arrow points to in the screenshot above. It 
+violates the down candle prior to it. It breaks the high of the down candle prior to it(making 
+the bear candle a bullish orderblock). So the orderblock on the monthly level can be refined 
+
+--- PAGE 302 ---
+302 
+ 
+to look as shown below: 
+ 
+We can now anticipate our refined level to be traded down into so we could be a buyer at 
+that level. We see that happen here(at point 6), price trades down back into it. Notice the 
+mean threshold of our refined bullish orderblock,price just pierces it just a little bit but does 
+not go down below the body of the down candle. What do we do? We identify we’re in a 
+range and the range is the the low at point 5 to point 5B. It’s trading back down into internal 
+range liquidity(at point 6) absorbing some more buys in the bullish orderblock. 
+We should see the responsiveness on the upside. Mind you,this is the weekly chart, look at 
+the bodies’ respect of the bullish order block’s opening. Yes it trades down through it a little 
+bit but we could be a buyer at that level here(at point 6) with the expectation that we’re 
+going to see a run right above these highs(at point 5B). So now here’s when bearish order 
+blocks are not considered. The up candle before the down move here(at point 5B) we will 
+not look to that as a selling point . Why? Because the higher timeframe is suggesting we’re 
+going to be going higher overall long term. And the long term trend direction is going to 
+drive a lot more significant price action than looking for sells. In other words we’re going to 
+be looking to be buyers on dips and selling on the rallies to take profit. 
+So that’s when you want to avoid bearish orderblocks because you’re standing in way of 
+institutional order flow. So there’s going to be buy stops above these highs here(at point 5B) 
+that we’re going to sell our longs to. They are willing buyers, great! We’re going to be willing 
+sellers if price gets up to that point from down here(point 6). 
+So now also, we have this level in here(point 6) we can be keying off of on a daily timeframe 
+and we can use a 4H timeframe as well to refine that. 
+We’re going to look at this level here(point 6), price shows the willingness to want to move 
+away and it does, we can now identify this level here(the yellow horizontal line shown in 
+
+--- PAGE 303 ---
+303 
+ 
+screenshot right below) which was the other monthly higher bullish order block: 
+ 
+We’re going to refine that order block too. Well, how are we going to refine it? Well, we 
+have this down candle(the down candle at point 6 in screenshot right above) right before 
+the price moves higher,the second up candle from point 6 trading through it validates it as a 
+bullish order block. So we can refine the yellow line as shown below: 
+ 
+Put it right on the opening. Okay, price validates the bullish orderblock right there. And you 
+can see that it trades back down through it(to the red horizontal line). In this instance we 
+didn’t get that much of a move away,we want to see price move away(to the upside). 
+Preferably what I’m looking for is a move of whatever the order block is ,now this is a 
+notation for your notes: If you see a move(here’s your order block), what I look for is 2-3 
+heights or the range if you will of the order block. I want to see at least two to three times 
+that as a rally away and that will give me a nice decent expectation to see a retracement 
+back into to getting another opportunity to buy long. We have that there, price rallies up to 
+point 7 and then comes all the way back down into what? We have this down candle(the 
+
+--- PAGE 304 ---
+304 
+ 
+bullish order block delineated with the yellow horizontal line),we could have kept that there 
+and we would have missed new any new opportunity but look what we have here; this down 
+candle(the down candle that traded through the order block created at point 6 down into 
+the red horizontal line) has traded into that old order block as well. So now we have a higher 
+bullish order block right here( the down candle that traded through the order block created 
+at point 6 down into the red horizontal line) because its open is higher than this candle(the 
+order block created at point 6) so now we can refine that same level just up to a higher 
+timeframe or not a higher timeframe but a higher order block. So now we can refine our 
+level to that that point right there(refined orderblock delineated with a green horizontal line 
+as shown in screenshot right below): 
+ 
+Price moves away and trades through this(new refined order block delineated with the 
+green horizontal line) candles high validating this as a bullish order block. Again we’re going 
+to be looking for a rally of 2-3 times the order block body’s height. So it has to trade about 
+here, here, here.Once it trades 2-3 times the order block body’s height, at that point, we 
+have a valid swing. So now we can look for a retracement back down(which it does). The 
+opening of this candle(the refined order block delineated with the green horizontal line) is 
+95.85 and the low of the candle that retraced back down into it is 95.87 so it’s only 2 pips 
+away from that. The high on this candle(the refined order block delineated with the green 
+horizontal line) is 95.86 so it still was only 1 pip away from that as well. But we always add 
+pips to our levels to get in to cover the dealing spread. 
+ 
+We also see another higher down candle that’s higher than the refined bullish order block 
+delineated with the green horizontal line. We have to move our level up to that new down 
+candle( the new down candle is delineated with a blue horizontal line as shown in 
+
+--- PAGE 305 ---
+305 
+ 
+screenshot right below): 
+ 
+Every time it creates a new down candle, that’s going to be the new potential bullish order 
+block. Price trades down into it so there is another opportunity to be a buyer here(where it 
+traded down to the blule line). 
+So that’s what we do from a higher timeframe to a lower timeframe, we refine our entries 
+and our levels with this in mind. 
+Price makes a run through, even after taking level 5B out, you can take partial profits out 
+okay, take a little bit more profits out at an old weekly high(point 0 in screenshot right 
+above) at point 7. Remember we’re looking for weekly high take profit set and then we leave 
+a little bit on and when price comes back down(to the blue line),we can now add back on 
+the positions we took off. Add them at the blue level as new longs and as price rallies 
+through to external range liquidity which is this high here(point 7). Entering at internal range 
+liquidity(at the blue level). The range from the blue marked level to point 7 is about 310 
+pips, just to get first profit at point 7 okay, and then you’re going to look for an expansion to 
+continue to take out this high(point 1) and this high(point 2) for external range liquidity. 
+What’s going to be above these highs? Buy stops, so you are going to be looking to sell to 
+those participants that would have an interest of buying above these highs(points 1 and 2). 
+ 
+
+--- PAGE 306 ---
+306 
+ 
+Refining it further into a daily timeframe, we have it as seen right below,you can see all these 
+levels get much more refined: 
+ 
+You can see the reactions about these levels again and now because these are weekly levels, 
+we can see the reactions at them on a daily basis. The levels are traded back down into 
+here(point 1 in screenshot above),bullish order block. The weekly level that we transposed 
+over here onto a daily. We can see these two down candles in a row(circled in the 
+screenshot above). On any timeframe, you have to blend them together to get one full order 
+block. In this case, it’s two down candles as one full bullish order block. So we can refine that 
+here,use the wicks and the bodies to look for that as well but we’re going to focus primarily 
+on the open on the candle. 
+And then recently,we had this down candle(the one the arrow points to in the screenshot 
+above) we talked about prior to this week’s trading(the week ending December 16,2016). In 
+a pre-market analysis I told you to this down candle(the one the arrow points to in the 
+screenshot above) prior to the big move up. I said that we would look for the mean 
+threshold of this down candle(the one the arrow points to in the screenshot above). Why? 
+Because I didn’t think we’re going to get down to the next down candle after the one the 
+arrow points to. This was because I viewed that down movement as a run on stops which we 
+would talk about in the next teaching but we traded back down into the middle point of the 
+down candle the arrow points to and then we expected to see what happen? External range 
+liquidity above this high(point 2) and then continue higher reaching into the higher 
+timeframe levels we’re looking for. 
+So you can see how dynamic working from the monthly levels to the weekly levels, refining 
+them, waiting for confirmation that there is a displacement by smart money, and then 
+simply waiting for those levels to be retraded down into, and you can refine these as small as 
+you want by going into as low as a five-minute chart if you want the ultra really, really low 
+risk entry and small stops. But you're looking for the direction from the monthly, the weekly, 
+and the daily to get you a directional bias and only focusing on those higher time frame 
+directions. 
+
+--- PAGE 307 ---
+307 
+ 
+ 
+Those order blocks are the ones that you buy. Those order blocks also will keep you from 
+taking focus on the bearish order blocks, because while bearish order blocks or the last up 
+candle prior to the down moves that you see in price, those are good objectives to take 
+profits at. 
+ 
+Okay, if you hit a bearish order block during a time of day when profit taking should take 
+place, guess what? You may not get that run above an old high. You may end up having to 
+take profits at that bearish order block and then wait for Asia and Frankfurt and then London 
+to retrace a little bit and then drive through, and then you'll see that run on a new higher 
+high for capturing external range liquidity. 
+ 
+So there's a lot of factors that you have to keep in mind, but this teaching was to focus your 
+attention more on only getting on the long bullish order blocks when the monthly and the 
+weekly and the daily show you clear indications of the markets being accumulated, and only 
+using bearish order blocks, okay, to take profits. One time of day is an impact, but if time of 
+day is not in effect, you don't even consider the bearish order block. You might expect them 
+to pause and consolidate there, but you're looking for them to drive price through an old 
+high to absorb external range liquidity because they're going to look to take profits at a 
+higher price, not just at an old high or inside of an old high. They're going to try to build a 
+premium in and expand that range because it's going to draw in more participation, more 
+excitement in the form of the funds, and that's what this business is all about, drawing 
+allocations from large institutional traders that trade managed funds and larger position 
+holders. So with that, guys, I wish you good luck and good trading. 
+ 
+ 

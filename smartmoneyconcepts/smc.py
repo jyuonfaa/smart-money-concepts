@@ -412,6 +412,7 @@ class smc:
         lowVolume = np.zeros(ohlc_len, dtype=np.float32)
         highVolume = np.zeros(ohlc_len, dtype=np.float32)
         percentage = np.zeros(ohlc_len, dtype=np.float32)
+        mean_threshold = np.zeros(ohlc_len, dtype=np.float32)
         mitigated_index = np.zeros(ohlc_len, dtype=np.int32)
         breaker = np.full(ohlc_len, False, dtype=bool)
 
@@ -431,6 +432,8 @@ class smc:
                         ob[idx] = 0
                         top_arr[idx] = 0.0
                         bottom_arr[idx] = 0.0
+
+                        mean_threshold[idx] = 0.0
                         obVolume[idx] = 0.0
                         lowVolume[idx] = 0.0
                         highVolume[idx] = 0.0
@@ -473,6 +476,8 @@ class smc:
                     ob[obIndex] = 1
                     top_arr[obIndex] = obTop
                     bottom_arr[obIndex] = obBtm
+
+                    mean_threshold[obIndex] = (_open[obIndex] + _close[obIndex]) / 2.0
                     vol_cur = _volume[close_index]
                     vol_prev1 = _volume[close_index - 1] if close_index >= 1 else 0.0
                     vol_prev2 = _volume[close_index - 2] if close_index >= 2 else 0.0
@@ -494,6 +499,8 @@ class smc:
                         ob[idx] = 0
                         top_arr[idx] = 0.0
                         bottom_arr[idx] = 0.0
+
+                        mean_threshold[idx] = 0.0
                         obVolume[idx] = 0.0
                         lowVolume[idx] = 0.0
                         highVolume[idx] = 0.0
@@ -532,6 +539,8 @@ class smc:
                     ob[obIndex] = -1
                     top_arr[obIndex] = obTop
                     bottom_arr[obIndex] = obBtm
+
+                    mean_threshold[obIndex] = (_open[obIndex] + _close[obIndex]) / 2.0
                     vol_cur = _volume[close_index]
                     vol_prev1 = _volume[close_index - 1] if close_index >= 1 else 0.0
                     vol_prev2 = _volume[close_index - 2] if close_index >= 2 else 0.0
@@ -549,6 +558,7 @@ class smc:
         obVolume = np.where(~np.isnan(ob), obVolume, np.nan)
         mitigated_index = np.where(~np.isnan(ob), mitigated_index, np.nan)
         percentage = np.where(~np.isnan(ob), percentage, np.nan)
+        mean_threshold = np.where(~np.isnan(ob), mean_threshold, np.nan)
 
         ob_series = pd.Series(ob, name="OB")
         top_series = pd.Series(top_arr, name="Top")
@@ -556,6 +566,7 @@ class smc:
         obVolume_series = pd.Series(obVolume, name="OBVolume")
         mitigated_index_series = pd.Series(mitigated_index, name="MitigatedIndex")
         percentage_series = pd.Series(percentage, name="Percentage")
+        mean_threshold_series = pd.Series(mean_threshold, name="MeanThreshold")
 
         return pd.concat(
             [
@@ -565,6 +576,7 @@ class smc:
                 obVolume_series,
                 mitigated_index_series,
                 percentage_series,
+                mean_threshold_series,
             ],
             axis=1,
         )
@@ -1351,6 +1363,549 @@ class smc:
                     ob_row = down_candles.iloc[0]
                     obs.append({'ts': ob_row.name, 'type': 'BULLISH_OB', 'high': ob_row['high'], 'low': ob_row['low']})
         return pd.DataFrame(obs)
+
+    @classmethod
+    def _mitigation_blocks(
+        cls,
+        ohlc: DataFrame,
+        swing_highs_lows: DataFrame,
+        fvg_df: DataFrame,
+        close_mitigation: bool = True,
+        structure_break_body: bool = False,
+    ) -> DataFrame:
+        """
+        ICT Month 4, Video 4 — Reinforcing Order Block Theory [Mitigation Block].
+        Pages 308-316, ICT Monthly Mentorship (December 2016).
+
+        Detects bearish mitigation blocks in a downtrend. Each block represents a
+        candle (point A) where trapped long positions will seek to liquidate on
+        retest, after the market has confirmed a lower structure via point C.
+
+        A/B/C model:
+          A = the last down-body candle (close < open) before the rally to B.
+              Source: p.309 -- "the last down candle because the last down candle
+              is where the buying took place right before that little short-term
+              rally up."
+          B = the swing high of the rally from A.
+              Source: p.310 caption -- "The Long Positions Taken From 'A' To 'B'
+              Price Swing."
+          C = the next swing low after B that breaks below A's threshold,
+              confirming bearish structure shift.
+              Source: p.309 -- "a net shift in market structure is seen here with
+              a break below that old low."
+
+        Hallmark validity (on retest):
+          - Wick overshoot of A's body is acceptable.
+          - Body violation of A = block dead.
+          Source: p.315 -- "notice the body of the candle is not violated. This is
+          hallmark characteristics of a mitigation block."
+
+        Staircase / cascading behaviour:
+          Each new leg of the downtrend creates an independent A/B/C block.
+          Source: p.313 diagram (two "Buyers Remorse" labels on successive legs);
+          p.315 -- "Every rally that sees lower prices needs to be mitigated right
+          here."
+
+        Parameters
+        ----------
+        ohlc : DataFrame
+            OHLC price data. Must contain open, high, low, close columns.
+        swing_highs_lows : DataFrame
+            Output of smc.swing_highs_lows(). Columns: HighLow (1=high, -1=low),
+            Level (wick price).
+        fvg_df : DataFrame
+            Output of smc.fvg(), index-aligned to ohlc. Used to compute the
+            FVGTarget (mean threshold of a nearby liquidity void).
+            Source: p.314-316 -- "mean threshold of the liquidity void" defined as
+            the 50% midpoint of the FVG body (Top + Bottom) / 2.
+            NOTE: smc.fvg() does not currently return a MeanThreshold column --
+            it is computed locally here as (Top + Bottom) / 2. The gap in
+            smc.fvg() is a deferred Tier 4 defect (project_forensics.md).
+        close_mitigation : bool, default True
+            SOURCED RULE. Controls the Invalidated test: whether A's body is
+            considered violated when a retest candle's *close* crosses A's body
+            top (True), or when its *high* crosses A's body top (False).
+            Source: p.315 -- "the body of the candle is not violated."
+        structure_break_body : bool, default False
+            ENGINEERING ASSUMPTION -- NOT DIRECTLY QUOTED FROM SOURCE.
+            Controls the C-point detection threshold: whether the next swing low
+            must break below A's body bottom (True) or A's wick low (False).
+            False (wick low) is the default for consistency with how swing lows
+            are defined throughout this codebase (smc.swing_highs_lows uses wick).
+            See inline comment above the C-point check in the implementation body.
+
+        Returns
+        -------
+        DataFrame, index-aligned to ohlc. Columns:
+          MB          : float, 1.0 where a bearish mitigation block is active at A.
+          ABodyTop    : float, max(open, close) of the A candle (upper body bound).
+          ABodyBottom : float, min(open, close) of the A candle (lower body bound).
+          AWickHigh   : float, high of the A candle (stop-loss reference).
+                        Source: p.315 -- "that high on this candle comes in at
+                        1.1289, so it needs to be above that in the form of a stop."
+          BLevel      : float, wick high of swing high B.
+          CLevel      : float, wick low of the C swing low (structure break).
+          FVGTarget   : float, (FVG Top + FVG Bottom) / 2 of nearest preceding FVG
+                        below A's body bottom. NaN if none found.
+          Invalidated : float, integer index into ohlc where A's body is first
+                        violated on retest. NaN if not yet invalidated.
+        """
+        _open  = ohlc["open"].values
+        _high  = ohlc["high"].values
+        _low   = ohlc["low"].values
+        _close = ohlc["close"].values
+        n = len(ohlc)
+
+        # Collect swing points in order: alternating lows (-1) and highs (1).
+        hl_vals = swing_highs_lows["HighLow"].values
+        lv_vals = swing_highs_lows["Level"].values
+
+        swing_indices = np.where(~np.isnan(hl_vals))[0]
+        if len(swing_indices) < 3:
+            # Not enough swings to form even one A/B/C triple.
+            empty = pd.DataFrame({
+                "MB":          np.full(n, np.nan),
+                "ABodyTop":    np.full(n, np.nan),
+                "ABodyBottom": np.full(n, np.nan),
+                "AWickHigh":   np.full(n, np.nan),
+                "BLevel":      np.full(n, np.nan),
+                "CLevel":      np.full(n, np.nan),
+                "FVGTarget":   np.full(n, np.nan),
+                "Invalidated": np.full(n, np.nan),
+            })
+            return empty
+
+        # Pre-allocate output arrays.
+        mb_arr          = np.full(n, np.nan)
+        a_body_top_arr  = np.full(n, np.nan)
+        a_body_bot_arr  = np.full(n, np.nan)
+        a_wick_high_arr = np.full(n, np.nan)
+        b_level_arr     = np.full(n, np.nan)
+        c_level_arr     = np.full(n, np.nan)
+        fvg_target_arr  = np.full(n, np.nan)
+        invalidated_arr = np.full(n, np.nan)
+
+        # Pre-compute FVG mean thresholds for fast lookup later.
+        # smc.fvg() returns Top and Bottom; midpoint computed locally here.
+        # NOTE: smc.fvg() has no MeanThreshold column (Tier 4 deferred defect).
+        has_fvg = ("Top" in fvg_df.columns and "Bottom" in fvg_df.columns)
+        if has_fvg:
+            fvg_top    = fvg_df["Top"].values
+            fvg_bottom = fvg_df["Bottom"].values
+            fvg_mid    = np.where(
+                ~np.isnan(fvg_top) & ~np.isnan(fvg_bottom),
+                (fvg_top + fvg_bottom) / 2.0,
+                np.nan,
+            )
+            fvg_present = ~np.isnan(fvg_mid)
+        else:
+            fvg_mid     = np.full(n, np.nan)
+            fvg_present = np.zeros(n, dtype=bool)
+
+        # Separate swing_indices into lows and highs.
+        low_idxs  = swing_indices[hl_vals[swing_indices] == -1]
+        high_idxs = swing_indices[hl_vals[swing_indices] ==  1]
+
+        for k in range(len(low_idxs)):
+            li_idx = low_idxs[k]   # ohlc integer index of swing low L_i
+
+            # Bound the A-search range using the preceding swing high.
+            preceding_highs = high_idxs[high_idxs < li_idx]
+            if len(preceding_highs) == 0:
+                continue
+            prev_high_idx = preceding_highs[-1]
+
+            # B = the swing high immediately following L_i.
+            following_highs = high_idxs[high_idxs > li_idx]
+            if len(following_highs) == 0:
+                continue
+            b_idx   = following_highs[0]
+            b_level = lv_vals[b_idx]
+
+            # C = the swing low immediately following B.
+            following_lows = low_idxs[low_idxs > b_idx]
+            if len(following_lows) == 0:
+                continue
+            c_idx   = following_lows[0]
+            c_level = lv_vals[c_idx]
+
+            # ── Step 1: Find point A ─────────────────────────────────────────
+            # Scan from prev_high_idx+1 to li_idx (inclusive), backwards.
+            # A = the LAST down-body candle (close < open) in this range.
+            # Source: p.309 -- "the last down candle."
+            search_start = prev_high_idx + 1
+            search_end   = li_idx + 1  # inclusive
+            if search_start >= search_end:
+                continue
+
+            a_idx = None
+            for ci in range(search_end - 1, search_start - 1, -1):
+                if _close[ci] < _open[ci]:
+                    a_idx = ci
+                    break
+            if a_idx is None:
+                continue
+
+            a_body_top  = max(_open[a_idx], _close[a_idx])
+            a_body_bot  = min(_open[a_idx], _close[a_idx])
+            a_wick_high = _high[a_idx]
+            a_wick_low  = _low[a_idx]
+
+            # ── Step 2: C-point structure break check ────────────────────────
+            # C-POINT STRUCTURE BREAK THRESHOLD
+            # Checking whether the next swing low breaks below A's body bottom
+            # (structure_break_body=True) or A's wick low (structure_break_body=False).
+            # NOTE: This is an engineering assumption for consistency with the video's
+            # general body-focus teaching. The source (pp.308-316) does not directly
+            # specify body vs. wick for THIS check. Do not cite this as sourced behaviour.
+            a_break_threshold = a_body_bot if structure_break_body else a_wick_low
+            if c_level >= a_break_threshold:
+                continue  # No structure shift below A -- not a mitigation block.
+
+            # ── Step 3: FVGTarget ─────────────────────────────────────────────
+            # Nearest FVG midpoint below A's body bottom, searching backwards from A.
+            # Source: p.314-316 -- "mean threshold of the liquidity void."
+            fvg_target = np.nan
+            for fi in range(a_idx - 1, -1, -1):
+                if fvg_present[fi] and fvg_mid[fi] < a_body_bot:
+                    fvg_target = fvg_mid[fi]
+                    break
+
+            # ── Step 4: Invalidation scan ─────────────────────────────────────
+            # From C forward: first candle where A's body top is violated.
+            # close_mitigation=True  -> close > a_body_top  (sourced: p.315)
+            # close_mitigation=False -> high  > a_body_top
+            invalidated_at = np.nan
+            for fi in range(c_idx + 1, n):
+                price_ref = _close[fi] if close_mitigation else _high[fi]
+                if price_ref > a_body_top:
+                    invalidated_at = float(fi)
+                    break
+
+            # ── Record at A's candle index ────────────────────────────────────
+            mb_arr[a_idx]          = 1.0
+            a_body_top_arr[a_idx]  = a_body_top
+            a_body_bot_arr[a_idx]  = a_body_bot
+            a_wick_high_arr[a_idx] = a_wick_high
+            b_level_arr[a_idx]     = b_level
+            c_level_arr[a_idx]     = c_level
+            fvg_target_arr[a_idx]  = fvg_target
+            invalidated_arr[a_idx] = invalidated_at
+
+        return pd.concat([
+            pd.Series(mb_arr,          name="MB",          index=ohlc.index),
+            pd.Series(a_body_top_arr,  name="ABodyTop",    index=ohlc.index),
+            pd.Series(a_body_bot_arr,  name="ABodyBottom", index=ohlc.index),
+            pd.Series(a_wick_high_arr, name="AWickHigh",   index=ohlc.index),
+            pd.Series(b_level_arr,     name="BLevel",      index=ohlc.index),
+            pd.Series(c_level_arr,     name="CLevel",      index=ohlc.index),
+            pd.Series(fvg_target_arr,  name="FVGTarget",   index=ohlc.index),
+            pd.Series(invalidated_arr, name="Invalidated", index=ohlc.index),
+        ], axis=1)
+
+    @classmethod
+    def _breaker_blocks(
+        cls,
+        ohlc: DataFrame,
+        swing_highs_lows: DataFrame,
+        confirm_break_close: bool = True,
+        close_break: bool = True,
+        zone_body_based: bool = True,
+        stop_wick_based: bool = True,
+    ) -> DataFrame:
+        """
+        Breaker Block detector (M4V5: Reinforcing Order Block Theory [Breaker Block],
+        pages 317-323, ICT Monthly Mentorship December 2016).
+
+        Detects bullish and bearish breaker blocks. A breaker block is the last
+        opposite-colored candle in the swing zone between two highs (bearish) or
+        two lows (bullish), confirmed when price raids the extreme stop pool beyond
+        the first high/low, and then reverses back through the mid-swing zone.
+
+        3-swing triplet model:
+          Bearish: H1 -> L_mid -> HH (raid above H1) -> reversal down through L_mid zone.
+            The BB candle = last down-body candle in [H1+1, L_mid].
+            Source p.318: "Bearish Breaker Block is a bearish range or Down Close
+            Candle in the most recent Swing Low prior to an Old High being violated."
+          Bullish: L1 -> H_mid -> LL (raid below L1) -> reversal up through H_mid zone.
+            The BB candle = last up-body candle in [L1+1, H_mid].
+            Source p.320: "Bullish Breaker Block is a bullish range or Up Close Candle
+            in the most recent Swing High prior to an Old Low being violated."
+
+        Staircase / cascading behaviour:
+          M4V5 does not describe explicit cascading (unlike M4V4's pp.312-313). Each
+          valid triplet is detected independently. Sequential triplets that naturally
+          form a staircase are detected without any enforced carry-forward logic.
+          This is a deliberate scope decision, not a deferral.
+
+        Parameters
+        ----------
+        ohlc : DataFrame
+            OHLC price data. Must contain open, high, low, close columns.
+        swing_highs_lows : DataFrame
+            Output of smc.swing_highs_lows(). Columns: HighLow (1=high, -1=low),
+            Level (wick price).
+        confirm_break_close : bool, default True
+            ENGINEERING ASSUMPTION -- M4V5 states "wait for price to come back down
+            into that old high" (p.317) and "wait for price to break through that
+            swing high" (p.320), defining the level to be broken (MidSwingLevel),
+            but contains NO language specifying whether the breaking candle must
+            CLOSE across the level, or if merely wicking across it suffices.
+            True  = close must cross MidSwingLevel to confirm structure shift.
+            False = wick extreme suffices.
+        close_break : bool, default True
+            ENGINEERING ASSUMPTION -- M4V5 pages 317-323 contain no language
+            specifying whether a retest candle must CLOSE through the BB zone
+            boundary (vs. merely wicking through it) to count as invalid.
+            Carried over from M4V4 (p.315: "the body of the candle is not violated
+            -- hallmark characteristics of a mitigation block"), which IS sourced.
+            That sourcing does NOT transfer to M4V5.
+            True  = close must cross BBBodyTop (bearish) / BBBodyBottom (bullish)
+                    to invalidate.
+            False = wick crossing suffices.
+        zone_body_based : bool, default True
+            ENGINEERING ASSUMPTION -- M4V5 pages 317-323 contain no wick/body
+            specification for the breaker zone boundaries. Defaulting to body-based
+            for consistency with _mitigation_blocks (ABodyTop/ABodyBottom) and
+            project Design Principle 2 (body-focus over wicks).
+            True  = BBBodyTop/BBBodyBottom use max/min(open, close).
+            False = BBBodyTop/BBBodyBottom use high/low.
+        stop_wick_based : bool, default True
+            ENGINEERING ASSUMPTION -- M4V5 pages 317-323 contain no stop-placement
+            guidance for the BB candle. The "Stops" labels in M4V5 diagrams refer
+            only to the raided stop pools (buy stops above old highs / sell stops
+            below old lows), NOT to trade stop placement. Wick-based stop carried
+            over from M4V4 (p.315: "that high on this candle comes in at 1.1289,
+            so it needs to be above that in the form of a stop"), which IS sourced.
+            That sourcing does NOT transfer to M4V5.
+            True  = BBWickHigh (bearish) / BBWickLow (bullish) populated from
+                    candle wick extremes.
+            False = BBWickHigh / BBWickLow are left NaN.
+
+        Returns
+        -------
+        DataFrame, index-aligned to ohlc. Columns:
+          BB            : float, -1.0 (bearish BB candle) or +1.0 (bullish BB candle).
+                          Populated ONLY for structurally confirmed breakers (where price
+                          successfully crossed MidSwingLevel). Unconfirmed raids are skipped.
+                          NaN everywhere else.
+          BBBodyTop     : float, upper body boundary of the BB candle.
+                          max(open, close) when zone_body_based=True; high otherwise.
+                          NaN where no BB.
+          BBBodyBottom  : float, lower body boundary of the BB candle.
+                          min(open, close) when zone_body_based=True; low otherwise.
+                          NaN where no BB.
+          BBWickHigh    : float, wick high (high) of the BB candle.
+                          Populated only when BB == -1.0 (bearish) and
+                          stop_wick_based=True. NaN for bullish blocks and non-BB rows.
+          BBWickLow     : float, wick low (low) of the BB candle.
+                          Populated only when BB == +1.0 (bullish) and
+                          stop_wick_based=True. NaN for bearish blocks and non-BB rows.
+          MidSwingLevel : float, price level of the mid-swing point (swing low between
+                          two highs for bearish; swing high between two lows for bullish).
+                          "the Swing Low in between the two Highs" (p.318).
+          RaidLevel     : float, price level of the raiding swing (new HH for bearish;
+                          new LL for bullish). Confirms the stop-pool raid occurred.
+          Invalidated   : float, integer index position in ohlc where the BB zone is
+                          first violated after the block forms. NaN if still live.
+        """
+        _open  = ohlc["open"].values
+        _high  = ohlc["high"].values
+        _low   = ohlc["low"].values
+        _close = ohlc["close"].values
+        n = len(ohlc)
+
+        hl_vals = swing_highs_lows["HighLow"].values
+        lv_vals = swing_highs_lows["Level"].values
+
+        swing_indices = np.where(~np.isnan(hl_vals))[0]
+
+        if len(swing_indices) < 3:
+            # Not enough swings to form even one triplet.
+            empty = pd.DataFrame({
+                "BB":            np.full(n, np.nan),
+                "BBBodyTop":     np.full(n, np.nan),
+                "BBBodyBottom":  np.full(n, np.nan),
+                "BBWickHigh":    np.full(n, np.nan),
+                "BBWickLow":     np.full(n, np.nan),
+                "MidSwingLevel": np.full(n, np.nan),
+                "RaidLevel":     np.full(n, np.nan),
+                "Invalidated":   np.full(n, np.nan),
+            }, index=ohlc.index)
+            return empty
+
+        # Pre-allocate output arrays (all NaN by default).
+        bb_arr            = np.full(n, np.nan)
+        bb_body_top_arr   = np.full(n, np.nan)
+        bb_body_bot_arr   = np.full(n, np.nan)
+        bb_wick_high_arr  = np.full(n, np.nan)
+        bb_wick_low_arr   = np.full(n, np.nan)
+        bb_mid_level_arr  = np.full(n, np.nan)
+        bb_raid_level_arr = np.full(n, np.nan)
+        bb_invalid_arr    = np.full(n, np.nan)
+
+        # ── 3-swing sliding window ─────────────────────────────────────────────
+        # Walk the confirmed swing sequence. At each step, the three most recent
+        # swing indices form the triplet [prev_swing, mid_swing, curr_swing].
+        # Triplet semantics:
+        #   Bearish: prev=H1(+1), mid=L_mid(-1), curr=H2(+1) with high[curr]>high[prev]
+        #   Bullish: prev=L1(-1), mid=H_mid(+1), curr=L2(-1) with low[curr]<low[prev]
+        # Each triplet evaluated independently -- no staircase carry-forward.
+        # ----------------------------------------------------------------------
+        for i in range(2, len(swing_indices)):
+            prev_swing = swing_indices[i - 2]
+            mid_swing  = swing_indices[i - 1]
+            curr_swing = swing_indices[i]
+
+            prev_hl = hl_vals[prev_swing]
+            mid_hl  = hl_vals[mid_swing]
+            curr_hl = hl_vals[curr_swing]
+
+            # ── BEARISH BB TRIPLET ───────────────────────────────────────────
+            if prev_hl == 1 and mid_hl == -1 and curr_hl == 1:
+                # Confirm the raid: H2 must exceed H1 (buy stops swept above old high).
+                if _high[curr_swing] <= _high[prev_swing]:
+                    continue  # No buy-stop raid — not a bearish BB triplet.
+
+                mid_swing_level = lv_vals[mid_swing]
+                raid_level      = _high[curr_swing]
+
+                # ── BB candle selection (bearish) ─────────────────────────────
+                # Search zone: [prev_swing + 1, mid_swing] inclusive on both ends.
+                # Scan backward from mid_swing to find the LAST down-body candle
+                # (close < open). This is the "last Down Close Candle in the most
+                # recent Swing Low prior to an Old High being violated." (p.318)
+                bb_candle_idx = None
+                for j in range(mid_swing, prev_swing, -1):
+                    if _close[j] < _open[j]:  # down-body BB candle
+                        bb_candle_idx = j
+                        break
+
+                if bb_candle_idx is None:
+                    continue  # No qualifying down-body BB candle in zone — skip triplet.
+
+                # ── Zone boundaries ───────────────────────────────────────────
+                # ENGINEERING ASSUMPTION (zone_body_based): see parameter docstring.
+                if zone_body_based:
+                    bb_body_top = max(_open[bb_candle_idx], _close[bb_candle_idx])
+                    bb_body_bot = min(_open[bb_candle_idx], _close[bb_candle_idx])
+                else:
+                    bb_body_top = _high[bb_candle_idx]
+                    bb_body_bot = _low[bb_candle_idx]
+
+                # ── Stop level (wick high, bearish only) ──────────────────────
+                # ENGINEERING ASSUMPTION (stop_wick_based): see parameter docstring.
+                bb_wick_h = _high[bb_candle_idx] if stop_wick_based else np.nan
+
+                # ── Two-Phase Invalidation Scan ───────────────────────────────
+                # Phase 1: Activation. Scan forward from curr_swing + 1 for the first
+                # candle that breaks down across MidSwingLevel (the market structure shift).
+                activation_idx = None
+                for k in range(curr_swing + 1, n):
+                    price_ref = _close[k] if confirm_break_close else _low[k]
+                    if price_ref < mid_swing_level:
+                        activation_idx = k
+                        break
+
+                # Phase 2: Invalidation. If activated, scan forward from activation_idx
+                # (inclusive, in case the activation candle itself whipsaws back up and closes
+                # above the zone) for a retest failure (closing above BBBodyTop).
+                if activation_idx is None:
+                    continue  # Triplet never confirmed structure shift -- not a valid breaker.
+
+                bb_invalid = np.nan
+                for k in range(activation_idx, n):
+                        price_ref = _close[k] if close_break else _high[k]
+                        if price_ref > bb_body_top:
+                            bb_invalid = float(k)
+                            break
+
+                # ── Record at the BB candle index ─────────────────────────────
+                bb_arr[bb_candle_idx]            = -1.0
+                bb_body_top_arr[bb_candle_idx]   = bb_body_top
+                bb_body_bot_arr[bb_candle_idx]   = bb_body_bot
+                bb_wick_high_arr[bb_candle_idx]  = bb_wick_h
+                bb_mid_level_arr[bb_candle_idx]  = mid_swing_level
+                bb_raid_level_arr[bb_candle_idx] = raid_level
+                bb_invalid_arr[bb_candle_idx]    = bb_invalid
+
+            # ── BULLISH BB TRIPLET ───────────────────────────────────────────
+            elif prev_hl == -1 and mid_hl == 1 and curr_hl == -1:
+                # Confirm the raid: L2 must break below L1 (sell stops swept below old low).
+                if _low[curr_swing] >= _low[prev_swing]:
+                    continue  # No sell-stop raid — not a bullish BB triplet.
+
+                mid_swing_level = lv_vals[mid_swing]
+                raid_level      = _low[curr_swing]
+
+                # ── BB candle selection (bullish) ─────────────────────────────
+                # Search zone: [prev_swing + 1, mid_swing] inclusive on both ends.
+                # Scan backward from mid_swing to find the LAST up-body candle
+                # (close > open). This is the "last Up Close Candle in the most
+                # recent Swing High prior to an Old Low being violated." (p.320)
+                bb_candle_idx = None
+                for j in range(mid_swing, prev_swing, -1):
+                    if _close[j] > _open[j]:  # up-body BB candle
+                        bb_candle_idx = j
+                        break
+
+                if bb_candle_idx is None:
+                    continue  # No qualifying up-body BB candle in zone — skip triplet.
+
+                # ── Zone boundaries ───────────────────────────────────────────
+                # ENGINEERING ASSUMPTION (zone_body_based): see parameter docstring.
+                if zone_body_based:
+                    bb_body_top = max(_open[bb_candle_idx], _close[bb_candle_idx])
+                    bb_body_bot = min(_open[bb_candle_idx], _close[bb_candle_idx])
+                else:
+                    bb_body_top = _high[bb_candle_idx]
+                    bb_body_bot = _low[bb_candle_idx]
+
+                # ── Stop level (wick low, bullish only) ───────────────────────
+                # ENGINEERING ASSUMPTION (stop_wick_based): see parameter docstring.
+                bb_wick_l = _low[bb_candle_idx] if stop_wick_based else np.nan
+
+                # ── Two-Phase Invalidation Scan ───────────────────────────────
+                # Phase 1: Activation. Scan forward from curr_swing + 1 for the first
+                # candle that breaks upward across MidSwingLevel.
+                activation_idx = None
+                for k in range(curr_swing + 1, n):
+                    price_ref = _close[k] if confirm_break_close else _high[k]
+                    if price_ref > mid_swing_level:
+                        activation_idx = k
+                        break
+
+                # Phase 2: Invalidation. If activated, scan forward from activation_idx
+                # (inclusive) for a retest failure (closing below BBBodyBottom).
+                if activation_idx is None:
+                    continue  # Triplet never confirmed structure shift -- not a valid breaker.
+
+                bb_invalid = np.nan
+                for k in range(activation_idx, n):
+                        price_ref = _close[k] if close_break else _low[k]
+                        if price_ref < bb_body_bot:
+                            bb_invalid = float(k)
+                            break
+
+                # ── Record at the BB candle index ─────────────────────────────
+                bb_arr[bb_candle_idx]            = 1.0
+                bb_body_top_arr[bb_candle_idx]   = bb_body_top
+                bb_body_bot_arr[bb_candle_idx]   = bb_body_bot
+                bb_wick_low_arr[bb_candle_idx]   = bb_wick_l
+                bb_mid_level_arr[bb_candle_idx]  = mid_swing_level
+                bb_raid_level_arr[bb_candle_idx] = raid_level
+                bb_invalid_arr[bb_candle_idx]    = bb_invalid
+
+        return pd.concat([
+            pd.Series(bb_arr,            name="BB",            index=ohlc.index),
+            pd.Series(bb_body_top_arr,   name="BBBodyTop",     index=ohlc.index),
+            pd.Series(bb_body_bot_arr,   name="BBBodyBottom",  index=ohlc.index),
+            pd.Series(bb_wick_high_arr,  name="BBWickHigh",    index=ohlc.index),
+            pd.Series(bb_wick_low_arr,   name="BBWickLow",     index=ohlc.index),
+            pd.Series(bb_mid_level_arr,  name="MidSwingLevel", index=ohlc.index),
+            pd.Series(bb_raid_level_arr, name="RaidLevel",     index=ohlc.index),
+            pd.Series(bb_invalid_arr,    name="Invalidated",   index=ohlc.index),
+        ], axis=1)
 
 
 # ================================================================
@@ -2717,3 +3272,311 @@ def _hns_signals(ohlc, patterns, htf_bias=None, htf_poi_top=None, htf_poi_btm=No
 
 smc.false_hns_patterns = _false_hns_patterns
 smc.hns_signals = _hns_signals
+
+
+import pandas as pd
+import numpy as np
+
+
+def _rejection_blocks(
+    ohlc,
+    swing_highs_lows,
+    close_invalidation=True
+):
+    """
+    Month 4, Video 6: Reinforcing Order Block Theory [Rejection Block]
+
+    Detects Rejection Blocks (bullish and bearish), which are zones formed by the
+    difference between the absolute highest/lowest wick and the highest/lowest body
+    (open/close) of a swing cluster.
+
+    Parameters
+    ----------
+    ohlc : pd.DataFrame
+        Dataframe with open, high, low, close columns and DatetimeIndex preserved.
+    swing_highs_lows : pd.DataFrame
+        Dataframe output of smc.swing_highs_lows(), must contain 'HighLow' column.
+    close_invalidation : bool, default True
+        [ENGINEERING ASSUMPTION] M4V6 does not explicitly specify invalidation rules for
+        Rejection Blocks. This parameter assumes standard Order Block / Breaker Block
+        carry-over (M4V4/M4V5): the block is invalidated when a candle body closes
+        completely beyond the extreme wick (close_invalidation=True) or when any wick
+        pierces it (False). Not sourced from M4V6 text.
+
+    CLUSTER BOUNDARY [ENGINEERING ASSUMPTION]
+    M4V6 leaves 'swing high' and 'swing low' undefined beyond the conceptual level.
+    This implementation bounds the candidate cluster to
+        [prior_opposite_swing + 1, current_swing]  (inclusive)
+    modeled on the _breaker_blocks precedent to scan the contiguous price leg that
+    built the swing extreme without introducing hallucinated mathematical boundaries.
+    Not sourced from M4V6 text.
+    """
+    rb           = pd.Series(np.nan, index=ohlc.index)
+    rb_top       = pd.Series(np.nan, index=ohlc.index)
+    rb_bottom    = pd.Series(np.nan, index=ohlc.index)
+    rb_wick_lvl  = pd.Series(np.nan, index=ohlc.index)
+    rb_body_lvl  = pd.Series(np.nan, index=ohlc.index)
+    invalidated  = pd.Series(np.nan, index=ohlc.index, dtype=object)
+
+    hl_vals      = swing_highs_lows["HighLow"].values
+    swing_indices = np.where(~np.isnan(hl_vals))[0]
+
+    # Require at least one prior swing to bound the cluster
+    for i in range(1, len(swing_indices)):
+        curr_pos   = swing_indices[i]
+        prev_pos   = swing_indices[i - 1]
+        swing_type = hl_vals[curr_pos]
+
+        # Phase 1 — Cluster scan: [prev_swing+1 .. curr_swing] inclusive
+        cluster = ohlc.iloc[prev_pos + 1 : curr_pos + 1]
+        if cluster.empty:
+            continue
+
+        if swing_type == 1:          # ---------- Bearish Rejection Block (Swing High)
+            cluster_wick_high = cluster['high'].max()
+            cluster_body_high = cluster[['open', 'close']].max().max()
+
+            # Invariant: discard zero-wick flat peak (no rejection present)
+            if cluster_wick_high == cluster_body_high:
+                continue
+
+            rb_t = cluster_wick_high
+            rb_b = cluster_body_high
+
+            rb.iloc[curr_pos]          = -1
+            rb_top.iloc[curr_pos]      = rb_t    # absolute upper bound (wick)
+            rb_bottom.iloc[curr_pos]   = rb_b    # absolute lower bound (body)
+            rb_wick_lvl.iloc[curr_pos] = rb_t    # stop reference = wick extreme
+            rb_body_lvl.iloc[curr_pos] = rb_b    # trigger = highest body (p.331)
+
+            # Phase 2 — Invalidation: first candle whose close (or wick) exceeds wick high
+            for scan_pos in range(curr_pos + 1, len(ohlc)):
+                if close_invalidation:
+                    breach = ohlc['close'].iloc[scan_pos] > rb_t
+                else:
+                    breach = ohlc['high'].iloc[scan_pos] > rb_t
+                if breach:
+                    invalidated.iloc[curr_pos] = ohlc.index[scan_pos]
+                    break
+
+        elif swing_type == -1:       # ---------- Bullish Rejection Block (Swing Low)
+            cluster_wick_low  = cluster['low'].min()
+            cluster_body_low  = cluster[['open', 'close']].min().min()
+
+            # Invariant: discard zero-wick flat bottom
+            if cluster_wick_low == cluster_body_low:
+                continue
+
+            rb_t = cluster_body_low   # upper bound = body extreme (higher value)
+            rb_b = cluster_wick_low   # lower bound = wick extreme (lower value)
+
+            rb.iloc[curr_pos]          = 1
+            rb_top.iloc[curr_pos]      = rb_t    # absolute upper bound (body)
+            rb_bottom.iloc[curr_pos]   = rb_b    # absolute lower bound (wick)
+            rb_wick_lvl.iloc[curr_pos] = rb_b    # stop reference = wick extreme
+            rb_body_lvl.iloc[curr_pos] = rb_t    # trigger = lowest body (p.332)
+
+            # Phase 2 — Invalidation: first candle whose close (or wick) breaches wick low
+            for scan_pos in range(curr_pos + 1, len(ohlc)):
+                if close_invalidation:
+                    breach = ohlc['close'].iloc[scan_pos] < rb_b
+                else:
+                    breach = ohlc['low'].iloc[scan_pos] < rb_b
+                if breach:
+                    invalidated.iloc[curr_pos] = ohlc.index[scan_pos]
+                    break
+
+    return pd.DataFrame({
+        "RB":          rb,
+        "RBTop":       rb_top,
+        "RBBottom":    rb_bottom,
+        "RBWickLevel": rb_wick_lvl,
+        "RBBodyLevel": rb_body_lvl,
+        "Invalidated": invalidated,
+    }, index=ohlc.index)
+
+
+# Wire into smc class
+from smartmoneyconcepts.smc import smc
+smc._rejection_blocks = staticmethod(_rejection_blocks)
+
+
+def _propulsion_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Month 4, Video 8: Propulsion Blocks
+    
+    Detects Propulsion Blocks -- an upgraded state of an Order Block that occurs 
+    when a new OB trades back into the zone of a previous, same-direction OB.
+    
+    ENGINEERING ASSUMPTIONS & DESIGN DECISIONS:
+    1. Color Guard: smc.ob() is known to occasionally select opposite-colored candles 
+       if they hold the extreme wick. M4V8 explicitly requires "trading another down 
+       candle into a previous down candle". Any OB from ob_df that is the wrong color 
+       is skipped to enforce structural purity.
+    2. Zone Geometry: PBTop and PBBottom are explicitly recomputed here as BODY-BASED 
+       extremes (max/min of open and close). This overrides smc.ob()'s wick-based 
+       Tier 4 defect to ensure the Mean Threshold mathematically aligns with M4V8's 
+       "half of the body's height" teaching.
+    3. Overlap Definition: The Propulsion Candle's WICK extreme must penetrate the 
+       Anchor OB's BODY-BASED zone (based on visual evidence from M4V8 p.345).
+    4. Staircase Logic: OBs are evaluated sequentially. A Propulsion Block can itself 
+       serve as the Anchor for a subsequent Propulsion Block.
+    5. Violation Mechanics: M4V8 does not specify whether the 'break' of the Mean 
+       Threshold or extreme requires a candle close or merely a wick penetration. 
+       Close-based violation was chosen as an ENGINEERING ASSUMPTION to maintain 
+       consistency with the close-invalidation standard established in both 
+       _breaker_blocks and _rejection_blocks.
+    6. Anchor Reset on Color-Guard Skip (DESIGN TRADEOFF -- CONSERVATIVE): When a 
+       color-guard skip fires (opposite-colored candle), the directional anchor is 
+       reset to None rather than preserved. This is intentionally the most conservative 
+       possible rule: ANY color mismatch clears the anchor, regardless of spatial 
+       proximity between the skipped OB and the stale anchor.
+       A narrower fix (e.g. reset only if the skipped OB price level is sufficiently 
+       far from the anchor zone) would require an unsourced proximity threshold that 
+       M4V8 never defines. To avoid that scope invention, the conservative version is 
+       used. Known tradeoff: this produces under-detection (some genuine same-direction 
+       pairings are broken by an intervening color-guard skip) in exchange for 
+       eliminating all stale long-range anchor false positives (confirmed defect: 
+       Jan-20 at 0.687 pairing with Apr-21 at 0.783 via trivially-true 0.783>=0.687).
+       This is NOT a claim that the conservative rule is more source-accurate; it is 
+       explicitly a choice to err toward false negatives over false positives pending 
+       any future sourced definition of local or proximity scope.
+       
+    Parameters:
+    ohlc : pd.DataFrame
+        Historical OHLC data.
+    ob_df : pd.DataFrame
+        The output DataFrame from smc.ob(), used to identify OB timestamps/directions.
+        
+    Returns:
+    pd.DataFrame
+        DataFrame with columns: ['PB', 'PBTop', 'PBBottom', 'AnchorOB_Index', 
+                                 'MeanThresholdViolated', 'Invalidated']
+    """
+    out = pd.DataFrame(index=ohlc.index, columns=[
+        'PB', 'PBTop', 'PBBottom', 'AnchorOB_Index', 
+        'MeanThresholdViolated', 'Invalidated'
+    ])
+    
+    if 'OB' not in ob_df.columns:
+        return out
+        
+    # Get integer indices of all confirmed OBs
+    valid_ob_idx = np.where(ob_df['OB'].notna())[0]
+    
+    last_bullish_anchor = None
+    last_bearish_anchor = None
+    
+    pb_records = []
+    
+    # Phase 1: Relational Scan (Identify Propulsion Blocks)
+    for idx in valid_ob_idx:
+        direction = ob_df['OB'].iloc[idx]
+        
+        # Guard: Ensure the OB anchor candle is the correct color.
+        # IMPORTANT: If the color guard fires, we clear last_*_anchor for that direction
+        # rather than silently carrying it forward. A skipped OB represents a real price
+        # event at a new level -- allowing a stale anchor from a distant price zone to
+        # remain pairable produces trivially-true overlap checks (confirmed defect: Jan-20
+        # anchor at 0.687 pairing with Apr-21 PB at 0.783 via 0.783 >= 0.687).
+        open_price = ohlc['open'].iloc[idx]
+        close_price = ohlc['close'].iloc[idx]
+        
+        if direction == 1 and close_price > open_price:
+            last_bullish_anchor = None  # Clear stale anchor; do not pair across this gap
+            continue
+        if direction == -1 and close_price < open_price:
+            last_bearish_anchor = None  # Clear stale anchor; do not pair across this gap
+            continue
+        
+        # Extract cluster and compute body-based metrics independently of smc.ob()
+        start = idx
+        if direction == 1:  # Bullish OB (cluster of down-close candles)
+            while start > 0 and ohlc['close'].iloc[start-1] <= ohlc['open'].iloc[start-1]:
+                start -= 1
+            cluster = ohlc.iloc[start:idx+1]
+            body_top = cluster[['open', 'close']].values.max()
+            body_bottom = cluster[['open', 'close']].values.min()
+            wick_extreme = cluster['low'].min()
+            
+            if last_bullish_anchor is not None:
+                anchor_body_top = last_bullish_anchor['body_top']
+                # Overlap Check: Wick extreme of PB penetrates Body-Top of Anchor
+                if wick_extreme <= anchor_body_top:
+                    pb_records.append({
+                        'idx': idx,
+                        'direction': 1,
+                        'body_top': body_top,
+                        'body_bottom': body_bottom,
+                        'wick_extreme': wick_extreme,
+                        'anchor_ts': ohlc.index[last_bullish_anchor['idx']]
+                    })
+            
+            # Regardless of outcome, this OB becomes the new anchor for the next check
+            last_bullish_anchor = {'idx': idx, 'body_top': body_top, 'body_bottom': body_bottom}
+            
+        elif direction == -1:  # Bearish OB (cluster of up-close candles)
+            while start > 0 and ohlc['close'].iloc[start-1] >= ohlc['open'].iloc[start-1]:
+                start -= 1
+            cluster = ohlc.iloc[start:idx+1]
+            body_top = cluster[['open', 'close']].values.max()
+            body_bottom = cluster[['open', 'close']].values.min()
+            wick_extreme = cluster['high'].max()
+            
+            if last_bearish_anchor is not None:
+                anchor_body_bottom = last_bearish_anchor['body_bottom']
+                # Overlap Check: Wick extreme of PB penetrates Body-Bottom of Anchor
+                if wick_extreme >= anchor_body_bottom:
+                    pb_records.append({
+                        'idx': idx,
+                        'direction': -1,
+                        'body_top': body_top,
+                        'body_bottom': body_bottom,
+                        'wick_extreme': wick_extreme,
+                        'anchor_ts': ohlc.index[last_bearish_anchor['idx']]
+                    })
+                    
+            last_bearish_anchor = {'idx': idx, 'body_top': body_top, 'body_bottom': body_bottom}
+
+    # Phase 2: Forward Scan (Invalidation & Mean Threshold Violation)
+    for rec in pb_records:
+        idx = rec['idx']
+        direction = rec['direction']
+        mt = (rec['body_top'] + rec['body_bottom']) / 2.0
+        wick_extreme = rec['wick_extreme']
+        
+        mt_violated = np.nan
+        invalidated = np.nan
+        
+        for k in range(idx + 1, len(ohlc)):
+            forward_close = ohlc['close'].iloc[k]
+            
+            if direction == 1:
+                # Bullish Warning: close below Mean Threshold
+                if pd.isna(mt_violated) and forward_close < mt:
+                    mt_violated = ohlc.index[k]
+                # Bullish Invalidation: close below Wick Extreme
+                if pd.isna(invalidated) and forward_close < wick_extreme:
+                    invalidated = ohlc.index[k]
+                    break
+            else:
+                # Bearish Warning: close above Mean Threshold
+                if pd.isna(mt_violated) and forward_close > mt:
+                    mt_violated = ohlc.index[k]
+                # Bearish Invalidation: close above Wick Extreme
+                if pd.isna(invalidated) and forward_close > wick_extreme:
+                    invalidated = ohlc.index[k]
+                    break
+        
+        # Map back to DatetimeIndex
+        ts = ohlc.index[idx]
+        out.loc[ts, 'PB'] = direction
+        out.loc[ts, 'PBTop'] = rec['body_top']
+        out.loc[ts, 'PBBottom'] = rec['body_bottom']
+        out.loc[ts, 'AnchorOB_Index'] = rec['anchor_ts']
+        out.loc[ts, 'MeanThresholdViolated'] = mt_violated
+        out.loc[ts, 'Invalidated'] = invalidated
+        
+    return out
+
+smc._propulsion_blocks = staticmethod(_propulsion_blocks)

@@ -61,19 +61,23 @@ def run_multi_tf_verification():
     daily_swings = smc.swing_highs_lows(eurusd_daily, swing_length=3)
     obs  = smc.ob(eurusd_daily, daily_swings)
     fvgs = smc.fvg(eurusd_daily)
+    bbs  = smc._breaker_blocks(eurusd_daily, daily_swings)
 
     htf_bias    = pd.Series(0.0,    index=eurusd_1h.index)
     htf_poi_top = pd.Series(np.nan, index=eurusd_1h.index)
     htf_poi_btm = pd.Series(np.nan, index=eurusd_1h.index)
+    htf_bb_dt   = pd.Series(None,   index=eurusd_1h.index, dtype=object)
     
     daily_bias = pd.Series(0.0, index=eurusd_daily.index)
     daily_top = pd.Series(np.nan, index=eurusd_daily.index)
     daily_btm = pd.Series(np.nan, index=eurusd_daily.index)
+    daily_bb_dt = pd.Series(None, index=eurusd_daily.index, dtype=object)
     
     current_bias  = 0.0
     active_ob_top = None
     active_ob_btm = None
     active_ob_idx = 0
+    active_bb_dt  = None
     
     pending_bias  = 0.0
     pending_ob_top = None
@@ -90,6 +94,7 @@ def run_multi_tf_verification():
         daily_bias.loc[idx] = current_bias
         daily_top.loc[idx] = active_ob_top
         daily_btm.loc[idx] = active_ob_btm
+        daily_bb_dt.loc[idx] = active_bb_dt
 
         # 2. Check if an OB formed today (it is marked retroactively by the SMC indicator, so we put it in Pending state)
         ob_val = obs['OB'].iloc[i]
@@ -114,6 +119,7 @@ def run_multi_tf_verification():
                 active_ob_top = pending_ob_top
                 active_ob_btm = pending_ob_btm
                 active_ob_idx = pending_ob_idx
+                active_bb_dt = None
                 pending_bias = 0
             elif close < pending_ob_btm:
                 pending_bias = 0
@@ -123,6 +129,7 @@ def run_multi_tf_verification():
                 active_ob_top = pending_ob_top
                 active_ob_btm = pending_ob_btm
                 active_ob_idx = pending_ob_idx
+                active_bb_dt = None
                 pending_bias = 0
             elif close > pending_ob_top:
                 pending_bias = 0
@@ -135,10 +142,26 @@ def run_multi_tf_verification():
                 
                 if rally_high > prior_high:
                     current_bias = -1  # Valid Bearish Breaker
+                    
+                    # Fetch BB POI instead of stale OB reuse
+                    sub_bbs = bbs.iloc[:i+1]
+                    bear_bbs = sub_bbs[sub_bbs['BB'] == -1]
+                    if not bear_bbs.empty:
+                        last_bb_date = bear_bbs.index[-1]
+                        last_bb = bear_bbs.iloc[-1]
+                        active_ob_top = last_bb['BBBodyTop']
+                        active_ob_btm = last_bb['BBBodyBottom']
+                        active_bb_dt = str(last_bb_date.date())
+                    else:
+                        active_ob_top = None
+                        active_ob_btm = None
+                        current_bias = 0.0
+                        active_bb_dt = None
                 else:
                     active_ob_top = None
                     active_ob_btm = None
                     current_bias = 0.0
+                    active_bb_dt = None
         elif current_bias == -1 and active_ob_top is not None:
             if close > active_ob_top:
                 prior_low = eurusd_daily['low'].iloc[max(0, active_ob_idx-10):active_ob_idx].min() if active_ob_idx > 0 else -np.inf
@@ -150,6 +173,7 @@ def run_multi_tf_verification():
                     active_ob_top = None
                     active_ob_btm = None
                     current_bias = 0.0
+                    active_bb_dt = None
 
     # Map the daily bias onto the 1H dataframe (Gap 1: 1H is the signal chart)
     for idx in eurusd_1h.index:
@@ -158,6 +182,7 @@ def run_multi_tf_verification():
             htf_bias.loc[idx] = daily_bias.loc[d]
             htf_poi_top.loc[idx] = daily_top.loc[d]
             htf_poi_btm.loc[idx] = daily_btm.loc[d]
+            htf_bb_dt.loc[idx] = daily_bb_dt.loc[d]
 
     print("Executing bar-by-bar sweeps on 1H...")
     signals = smc.hns_signals(eurusd_1h, patterns, htf_bias, htf_poi_top, htf_poi_btm)
@@ -168,6 +193,12 @@ def run_multi_tf_verification():
     print(f"Total executions fired: {len(buys) + len(sells)}")
     print(f"  - {len(buys)} Buys  (Equal-Lows Turtle Soup inside Bullish Daily POI)")
     print(f"  - {len(sells)} Sells (Equal-Highs Turtle Soup inside Bearish Daily POI)")
+    
+    for idx, row in sells.iterrows():
+        t = htf_poi_top.loc[idx] if idx in htf_poi_top.index else np.nan
+        b = htf_poi_btm.loc[idx] if idx in htf_poi_btm.index else np.nan
+        dt = htf_bb_dt.loc[idx] if idx in htf_bb_dt.index else None
+        print(f"    SELL at {idx}: POI Top={t}, POI Btm={b}, BB_Date={dt}")
 
     # ── Visualization ────────────────────────────────────────────────────────
     print("Generating Visualization...")

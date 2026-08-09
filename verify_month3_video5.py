@@ -134,9 +134,9 @@ def run_smt_verification():
         bearish_obs_gated  = smc.smt_apply_bias_filter(bearish_obs_all, smt_df, 'BEARISH')
         bullish_obs_gated  = smc.smt_apply_bias_filter(bullish_obs_all, smt_df, 'BULLISH')
         print(f"Total Bearish OBs (raw)                 : {len(bearish_obs_all)}")
-        print(f"Bearish OBs passing SMT BEARISH bias    : {len(bearish_obs_gated)}  ← short entries")
+        print(f"Bearish OBs passing SMT BEARISH bias    : {len(bearish_obs_gated)}  <- short entries")
         print(f"Total Bullish OBs (raw)                 : {len(bullish_obs_all)}")
-        print(f"Bullish OBs passing SMT BULLISH bias    : {len(bullish_obs_gated)}  ← long entries")
+        print(f"Bullish OBs passing SMT BULLISH bias    : {len(bullish_obs_gated)}  <- long entries")
         reduction_pct = (1 - (len(bearish_obs_gated) + len(bullish_obs_gated)) /
                          max(1, len(bearish_obs_all) + len(bullish_obs_all))) * 100
         print(f"Signal noise reduction                  : {reduction_pct:.1f}% filtered out")
