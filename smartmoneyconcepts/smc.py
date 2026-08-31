@@ -3580,3 +3580,148 @@ def _propulsion_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 smc._propulsion_blocks = staticmethod(_propulsion_blocks)
+
+
+def _vacuum_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame, close_fill: bool = True, close_invalidation: bool = True) -> pd.DataFrame:
+    """
+    Month 4, Video 9: Vacuum Blocks
+
+    Detects Vacuum Blocks -- a breakaway gap (up or down) representing a vacuum of liquidity
+    caused by a volatility event (e.g. NFP, FOMC, session open).
+
+    Source: ICT Mentorship 2016, Month 4 Video 9, pages 347-354.
+    Exact citation (p.342/347): "A bullish vacuum block is a gap that's created in price
+    action as a result of a volatility event."
+
+    ENGINEERING ASSUMPTIONS (both unspecified in source, p.347-354):
+    1. close_fill (default=True): Gap fill confirmed by candle CLOSE reaching VBLow (bull)
+       or VBHigh (bear). If False, a wick touch suffices. Source does not specify.
+    2. close_invalidation (default=True): Post-fill invalidation confirmed by candle CLOSE
+       beyond VBLow (bull) / VBHigh (bear). If False, a wick touch suffices.
+       Consistent with close-based convention established in _breaker_blocks,
+       _rejection_blocks, and _propulsion_blocks -- NOT sourced from M4V9.
+    3. VBOverlapsOB checks only OBs that are LIVE (unmitigated) as of the vacuum block's
+       formation candle. ob_df.MitigatedIndex == 0.0 means never mitigated; a positive
+       value means mitigated at that positional index. OBs mitigated before the VB forms
+       are excluded.
+
+    Zone Geometry (sourced from p.349 diagram):
+    - Bullish: VBLow  = close[i-1], VBHigh = open[i]
+    - Bearish: VBHigh = close[i-1], VBLow  = open[i]
+    No wick component -- purely open/close boundaries of the gap.
+
+    Parameters:
+    ohlc : pd.DataFrame
+        Historical OHLC data with DatetimeIndex.
+    ob_df : pd.DataFrame
+        Output DataFrame from smc.ob(). Must contain 'OB', 'Top', 'Bottom', 'MitigatedIndex'.
+    close_fill : bool
+        See assumption 1 above.
+    close_invalidation : bool
+        See assumption 2 above.
+
+    Returns:
+    pd.DataFrame
+        Indexed identically to ohlc. Columns:
+        'VB'               : 1 (bullish gap up) / -1 (bearish gap down) / NaN
+        'VBHigh'           : Upper boundary of the vacuum zone
+        'VBLow'            : Lower boundary of the vacuum zone
+        'VBMeanThreshold'  : Midpoint of zone (VBHigh + VBLow) / 2
+        'VBFilled'         : Timestamp when gap was fully closed, else NaN
+        'VBInvalidated'    : Timestamp when price re-entered gap post-fill, else NaN
+        'VBOverlapsOB'     : True if any LIVE ob_df zone overlaps [VBLow, VBHigh] at formation
+    """
+    out = pd.DataFrame(index=ohlc.index, columns=[
+        'VB', 'VBHigh', 'VBLow', 'VBMeanThreshold',
+        'VBFilled', 'VBInvalidated', 'VBOverlapsOB'
+    ])
+
+    if 'OB' not in ob_df.columns:
+        return out
+
+    opens  = ohlc['open'].values
+    highs  = ohlc['high'].values
+    lows   = ohlc['low'].values
+    closes = ohlc['close'].values
+    idx_array = ohlc.index
+
+    ob_dirs       = ob_df['OB'].values
+    ob_tops       = ob_df['Top'].values
+    ob_bottoms    = ob_df['Bottom'].values
+    ob_mitigated  = ob_df['MitigatedIndex'].values  # 0.0 = never mitigated; >0 = positional index of mitigation
+
+    for i in range(1, len(ohlc)):
+        gap_up   = opens[i] > closes[i-1]
+        gap_down = opens[i] < closes[i-1]
+
+        if not (gap_up or gap_down):
+            continue
+
+        direction = 1 if gap_up else -1
+
+        if direction == 1:
+            vb_low  = closes[i-1]
+            vb_high = opens[i]
+        else:
+            vb_low  = opens[i]
+            vb_high = closes[i-1]
+
+        vb_mt = (vb_high + vb_low) / 2.0
+
+        # VBOverlapsOB: check only OBs that are live (unmitigated) at formation index i.
+        # MitigatedIndex == 0.0 means never mitigated (live).
+        # MitigatedIndex > i means mitigated after this VB formed (still live at formation).
+        overlaps = False
+        for j in range(i):
+            if pd.isna(ob_dirs[j]):
+                continue
+            mit = ob_mitigated[j]
+            if pd.isna(mit):
+                continue
+            # Live if never mitigated (0.0) or mitigated after this bar
+            ob_live = (mit == 0.0) or (mit > i)
+            if ob_live and ob_bottoms[j] <= vb_high and ob_tops[j] >= vb_low:
+                overlaps = True
+                break
+
+        # Forward scan: fill and invalidation
+        filled_idx = -1
+        inval_idx  = -1
+
+        for j in range(i + 1, len(ohlc)):
+            if filled_idx == -1:
+                if direction == 1:
+                    test = closes[j] if close_fill else lows[j]
+                    if test <= vb_low:
+                        filled_idx = j
+                else:
+                    test = closes[j] if close_fill else highs[j]
+                    if test >= vb_high:
+                        filled_idx = j
+            else:
+                if direction == 1:
+                    test = closes[j] if close_invalidation else lows[j]
+                    if test < vb_low:
+                        inval_idx = j
+                        break
+                else:
+                    test = closes[j] if close_invalidation else highs[j]
+                    if test > vb_high:
+                        inval_idx = j
+                        break
+
+        ts = idx_array[i]
+        out.loc[ts, 'VB']              = direction
+        out.loc[ts, 'VBHigh']          = vb_high
+        out.loc[ts, 'VBLow']           = vb_low
+        out.loc[ts, 'VBMeanThreshold'] = vb_mt
+        out.loc[ts, 'VBOverlapsOB']    = overlaps
+        if filled_idx != -1:
+            out.loc[ts, 'VBFilled']     = idx_array[filled_idx]
+        if inval_idx != -1:
+            out.loc[ts, 'VBInvalidated'] = idx_array[inval_idx]
+
+    return out
+
+
+smc._vacuum_blocks = staticmethod(_vacuum_blocks)

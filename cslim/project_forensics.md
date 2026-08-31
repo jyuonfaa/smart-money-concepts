@@ -98,6 +98,16 @@
 - Golden Master reconfirmed unaffected throughout (HRR=471, LRR=37, 11 transitions), including after both direct file edits.
 - This is the final video in the ICT Mentorship 2016 document (page 346 of 346).
 
+**Month 4, Video 9** — status: LOCKED (this session)
+- New detector built: smc._vacuum_blocks(ohlc, ob_df, close_fill=True, close_invalidation=True). Detects vacuum blocks — breakaway gaps up or down representing a vacuum of liquidity driven by a volatility event.
+- Sourced model (pages 347-354): "A bullish vacuum block is a gap that's created in price action as a result of a volatility event." Zone geometry strictly uses the open/close boundaries of the gap (no wick component), bounding the literal empty space.
+- Wiring pattern identical to the prior four detectors (module-level function, monkey-patched via smc._vacuum_blocks = staticmethod(_vacuum_blocks)).
+- Three explicitly honesty-flagged engineering assumptions due to source silence: (1) close_fill=True (gap fill confirmed by candle close reaching the zone boundary, rather than wick penetration), (2) close_invalidation=True (post-fill invalidation confirmed by candle close breaking back beyond the origin level), (3) VBOverlapsOB uses a strict position-aware scan against ob_df['MitigatedIndex'] to ensure it only considers OBs that are live/unmitigated as of the VB's formation candle.
+- Dataset-suitability finding: Data Audit revealed 99.3% of detected VBs on 15M continuous 24h data (and ~80% on Daily) were sub-1-pip gaps caused by tick-level rounding across resampling boundaries (consecutive 23:59 and 00:00 M1 bars). The detector logic is mathematically correct and accurately detected a genuine 11.4 pip weekly open gap on Sep 18, but M1-resampled data is fundamentally unsuitable for this concept without true intrabar trading halts.
+- Visual Audit: Sep 18 17:00 (UTC) weekly open bearish block rendered via custom date-axis chart. Clearly demonstrated the Friday close / Sunday open physical gap, bounding the zone at [0.74776, 0.74890]. Accurately showed consecutive FILLED (18:45) and INVALIDATED (19:00) markers as price blew straight through the zone without stalling, verifying the close-based condition logic.
+- Golden Master reconfirmed unaffected (HRR=471, LRR=37, 11 transitions).
+
+
 ## 2. KNOWN CORE LIBRARY DEFICIENCIES (new section, four tiers)
 
 TIER 1 — Never built, no code exists anywhere in repo history:
@@ -106,7 +116,6 @@ TIER 1 — Never built, no code exists anywhere in repo history:
 - smc.monthly_range_ob()
 
 TIER 2 — Real implementation exists but orphaned/unmerged/unverified:
-- smc.breaker_blocks() — in scratch_breaker.py, runs cleanly, NOT verified against its canonical source (Month 4 Video 5), deliberately held pending that video
 - smc.ny_midnight_open() — in append_to_smc.py, never reviewed against notes at all
 
 TIER 3 — Hallucinated, never existed, do not attempt to locate:
@@ -138,8 +147,8 @@ TIER 4 — Existing function with a confirmed defect:
 - **`fvg(cls, ohlc, join_consecutive)`** | Detects Fair Value Gaps. | Built: Month 2 | Status: Original
 - **`swing_highs_lows(cls, ohlc, swing_length)`** | Detects Swing Highs and Lows. | Built: Month 2 | Status: Original
 - **`bos_choch(cls, ohlc, swing_highs_lows, close_break)`** | Detects Break of Structure and Change of Character. | Built: Month 2 | Status: Original
-- **`ob(cls, ohlc, swing_highs_lows, close_mitigation)`** | Detects Order Blocks. | Built: Month 2 | Status: Original
-- **`liquidity(cls, ohlc, swing_highs_lows, range_percent)`** | Detects Liquidity pools. | Built: Month 2 Video 3 | Status: Modified (Added `is_too_clean` flag)
+- **`ob(cls, ohlc, swing_highs_lows, close_mitigation)`** | Detects Order Blocks. | Built: Month 2 | Status: Modified (Added MeanThreshold output, M4V3)
+- **`liquidity(cls, ohlc, swing_highs_lows, range_percent)`** | Detects Liquidity pools. | Built: Month 2 Video 3 | Status: Modified (Added `is_too_clean` flag, fixed wick-based sweep bug to close-based, M3V2)
 - **`previous_high_low(cls, ohlc, time_frame)`** | Detects Previous High Low. | Built: UNKNOWN | Status: Original
 - **`sessions(cls, ohlc, session, start_time, end_time, time_zone)`** | Detects sessions. | Built: UNKNOWN | Status: Original
 - **`retracements(cls, ohlc, swing_highs_lows)`** | Detects percentage of retracement. | Built: UNKNOWN | Status: Original
@@ -160,6 +169,10 @@ TIER 4 — Existing function with a confirmed defect:
 - **`_phantom_signals(ohlc, phantoms, ob_df, htf_bias)`** | Full 3-Phase Market Maker Trap Execution Engine. | Built: Month 3 Video 7 | Status: Built from scratch
 - **`_false_hns_patterns(ohlc, swings, max_neckline_slope_pct)`** | Detects False Head and Shoulders Traps. | Built: Month 3 Video 8 | Status: Built from scratch
 - **`_hns_signals(ohlc, patterns, htf_bias, htf_poi_top, htf_poi_btm)`** | Executes trades on the diagonal neckline sweep. | Built: Month 3 Video 8 | Status: Built from scratch
+- **`_mitigation_blocks(ohlc, swing_highs_lows, fvg_df, close_mitigation=True, structure_break_body=False)`** | Detects bearish mitigation blocks. | Built: Month 4 Video 4 | Status: Built from scratch
+- **`_breaker_blocks(ohlc, swing_highs_lows, confirm_break_close=True, close_break=True, zone_body_based=True, stop_wick_based=True)`** | Detects bullish and bearish breaker blocks. | Built: Month 4 Video 5 | Status: Built from scratch
+- **`_rejection_blocks(ohlc, swing_highs_lows, close_invalidation=True)`** | Detects bullish and bearish rejection blocks. | Built: Month 4 Video 6 | Status: Built from scratch
+- **`_propulsion_blocks(ohlc, ob_df)`** | Detects propulsion blocks. | Built: Month 4 Video 8 | Status: Built from scratch
 
 ## 6. FULL FUNCTION INVENTORY — state_machine.py
 - **`PriceDeliveryState`** | Data class for logging state. | Built: UNKNOWN | Status: Built from scratch

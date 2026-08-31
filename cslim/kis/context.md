@@ -91,6 +91,7 @@ A production-ready institutional trading suite designed to encode the ICT Mentor
 | `smartmoneyconcepts/state_machine.py` | Core transition engine: detect_reversals(), turtle_soup_signals() |
 | `risk_engine.py` | Capital risk & exits scheduling engine |
 | `verify_audusd_sept.py` | Regression audit & verification script |
+| `verify_market_protraction.py` | Regression audit & verification script |
 | `verify_mean_threshold.py` | Regression audit & verification script |
 | `verify_month2_video2.py` | Regression audit & verification script |
 | `verify_month2_video3.py` | Regression audit & verification script |
@@ -103,8 +104,16 @@ A production-ready institutional trading suite designed to encode the ICT Mentor
 | `verify_month3_video3.py` | Regression audit & verification script |
 | `verify_month3_video4.py` | Regression audit & verification script |
 | `verify_month3_video5.py` | Regression audit & verification script |
+| `verify_month3_video6.py` | Regression audit & verification script |
+| `verify_month4_video1.py` | Regression audit & verification script |
+| `verify_month4_video4.py` | Regression audit & verification script |
+| `verify_month4_video5.py` | Regression audit & verification script |
+| `verify_month4_video6.py` | Regression audit & verification script |
+| `verify_month4_video8.py` | Regression audit & verification script |
 | `verify_step2.py` | Regression audit & verification script |
 | `verify_video8.py` | Regression audit & verification script |
+| `verify_video8_audusd.py` | Regression audit & verification script |
+| `verify_video8_full_history.py` | Regression audit & verification script |
 | `verify_week.py` | Regression audit & verification script |
 | `visualize_audit.py` | Plotly visualization dashboard |
 | `visualize_audit_plotly.py` | Plotly visualization dashboard |
@@ -120,6 +129,14 @@ A production-ready institutional trading suite designed to encode the ICT Mentor
 | `visualize_month3_video2.py` | Plotly visualization dashboard |
 | `visualize_month3_video3.py` | Plotly visualization dashboard |
 | `visualize_month3_video4.py` | Plotly visualization dashboard |
+| `visualize_month3_video6.py` | Plotly visualization dashboard |
+| `visualize_month3_video7.py` | Plotly visualization dashboard |
+| `visualize_month4_video1.py` | Plotly visualization dashboard |
+| `visualize_month4_video4.py` | Plotly visualization dashboard |
+| `visualize_month4_video5.py` | Plotly visualization dashboard |
+| `visualize_month4_video6.py` | Plotly visualization dashboard |
+| `visualize_month4_video8.py` | Plotly visualization dashboard |
+| `visualize_month4_video9.py` | Plotly visualization dashboard |
 | `visualize_smt_2026.py` | Plotly visualization dashboard |
 | `visualize_smt_real.py` | Plotly visualization dashboard |
 | `visualize_video4.py` | Plotly visualization dashboard |
@@ -127,6 +144,7 @@ A production-ready institutional trading suite designed to encode the ICT Mentor
 | `visualize_video6.py` | Plotly visualization dashboard |
 | `visualize_video7.py` | Plotly visualization dashboard |
 | `visualize_video8.py` | Plotly visualization dashboard |
+| `visualize_video8_gbpusd_2025.py` | Plotly visualization dashboard |
 | `AUDUSD_SEPT_2016_VALUATION.html` | Locked golden master output |
 | `BTC_FORENSIC_AUDIT.html` | Locked golden master output |
 | `ICT_CASCADE_MACRO_TARGETS.html` | Locked golden master output |
@@ -142,14 +160,23 @@ A production-ready institutional trading suite designed to encode the ICT Mentor
 | `ICT_MONTH3_VIDEO2_TOPDOWN.html` | Locked golden master output |
 | `ICT_MONTH3_VIDEO4_MONTHLY_RANGE.html` | Locked golden master output |
 | `ICT_MONTH3_VIDEO5_SMT_DIVERGENCE.html` | Locked golden master output |
+| `ICT_MONTH3_VIDEO6_MACRO_FLOW.html` | Locked golden master output |
+| `ICT_MONTH3_VIDEO7_PHANTOMS.html` | Locked golden master output |
 | `ICT_SMT_REAL_DATA.html` | Locked golden master output |
 | `ICT_VIDEO_4_TRIPLE.html` | Locked golden master output |
 | `ICT_VIDEO_5_PREMIUM.html` | Locked golden master output |
 | `ICT_VIDEO_6_VALUATION.html` | Locked golden master output |
 | `ICT_VIDEO_6_VALUATION_v2.html` | Locked golden master output |
 | `ICT_VIDEO_8_MARKET_PROTRACTION.html` | Locked golden master output |
+| `pb_bear_dec16.html` | Locked golden master output |
+| `pb_bull_nov10.html` | Locked golden master output |
+| `vb_sep18_weekly_open.html` | Locked golden master output |
 | `visualize_month3_video3.html` | Locked golden master output |
+| `visualize_month4_video1.html` | Locked golden master output |
+| `visualize_month4_video1_zoomed.html` | Locked golden master output |
 | `visualize_video7.html` | Locked golden master output |
+| `visualize_video8.html` | Locked golden master output |
+| `visualize_video8_gbpusd_2025.html` | Locked golden master output |
 
 ## 6. Development Standards [LOCKED]
 - **Stable Pathing:** Reports update master files (e.g., `ICT_VIDEO_6_VALUATION.html`, `visualize_video7.html`, `ICT_VIDEO_8_MARKET_PROTRACTION.html`, `ICT_MONTH2_VIDEO2_TURTLE_SOUP.html`).
