@@ -107,6 +107,19 @@
 - Visual Audit: Sep 18 17:00 (UTC) weekly open bearish block rendered via custom date-axis chart. Clearly demonstrated the Friday close / Sunday open physical gap, bounding the zone at [0.74776, 0.74890]. Accurately showed consecutive FILLED (18:45) and INVALIDATED (19:00) markers as price blew straight through the zone without stalling, verifying the close-based condition logic.
 - Golden Master reconfirmed unaffected (HRR=471, LRR=37, 11 transitions).
 
+**Month 4, Video 10** — status: LOCKED (this session)
+- New detector built: smc._liquidity_voids(ohlc, consolidation_df, swing_highs_lows, fvg_df, close_fill=True). Detects aggressive displacement runs (liquidity voids) departing from a consolidation zone through to the first terminating opposing swing.
+- Sourced model (pages 355-362): "A liquidity void is a range in price delivery where one side of the market liquidity is shown in wide or long one-sided ranges or candles. Price typically will want to revisit this porous range or void of contrarian liquidity." Direction named for the missing liquidity side: bearish displacement is 'buy-side' void; bullish displacement is 'sell-side' void (p.357).
+- Differentiated from smc.fvg(): Verified that smc.fvg() only captures individual wick gaps (~41-47% of a run's range), whereas the liquidity void spans the ENTIRE displacement move from consolidation exit (LVStart) to swing termination (LVEnd).
+- Zone geometry & Fill tracking: LVLow and LVHigh bound the full extremes of the run. LVFilled marks the timestamp when price covers back across the origin cap level (LVHigh for buy-side void, LVLow for sell-side void). No timeout logic applied, honoring p.356 ("They can stay open for months").
+- LVCommonGapRef: Contextual pointer into existing fvg_df for entries occurring near the cap level post-fill (pp.360-361); confirmed in diagnostic to locate true adjacent FVGs independent of the fill bar.
+- Three explicitly honesty-flagged engineering assumptions: (1) No minimum size or candle count threshold (every consolidation-exit-to-next-swing is flagged), (2) close_fill=True (close past cap level confirms fill), (3) 'at or near' cap level for common gap defined as within 20% of the void range.
+- Fixes applied during implementation: Resolved RangeIndex/positional-integer defect inside the function to ensure timestamps are returned for LVFilled/LVCommonGapRef/LVStart regardless of upstream index resets. Added explicit LVStart column to resolve formation vs. termination indexing ambiguity.
+- Data Audit: Daily (2 voids, both buy-side, 0 filled — including a 4.5-month span from Jan 14 to May 24); 15M Sep 11-18 (7 voids, 3 buy-side, 4 sell-side, 4 filled, 4 common gap refs).
+- Visual Audit: Rendered Chart 1 (AUDUSD 15M Sep 11-13 full lifecycle: LVStart, LVEnd, LVFilled at Sep 13 10:45, and distinct LVCommonGapRef at Sep 13 11:00) and Chart 2 (AUDUSD Daily Jan-Jun 2016 multi-month anchoring check spanning Jan 14 to May 24 without wall-to-wall defects).
+- Golden Master reconfirmed unaffected throughout (HRR=471, LRR=37, 11 transitions).
+
+
 
 ## 2. KNOWN CORE LIBRARY DEFICIENCIES (new section, four tiers)
 

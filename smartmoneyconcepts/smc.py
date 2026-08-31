@@ -3725,3 +3725,159 @@ def _vacuum_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame, close_fill: bool = T
 
 
 smc._vacuum_blocks = staticmethod(_vacuum_blocks)
+
+
+def _liquidity_voids(ohlc: pd.DataFrame, consolidation_df: pd.DataFrame, swing_highs_lows: pd.DataFrame, fvg_df: pd.DataFrame, close_fill: bool = True) -> pd.DataFrame:
+    """
+    Month 4 Video 10: Reinforcing Liquidity Voids [When To Anticipate Ranges to Fill In]
+    Detects aggressive displacement runs (liquidity voids) departing from a consolidation zone.
+
+    Source: ICT Mentorship 2016, Month 4 Video 10, pages 355-362.
+    Exact citation (p.355): "A liquidity void is a range in price delivery where one side of
+    the market liquidity is shown in wide or long one-sided ranges or candles. Price typically
+    will want to revisit this porous range or void of contrarian liquidity."
+
+    This is NOT the same as smc.fvg(). Verified: fvg() captures ~41-47% of a displacement
+    run via individual wick-gap pockets. The liquidity void is the ENTIRE run range -- from
+    consolidation exit to the terminating opposing swing -- not the pockets inside it.
+
+    Parameters
+    ----------
+    ohlc              : standard OHLC DataFrame (RangeIndex, as produced by smc callers)
+    consolidation_df  : output of smc.consolidation() -- used to find BreakLong/BreakShort
+    swing_highs_lows  : output of smc.swing_highs_lows() -- HighLow column (-1=low, 1=high)
+    fvg_df            : output of smc.fvg() -- used for LVCommonGapRef look-up only
+    close_fill        : ENGINEERING ASSUMPTION -- source does not specify wick vs. close for
+                        fill confirmation. Default True = confirmed by candle close past the
+                        cap level; False = wick penetration sufficient.
+
+    Returns
+    -------
+    DataFrame indexed identically to ohlc with columns:
+        LVStart          : Timestamp of the consolidation exit that originated the void.
+        MissingLiquidity : 'buy-side' (bearish run) or 'sell-side' (bullish run).
+                           Named for the liquidity NOT delivered (p.357: "There's a void of
+                           buy-side liquidity; that means the markets aggressively moved away
+                           from that consolidation... it was all on sell-side liquidity.").
+        LVLow            : Lowest low of the full displacement run (high-low extremes, no
+                           wick/body distinction -- source gives none).
+        LVHigh           : Highest high of the full displacement run.
+        LVFilled         : Timestamp when void is filled (price closes / wicks back through
+                           cap level). Null until filled. Source (p.356): "There's no specific
+                           time limit on how long it's going to take for these voids to close in."
+                           No timeout logic is added.
+        LVCommonGapRef   : ENGINEERING ASSUMPTION -- after LVFilled triggers, pointer to the
+                           first FVG in fvg_df whose zone falls at or near the cap level (within
+                           20% of the void range). This is NOT new gap-detection logic; it is a
+                           reference into the existing fvg() output used as the common gap entry
+                           context described on pages 360-361. Null if none found.
+    """
+    df = ohlc.copy()
+    n  = len(df)
+
+    # ENGINEERING ASSUMPTION: No minimum size or candle-count threshold is given in the source.
+    # Every consolidation-exit-to-next-swing move is flagged as a candidate void, full stop.
+    out_LVStart          = np.full(n, np.nan, dtype=object)
+    out_MissingLiquidity = np.full(n, np.nan, dtype=object)
+    out_LVLow            = np.full(n, np.nan)
+    out_LVHigh           = np.full(n, np.nan)
+    out_LVFilled         = np.full(n, np.nan, dtype=object)
+    out_LVCommonGapRef   = np.full(n, np.nan, dtype=object)
+
+    idx = df.index
+    # Timestamp resolution fix: when ohlc is passed after reset_index(), df.index is a
+    # RangeIndex so idx[k] would return a positional integer, not a datetime. Build a
+    # separate timestamps array that always holds actual datetimes regardless.
+    if "date" in df.columns:
+        timestamps = pd.to_datetime(df["date"]).values
+    else:
+        timestamps = pd.to_datetime(df.index).values
+
+    i = 0
+    while i < n:
+        brk_long  = consolidation_df["BreakLong"].iloc[i]
+        brk_short = consolidation_df["BreakShort"].iloc[i]
+
+        if brk_long == 1.0 or brk_short == -1.0:
+            is_bearish   = (brk_short == -1.0)
+            # After a bearish exit, look for the first swing LOW as the run terminator.
+            # After a bullish exit, look for the first swing HIGH.
+            target_swing = -1.0 if is_bearish else 1.0
+
+            end_idx = -1
+            for j in range(i + 1, n):
+                if swing_highs_lows["HighLow"].iloc[j] == target_swing:
+                    end_idx = j
+                    break
+
+            if end_idx != -1:
+                lv_low   = float(df["low"].iloc[i:end_idx + 1].min())
+                lv_high  = float(df["high"].iloc[i:end_idx + 1].max())
+                # Name the void for the missing liquidity side, not price direction.
+                void_type = "buy-side" if is_bearish else "sell-side"
+                # cap_level = the boundary price must return to in order to fill the void.
+                # Bearish void: price gapped down -> cap is LVHigh (the top of the run).
+                # Bullish void: price gapped up   -> cap is LVLow  (the bottom of the run).
+                cap_level  = lv_high if is_bearish else lv_low
+                void_range = lv_high - lv_low
+
+                # Fill tracking: scan forward from run end for close (or wick) past cap level.
+                filled_ts  = np.nan
+                filled_idx = -1
+                for k in range(end_idx + 1, n):
+                    if is_bearish:
+                        # buy-side void: fill = price closes back up through LVHigh
+                        val = df["close"].iloc[k] if close_fill else df["high"].iloc[k]
+                        if val >= cap_level:
+                            filled_ts  = pd.Timestamp(timestamps[k])
+                            filled_idx = k
+                            break
+                    else:
+                        # sell-side void: fill = price closes back down through LVLow
+                        val = df["close"].iloc[k] if close_fill else df["low"].iloc[k]
+                        if val <= cap_level:
+                            filled_ts  = pd.Timestamp(timestamps[k])
+                            filled_idx = k
+                            break
+
+                # Common Gap Reference: pointer into fvg_df, not new gap detection.
+                # ENGINEERING ASSUMPTION: "at or near" = FVG boundary within 20% of void
+                # range from cap level. Source describes this contextually (pp.360-361) but
+                # gives no numerical proximity threshold.
+                cg_ts = np.nan
+                if filled_idx != -1:
+                    near_thresh = void_range * 0.20
+                    for m in range(filled_idx, n):
+                        f_val = fvg_df["FVG"].iloc[m]
+                        if pd.notna(f_val):
+                            f_top = float(fvg_df["Top"].iloc[m])
+                            f_bot = float(fvg_df["Bottom"].iloc[m])
+                            if (abs(f_top - cap_level) <= near_thresh or
+                                    abs(f_bot - cap_level) <= near_thresh):
+                                cg_ts = pd.Timestamp(timestamps[m])
+                                break
+
+                out_LVStart[end_idx]          = pd.Timestamp(timestamps[i])
+                out_MissingLiquidity[end_idx] = void_type
+                out_LVLow[end_idx]            = lv_low
+                out_LVHigh[end_idx]           = lv_high
+                out_LVFilled[end_idx]         = filled_ts
+                out_LVCommonGapRef[end_idx]   = cg_ts
+
+                # Advance past the end of this void to avoid re-processing its bars.
+                i = end_idx
+                continue
+
+        i += 1
+
+    return pd.DataFrame({
+        "LVStart":          out_LVStart,
+        "MissingLiquidity": out_MissingLiquidity,
+        "LVLow":            out_LVLow,
+        "LVHigh":           out_LVHigh,
+        "LVFilled":         out_LVFilled,
+        "LVCommonGapRef":   out_LVCommonGapRef,
+    }, index=idx)
+
+
+smc._liquidity_voids = staticmethod(_liquidity_voids)

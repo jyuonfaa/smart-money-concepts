@@ -132,6 +132,7 @@ A production-ready institutional trading suite designed to encode the ICT Mentor
 | `visualize_month3_video6.py` | Plotly visualization dashboard |
 | `visualize_month3_video7.py` | Plotly visualization dashboard |
 | `visualize_month4_video1.py` | Plotly visualization dashboard |
+| `visualize_month4_video10.py` | Plotly visualization dashboard |
 | `visualize_month4_video4.py` | Plotly visualization dashboard |
 | `visualize_month4_video5.py` | Plotly visualization dashboard |
 | `visualize_month4_video6.py` | Plotly visualization dashboard |
@@ -168,6 +169,8 @@ A production-ready institutional trading suite designed to encode the ICT Mentor
 | `ICT_VIDEO_6_VALUATION.html` | Locked golden master output |
 | `ICT_VIDEO_6_VALUATION_v2.html` | Locked golden master output |
 | `ICT_VIDEO_8_MARKET_PROTRACTION.html` | Locked golden master output |
+| `m4v10_chart1_15m_lifecycle.html` | Locked golden master output |
+| `m4v10_chart2_daily_long_duration.html` | Locked golden master output |
 | `pb_bear_dec16.html` | Locked golden master output |
 | `pb_bull_nov10.html` | Locked golden master output |
 | `vb_sep18_weekly_open.html` | Locked golden master output |
