@@ -3881,3 +3881,168 @@ def _liquidity_voids(ohlc: pd.DataFrame, consolidation_df: pd.DataFrame, swing_h
 
 
 smc._liquidity_voids = staticmethod(_liquidity_voids)
+
+
+def _liquidity_raids(
+    ohlc: pd.DataFrame,
+    swing_highs_lows: pd.DataFrame,
+    sweep_expected_min_pips: float = 10.0,
+    sweep_expected_max_pips: float = 20.0,
+    sweep_reject_threshold_pips: float = 25.0,
+    pip_size: float = 0.0001,
+    close_revert: bool = True,
+) -> pd.DataFrame:
+    """
+    Month 4 Video 11: Reinforcing Liquidity Pools [When To Anticipate Raids]
+    Detects wick-based stop raids / liquidity pool sweeps beyond confirmed swing levels.
+
+    Source: ICT Mentorship 2016, Month 4 Video 11, pages 363-374.
+    Exact citation (p.366): "Validation: When the Low is Violated or Price moves below
+    the recent Low -- the Sell Stops become Market Orders to Sell At Market. This injects
+    Sell Side Liquidity into the Market -- typically paired with Smart Money Buyers."
+
+    Sourced rules:
+    - Violation detection is strictly WICK-BASED: resting stops trigger on touch/penetration,
+      not on candle close (p.366).
+    - Anticipated sweep depth: 10 to 20 pips on intraday timeframes (p.366).
+    - Rejection threshold: > 25 pips is excessive and likely a structural decline/rally,
+      not a stop raid (p.366).
+
+    ENGINEERING ASSUMPTIONS:
+    1. Reversion confirmation window & mechanics: The source does not specify an exact
+       bar-count scan window or wick vs close rule for confirming that price reverted back
+       beyond the violated swing level. By default, close_revert=True checks whether price
+       closes back beyond the original swing level within a 10-bar forward scan window.
+    2. Classification tag mapping: Sourced text defines 10-20 pips as the anticipated range
+       ('expected') and >25 pips as excessive ('excessive'). Sweeps < 10 pips are 'shallow'.
+       Depths falling in (sweep_expected_max_pips, sweep_reject_threshold_pips] -- i.e. (20, 25]
+       pips -- are classified under a fourth tag, 'elevated'. This fourth tier is an explicit
+       ENGINEERING ASSUMPTION: the source does not name or describe this specific zone; it only
+       gives the 10-20 'anticipated' range and the >25 'probably not a stop run' ceiling.
+       'Elevated' fills the gap between those two numbers without claiming source support it
+       doesn't have.
+
+    Parameters
+    ----------
+    ohlc                        : standard OHLC DataFrame
+    swing_highs_lows            : output of smc.swing_highs_lows()
+    sweep_expected_min_pips     : float, default 10.0 (sourced to p.366)
+    sweep_expected_max_pips     : float, default 20.0 (sourced to p.366)
+    sweep_reject_threshold_pips : float, default 25.0 (sourced to p.366)
+    pip_size                    : float, default 0.0001
+    close_revert                : bool, default True (ENGINEERING ASSUMPTION)
+
+    Returns
+    -------
+    DataFrame indexed identically to ohlc with columns:
+        RaidType       : 'high' (buy stops raided above swing high) or 'low' (sell stops raided below swing low)
+        SwingLevel     : Price level of the swing that was raided
+        SwingIndex     : Timestamp of the original swing point
+        RaidIndex      : Timestamp of the violation bar
+        SweepDepthPips : Penetration distance beyond the swing level, in pips
+        Classification : 'expected' / 'shallow' / 'elevated' / 'excessive'
+        RaidReverted   : bool, True if price reverted back beyond the swing level within the scan window
+    """
+    df = ohlc.copy()
+    n = len(df)
+
+    if "date" in df.columns:
+        timestamps = pd.to_datetime(df["date"]).values
+    else:
+        timestamps = pd.to_datetime(df.index).values
+
+    idx = df.index
+
+    out_RaidType = np.full(n, np.nan, dtype=object)
+    out_SwingLevel = np.full(n, np.nan)
+    out_SwingIndex = np.full(n, np.nan, dtype=object)
+    out_RaidIndex = np.full(n, np.nan, dtype=object)
+    out_SweepDepthPips = np.full(n, np.nan)
+    out_Classification = np.full(n, np.nan, dtype=object)
+    out_RaidReverted = np.full(n, np.nan, dtype=object)
+
+    ohlc_high = df["high"].values
+    ohlc_low = df["low"].values
+    ohlc_close = df["close"].values
+    shl_HL = swing_highs_lows["HighLow"].values
+    shl_Level = swing_highs_lows["Level"].values
+
+    # ENGINEERING ASSUMPTION: 10-bar forward window for evaluating reversion
+    revert_window = 10
+
+    for i in range(n):
+        hl = shl_HL[i]
+        if np.isnan(hl) or hl == 0:
+            continue
+
+        is_high = (hl == 1.0)
+        swing_price = shl_Level[i]
+        if np.isnan(swing_price):
+            swing_price = ohlc_high[i] if is_high else ohlc_low[i]
+
+        # Scan forward for the first subsequent bar whose WICK violates it
+        v_idx = -1
+        for j in range(i + 1, n):
+            if is_high:
+                if ohlc_high[j] > swing_price:
+                    v_idx = j
+                    break
+            else:
+                if ohlc_low[j] < swing_price:
+                    v_idx = j
+                    break
+
+        if v_idx != -1:
+            if is_high:
+                depth_pips = (ohlc_high[v_idx] - swing_price) / pip_size
+                raid_type = "high"
+            else:
+                depth_pips = (swing_price - ohlc_low[v_idx]) / pip_size
+                raid_type = "low"
+
+            # Classification
+            if depth_pips < sweep_expected_min_pips:
+                classification = "shallow"
+            elif depth_pips <= sweep_expected_max_pips:
+                classification = "expected"
+            elif depth_pips <= sweep_reject_threshold_pips:
+                classification = "elevated"
+            else:
+                classification = "excessive"
+
+            # Reversal confirmation: check if price closes/wicks back beyond the original swing level
+            # ENGINEERING ASSUMPTION: evaluated over subsequent bars within revert_window
+            reverted = False
+            for k in range(v_idx + 1, min(v_idx + 1 + revert_window, n)):
+                if is_high:
+                    val = ohlc_close[k] if close_revert else ohlc_low[k]
+                    if val <= swing_price:
+                        reverted = True
+                        break
+                else:
+                    val = ohlc_close[k] if close_revert else ohlc_high[k]
+                    if val >= swing_price:
+                        reverted = True
+                        break
+
+            out_RaidType[v_idx] = raid_type
+            out_SwingLevel[v_idx] = swing_price
+            out_SwingIndex[v_idx] = pd.Timestamp(timestamps[i])
+            out_RaidIndex[v_idx] = pd.Timestamp(timestamps[v_idx])
+            out_SweepDepthPips[v_idx] = depth_pips
+            out_Classification[v_idx] = classification
+            out_RaidReverted[v_idx] = reverted
+
+    return pd.DataFrame({
+        "RaidType": out_RaidType,
+        "SwingLevel": out_SwingLevel,
+        "SwingIndex": out_SwingIndex,
+        "RaidIndex": out_RaidIndex,
+        "SweepDepthPips": out_SweepDepthPips,
+        "Classification": out_Classification,
+        "RaidReverted": out_RaidReverted,
+    }, index=idx)
+
+
+smc._liquidity_raids = staticmethod(_liquidity_raids)
+

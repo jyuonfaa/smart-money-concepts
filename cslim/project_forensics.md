@@ -119,6 +119,16 @@
 - Visual Audit: Rendered Chart 1 (AUDUSD 15M Sep 11-13 full lifecycle: LVStart, LVEnd, LVFilled at Sep 13 10:45, and distinct LVCommonGapRef at Sep 13 11:00) and Chart 2 (AUDUSD Daily Jan-Jun 2016 multi-month anchoring check spanning Jan 14 to May 24 without wall-to-wall defects).
 - Golden Master reconfirmed unaffected throughout (HRR=471, LRR=37, 11 transitions).
 
+**Month 4, Video 11** — status: LOCKED (this session)
+- New detector: smc._liquidity_raids(ohlc, swing_highs_lows, sweep_expected_min_pips=10.0, sweep_expected_max_pips=20.0, sweep_reject_threshold_pips=25.0, pip_size=0.0001, close_revert=True), wired via staticmethod.
+- Scope deliberately split at planning stage: this video's own text (p.364) requires HTF bias for trade direction and profit target selection -- logged as a Layer 4 dependency, same class as M4V2/M4V7. The 30-50 pip stop-placement rule is a Layer 6 (risk_engine.py) concern, not built here. This detector answers only "was a swing level violated, and by how much."
+- Violation detection is sourced as wick-based (p.366's stop-order mechanic), not an engineering assumption.
+- Two engineering assumptions: close_revert mechanic/window (10-bar forward scan, unsourced), and the "elevated" classification tier (20-25 pips) filling a gap the source's own 10-20/>25 numbers don't name.
+- Real correction during build: initial classification logic silently absorbed the unsourced 20-25 pip zone into "expected," diluting the sourced 10-20 pip range's meaning. Caught against real data -- both daily 2016 examples (20.2 and 22.1 pips) fell exactly in that undefined gap -- and fixed with the properly-flagged "elevated" tier before lock.
+- Data Audit: Daily AUDUSD 2016 -- 2 raids detected (both "elevated," 1 reverted). 15M Sep 11-18 -- 3 raids (2 shallow, 1 expected; 2 reverted). Sparse daily detection consistent with established swing/consolidation-dependent pattern at that timeframe.
+- Visual Audit: passed on a single clean 15M example (2016-09-15 08:30, 10.9 pip sweep, expected classification, reverted to close 0.74695 below the 0.74956 swing level).
+- Golden Master reconfirmed unaffected throughout (HRR=471, LRR=37, 11 transitions).
+
 
 
 ## 2. KNOWN CORE LIBRARY DEFICIENCIES (new section, four tiers)
