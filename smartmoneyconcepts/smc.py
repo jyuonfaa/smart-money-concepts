@@ -4046,3 +4046,504 @@ def _liquidity_raids(
 
 smc._liquidity_raids = staticmethod(_liquidity_raids)
 
+
+def _measured_moves(
+    ohlc: pd.DataFrame,
+    swing_highs_lows: pd.DataFrame,
+    max_peak_diff_pips: float = 20.0,
+    pip_size: float = 0.0001,
+    breakout_close: bool = True,
+    target_hit_close: bool = True,
+) -> pd.DataFrame:
+    """
+    Month 4, Video 14: Market Maker Trap: Double Tops and Bottoms (pages 397-403)
+
+    Detects Double Top and Double Bottom measured-move projections. Activates on confirmed
+    breakout through the second peak/trough and projects a 1:1 continuation expansion target.
+
+    Parameters
+    ----------
+    ohlc : pd.DataFrame
+        Dataframe with open, high, low, close columns and preserved DatetimeIndex.
+    swing_highs_lows : pd.DataFrame
+        Dataframe output of smc.swing_highs_lows(), must contain 'HighLow' and 'Level' columns.
+    max_peak_diff_pips : float, default 20.0
+        ENGINEERING ASSUMPTION: The source describes "relatively equal highs" (p.397)
+        "in close proximity to one another" (p.398) but specifies no explicit numerical
+        threshold for equality. Default 20.0 pips is selected based on ICT's explicit 10-20
+        pip stop-run range in M4V14 (p.402: "usually we expect a 20 pip, 10-20 pip range run
+        above an old high or 10-20 pip run below an old low for stop runs") and aligns with
+        M4V11's sweep_expected_max_pips=20.0.
+    pip_size : float, default 0.0001
+        Pip value for price difference calculations (standard 4-decimal FX pip).
+    breakout_close : bool, default True
+        ENGINEERING ASSUMPTION: Source describes price breaking through the double top/bottom
+        level but does not explicitly specify wick vs close for confirming the breakout.
+        If True, requires candle close beyond Peak 2 level; if False, wick penetration suffices.
+    target_hit_close : bool, default True
+        ENGINEERING ASSUMPTION: Evaluates whether the projected target was reached.
+        If True, requires candle close at or beyond ProjectedTarget; if False, wick penetration suffices.
+
+    Measured-Move Anchor Choice (ENGINEERING ASSUMPTION):
+        The source describes the two peaks as "relatively equal" (p.397) but does not
+        explicitly state which peak to anchor the measured move projection from.
+        This implementation anchors to the outer extreme: dt_high = max(Peak1Level, Peak2Level)
+        for double tops, and db_low = min(Peak1Level, Peak2Level) for double bottoms.
+        Rationale: In institutional order flow, the outermost extreme represents the true
+        defensive boundary of the pattern where the final cluster of buy/sell stops sits.
+        Until the higher peak (for tops) or lower trough (for bottoms) is breached, the full
+        range of liquidity is not unlocked, making the outer extreme the institutional
+        baseline from which the 1:1 expansion target is projected.
+
+    Returns
+    -------
+    pd.DataFrame indexed identically to ohlc with columns:
+        DoubleType       : 'top' or 'bottom'
+        Peak1Level       : float, price level of the first swing peak/trough
+        Peak1Index       : Timestamp, timestamp of the first swing peak/trough
+        InterveningLevel : float, price level of the intervening swing trough/peak
+        InterveningIndex : Timestamp, timestamp of the intervening swing trough/peak
+        Peak2Level       : float, price level of the second swing peak/trough
+        Peak2Index       : Timestamp, timestamp of the second swing peak/trough
+        BreakoutIndex    : Timestamp, timestamp of the candle that confirmed the breakout
+        MeasuredRange    : float, absolute distance between double extreme and intervening swing
+        ProjectedTarget  : float, 1:1 expansion objective projected in breakout direction
+        TargetHit        : bool, True if price subsequently reached ProjectedTarget
+    """
+    df = ohlc.copy()
+    n = len(df)
+
+    if "date" in df.columns:
+        timestamps = pd.to_datetime(df["date"]).values
+    else:
+        timestamps = pd.to_datetime(df.index).values
+
+    idx = df.index
+
+    out_DoubleType = np.full(n, np.nan, dtype=object)
+    out_Peak1Level = np.full(n, np.nan)
+    out_Peak1Index = np.full(n, np.nan, dtype=object)
+    out_InterveningLevel = np.full(n, np.nan)
+    out_InterveningIndex = np.full(n, np.nan, dtype=object)
+    out_Peak2Level = np.full(n, np.nan)
+    out_Peak2Index = np.full(n, np.nan, dtype=object)
+    out_BreakoutIndex = np.full(n, np.nan, dtype=object)
+    out_MeasuredRange = np.full(n, np.nan)
+    out_ProjectedTarget = np.full(n, np.nan)
+    out_TargetHit = np.full(n, np.nan, dtype=object)
+
+    _high = df["high"].values
+    _low = df["low"].values
+    _close = df["close"].values
+
+    shl_HL = swing_highs_lows["HighLow"].values
+    shl_Level = swing_highs_lows["Level"].values
+    swing_indices = np.where(~np.isnan(shl_HL) & (shl_HL != 0))[0]
+
+    for i in range(2, len(swing_indices)):
+        p1 = swing_indices[i - 2]
+        mid = swing_indices[i - 1]
+        p2 = swing_indices[i]
+
+        hl1 = shl_HL[p1]
+        hl_mid = shl_HL[mid]
+        hl2 = shl_HL[p2]
+
+        # Double Top: swing high -> swing low -> swing high
+        if hl1 == 1 and hl_mid == -1 and hl2 == 1:
+            p1_lvl = shl_Level[p1] if not np.isnan(shl_Level[p1]) else _high[p1]
+            mid_lvl = shl_Level[mid] if not np.isnan(shl_Level[mid]) else _low[mid]
+            p2_lvl = shl_Level[p2] if not np.isnan(shl_Level[p2]) else _high[p2]
+
+            # ENGINEERING ASSUMPTION: Proximity/equality filter between the two peaks (p.397-398)
+            diff_pips = abs(p1_lvl - p2_lvl) / pip_size
+            if diff_pips > max_peak_diff_pips:
+                continue
+
+            # ENGINEERING ASSUMPTION: Measured-move anchor choice.
+            # The source describes two "relatively equal" peaks (p.397) without specifying
+            # which peak to anchor the measurement to. We anchor to max(p1_lvl, p2_lvl) because
+            # the higher peak represents the outermost defensive extreme where all buy stops pool.
+            # Only once this extreme is cleared is the full consolidation range expanded 1:1.
+            dt_high = max(p1_lvl, p2_lvl)
+            m_range = dt_high - mid_lvl
+            target = dt_high + m_range
+
+            # Breakout scan: first bar after p2 where price breaks through Peak 2
+            bo_idx = None
+            for k in range(p2 + 1, n):
+                val = _close[k] if breakout_close else _high[k]
+                if val > p2_lvl:
+                    bo_idx = k
+                    break
+
+            if bo_idx is None:
+                continue  # Only trigger once price actually breaks through Peak 2
+
+            # TargetHit scan: forward scan from bo_idx
+            target_hit = False
+            for k in range(bo_idx, n):
+                val = _close[k] if target_hit_close else _high[k]
+                if val >= target:
+                    target_hit = True
+                    break
+
+            out_DoubleType[p2] = "top"
+            out_Peak1Level[p2] = p1_lvl
+            out_Peak1Index[p2] = pd.Timestamp(timestamps[p1])
+            out_InterveningLevel[p2] = mid_lvl
+            out_InterveningIndex[p2] = pd.Timestamp(timestamps[mid])
+            out_Peak2Level[p2] = p2_lvl
+            out_Peak2Index[p2] = pd.Timestamp(timestamps[p2])
+            out_BreakoutIndex[p2] = pd.Timestamp(timestamps[bo_idx])
+            out_MeasuredRange[p2] = m_range
+            out_ProjectedTarget[p2] = target
+            out_TargetHit[p2] = target_hit
+
+        # Double Bottom: swing low -> swing high -> swing low
+        elif hl1 == -1 and hl_mid == 1 and hl2 == -1:
+            p1_lvl = shl_Level[p1] if not np.isnan(shl_Level[p1]) else _low[p1]
+            mid_lvl = shl_Level[mid] if not np.isnan(shl_Level[mid]) else _high[mid]
+            p2_lvl = shl_Level[p2] if not np.isnan(shl_Level[p2]) else _low[p2]
+
+            # ENGINEERING ASSUMPTION: Proximity/equality filter between the two troughs (p.397-398)
+            diff_pips = abs(p1_lvl - p2_lvl) / pip_size
+            if diff_pips > max_peak_diff_pips:
+                continue
+
+            # ENGINEERING ASSUMPTION: Measured-move anchor choice.
+            # Mirrored: We anchor to min(p1_lvl, p2_lvl) because the lower trough represents
+            # the outermost defensive floor where all sell stops pool, establishing the
+            # baseline from which the 1:1 downward expansion is projected.
+            db_low = min(p1_lvl, p2_lvl)
+            m_range = mid_lvl - db_low
+            target = db_low - m_range
+
+            # Breakout scan: first bar after p2 where price breaks through Peak 2 (trough)
+            bo_idx = None
+            for k in range(p2 + 1, n):
+                val = _close[k] if breakout_close else _low[k]
+                if val < p2_lvl:
+                    bo_idx = k
+                    break
+
+            if bo_idx is None:
+                continue  # Only trigger once price actually breaks through Peak 2
+
+            # TargetHit scan: forward scan from bo_idx
+            target_hit = False
+            for k in range(bo_idx, n):
+                val = _close[k] if target_hit_close else _low[k]
+                if val <= target:
+                    target_hit = True
+                    break
+
+            out_DoubleType[p2] = "bottom"
+            out_Peak1Level[p2] = p1_lvl
+            out_Peak1Index[p2] = pd.Timestamp(timestamps[p1])
+            out_InterveningLevel[p2] = mid_lvl
+            out_InterveningIndex[p2] = pd.Timestamp(timestamps[mid])
+            out_Peak2Level[p2] = p2_lvl
+            out_Peak2Index[p2] = pd.Timestamp(timestamps[p2])
+            out_BreakoutIndex[p2] = pd.Timestamp(timestamps[bo_idx])
+            out_MeasuredRange[p2] = m_range
+            out_ProjectedTarget[p2] = target
+            out_TargetHit[p2] = target_hit
+
+    return pd.DataFrame({
+        "DoubleType": out_DoubleType,
+        "Peak1Level": out_Peak1Level,
+        "Peak1Index": out_Peak1Index,
+        "InterveningLevel": out_InterveningLevel,
+        "InterveningIndex": out_InterveningIndex,
+        "Peak2Level": out_Peak2Level,
+        "Peak2Index": out_Peak2Index,
+        "BreakoutIndex": out_BreakoutIndex,
+        "MeasuredRange": out_MeasuredRange,
+        "ProjectedTarget": out_ProjectedTarget,
+        "TargetHit": out_TargetHit,
+    }, index=idx)
+
+
+smc._measured_moves = staticmethod(_measured_moves)
+
+
+
+def _swing_structure_hierarchy(ohlc, swing_highs_lows):
+    """
+    Month 5 Video 2 (p. 443) — Open Float (Swing Hierarchy)
+    Detects Intermediate-Term Highs and Lows from baseline Short-Term swings.
+    
+    An Intermediate-Term High (ITH) is a short-term high that is flanked by a 
+    short-term high on both the immediately preceding and following sides 
+    ("like a head and shoulders top formation", where the center is higher).
+    """
+    import pandas as pd
+    import numpy as np
+    
+    df = pd.DataFrame(index=ohlc.index)
+    df['IntermediateHighLow'] = np.nan
+    df['IntermediateLevel'] = np.nan
+    
+    if len(swing_highs_lows) == 0:
+        return df
+        
+    sw = swing_highs_lows.copy()
+    
+    # Agnostic extraction for both swing_highs_lows (HighLow, Level) and v4 (type, p)
+    if 'HighLow' in sw.columns:
+        if len(sw) == len(ohlc) and not isinstance(sw.index, pd.DatetimeIndex):
+            sw.index = ohlc.index
+        highs = sw[sw['HighLow'] == 1]
+        lows = sw[sw['HighLow'] == -1]
+        level_col = 'Level'
+    elif 'type' in sw.columns:
+        highs = sw[sw['type'] == 'HIGH']
+        lows = sw[sw['type'] == 'LOW']
+        level_col = 'p'
+    else:
+        return df
+
+    def extract_series(subset):
+        if 'ts' in subset.columns and not isinstance(subset.index, pd.DatetimeIndex):
+            return pd.Series(subset[level_col].values, index=pd.to_datetime(subset['ts']))
+        else:
+            return subset[level_col].dropna()
+
+    s_highs = extract_series(highs).sort_index()
+    s_lows = extract_series(lows).sort_index()
+
+    ith_ts = []
+    ith_p = []
+    for i in range(1, len(s_highs) - 1):
+        p_prev = s_highs.iloc[i-1]
+        p_curr = s_highs.iloc[i]
+        p_next = s_highs.iloc[i+1]
+        if p_curr > p_prev and p_curr > p_next:
+            ith_ts.append(s_highs.index[i])
+            ith_p.append(p_curr)
+            
+    itl_ts = []
+    itl_p = []
+    for i in range(1, len(s_lows) - 1):
+        p_prev = s_lows.iloc[i-1]
+        p_curr = s_lows.iloc[i]
+        p_next = s_lows.iloc[i+1]
+        if p_curr < p_prev and p_curr < p_next:
+            itl_ts.append(s_lows.index[i])
+            itl_p.append(p_curr)
+
+    for ts, p in zip(ith_ts, ith_p):
+        if ts in df.index:
+            df.loc[ts, 'IntermediateHighLow'] = 1
+            df.loc[ts, 'IntermediateLevel'] = float(p)
+            
+    for ts, p in zip(itl_ts, itl_p):
+        if ts in df.index:
+            df.loc[ts, 'IntermediateHighLow'] = -1
+            df.loc[ts, 'IntermediateLevel'] = float(p)
+            
+    return df
+
+smc._swing_structure_hierarchy = staticmethod(_swing_structure_hierarchy)
+
+
+
+
+def _failure_swings(
+    ohlc,
+    swing_highs_lows,
+    confirm_break_close=True,
+    close_break=True
+):
+    """
+    Failure Swings detector (M5V5: Defining Institutional Swing Points,
+    pages 489-492, ICT Monthly Mentorship).
+
+    Detects bearish (M-pattern) and bullish (W-pattern) failure swings.
+    A failure swing is a 3-swing triplet where the second extreme (High 2 or
+    Low 2) FAILS to sweep the first extreme, followed by a break in market
+    structure through the intervening valley/peak (the MidSwingLevel).
+
+    This detector is the structural mirror-image counterpart to
+    smc._breaker_blocks() (M4V5). Both scan the same H-L-H / L-H-L triplet
+    space; _breaker_blocks keeps only the "swept" half (High2 > High1);
+    this detector keeps only the "failed" half (High2 < High1).
+    smc._mitigation_blocks() (M4V4) is structurally unrelated (A/B/C
+    down-candle-body construct, no High1/High2 comparison).
+
+    Source: pages 489-492, ICT Monthly Mentorship M5V5.
+
+    ENGINEERING ASSUMPTIONS:
+    1. StopLevel anchor (wick extreme of the failed second peak/trough):
+       Page 491 contains an explicit stop-placement instruction ("buy stop
+       right above this short-term high") in the paragraph describing the
+       BREAKER pattern immediately preceding the failure-swing discussion.
+       That instruction is not explicitly restated for the failure swing
+       itself. Using the wick extreme of High2/Low2 as StopLevel is inferred
+       by symmetry with the breaker -- it is NOT a separately sourced
+       instruction for this pattern.
+    2. confirm_break_close: pages 489-492 contain no language specifying
+       whether the activation candle (crossing MidSwingLevel) must close
+       through the level or if wicking through it suffices. Default True
+       (close-based) is an engineering choice, not a sourced rule.
+    3. close_break: pages 489-492 contain no language specifying whether
+       the invalidation candle must close through StopLevel or wick through
+       it. Default True (close-based) is an engineering choice, not a
+       sourced rule.
+
+    Parameters
+    ----------
+    ohlc : pd.DataFrame
+        OHLC price data. Must contain open, high, low, close columns.
+    swing_highs_lows : pd.DataFrame
+        Output of smc.swing_highs_lows(). Columns: HighLow (1=high, -1=low),
+        Level (wick price).
+    confirm_break_close : bool, default True
+        ENGINEERING ASSUMPTION #2.
+        True  = activation requires a candle CLOSE through MidSwingLevel.
+        False = activation on wick extreme crossing MidSwingLevel.
+    close_break : bool, default True
+        ENGINEERING ASSUMPTION #3.
+        True  = invalidation requires a candle CLOSE through StopLevel.
+        False = invalidation on wick extreme crossing StopLevel.
+
+    Returns
+    -------
+    pd.DataFrame, index-aligned to ohlc. Columns:
+      FS            : float, -1.0 (bearish) or 1.0 (bullish).
+                      Recorded at the curr_swing (High2 / Low2) index.
+                      Only activated triplets are recorded; non-activating
+                      triplets produce no row entry (remain NaN).
+      MidSwingLevel : float, price level of the broken valley/peak.
+                      Source: pp.489-491 -- the retest of the short-term low
+                      (valley) in between the two highs is the entry trigger.
+      StopLevel     : float, wick extreme of High2 (bearish) or Low2
+                      (bullish). ENGINEERING ASSUMPTION #1.
+      Invalidated   : float, integer index into ohlc where price first
+                      crosses StopLevel (invalidating the setup). NaN if
+                      not yet invalidated.
+    """
+    import numpy as np
+    import pandas as pd
+
+    _open  = ohlc["open"].values
+    _high  = ohlc["high"].values
+    _low   = ohlc["low"].values
+    _close = ohlc["close"].values
+    n = len(ohlc)
+
+    hl_vals = swing_highs_lows["HighLow"].values
+    lv_vals = swing_highs_lows["Level"].values
+
+    swing_indices = np.where(~np.isnan(hl_vals))[0]
+
+    fs_arr          = np.full(n, np.nan)
+    mid_level_arr   = np.full(n, np.nan)
+    stop_level_arr  = np.full(n, np.nan)
+    invalidated_arr = np.full(n, np.nan)
+
+    if len(swing_indices) < 3:
+        return pd.DataFrame({
+            "FS":            fs_arr,
+            "MidSwingLevel": mid_level_arr,
+            "StopLevel":     stop_level_arr,
+            "Invalidated":   invalidated_arr,
+        }, index=ohlc.index)
+
+    for i in range(len(swing_indices) - 2):
+        prev_swing = swing_indices[i]
+        mid_swing  = swing_indices[i + 1]
+        curr_swing = swing_indices[i + 2]
+
+        prev_hl = hl_vals[prev_swing]
+        mid_hl  = hl_vals[mid_swing]
+        curr_hl = hl_vals[curr_swing]
+
+        # ── BEARISH M-PATTERN ──────────────────────────────────────────────
+        # Triplet: High1, Low, High2 (same space as _breaker_blocks bearish)
+        if prev_hl == 1 and mid_hl == -1 and curr_hl == 1:
+            # Failure condition: High2 strictly fails to exceed High1.
+            # Mirror of _breaker_blocks's own check (_high[curr] <= _high[prev]
+            # continues there; here we continue on the swept case instead).
+            if _high[curr_swing] >= _high[prev_swing]:
+                continue  # Swept -- this is a breaker triplet, not a failure swing.
+
+            mid_swing_level = lv_vals[mid_swing]
+
+            # ENGINEERING ASSUMPTION #1: StopLevel = wick high of High2.
+            stop_level = _high[curr_swing]
+
+            # Activation: first candle after curr_swing crossing below MidSwingLevel.
+            # ENGINEERING ASSUMPTION #2: close vs. wick controlled by confirm_break_close.
+            activation_idx = None
+            for k in range(curr_swing + 1, n):
+                price_ref = _close[k] if confirm_break_close else _low[k]
+                if price_ref < mid_swing_level:
+                    activation_idx = k
+                    break
+
+            if activation_idx is None:
+                continue  # Structure never broke -- not yet a valid failure swing.
+
+            # Invalidation: first candle from activation crossing back above StopLevel.
+            # ENGINEERING ASSUMPTION #3: close vs. wick controlled by close_break.
+            invalid_idx = np.nan
+            for k in range(activation_idx, n):
+                price_ref = _close[k] if close_break else _high[k]
+                if price_ref > stop_level:
+                    invalid_idx = float(k)
+                    break
+
+            fs_arr[curr_swing]          = -1.0
+            mid_level_arr[curr_swing]   = mid_swing_level
+            stop_level_arr[curr_swing]  = stop_level
+            invalidated_arr[curr_swing] = invalid_idx
+
+        # ── BULLISH W-PATTERN ──────────────────────────────────────────────
+        # Triplet: Low1, High, Low2 (same space as _breaker_blocks bullish)
+        elif prev_hl == -1 and mid_hl == 1 and curr_hl == -1:
+            # Failure condition: Low2 strictly fails to drop below Low1.
+            if _low[curr_swing] <= _low[prev_swing]:
+                continue  # Swept -- this is a breaker triplet, not a failure swing.
+
+            mid_swing_level = lv_vals[mid_swing]
+
+            # ENGINEERING ASSUMPTION #1: StopLevel = wick low of Low2.
+            stop_level = _low[curr_swing]
+
+            # Activation: first candle after curr_swing crossing above MidSwingLevel.
+            # ENGINEERING ASSUMPTION #2.
+            activation_idx = None
+            for k in range(curr_swing + 1, n):
+                price_ref = _close[k] if confirm_break_close else _high[k]
+                if price_ref > mid_swing_level:
+                    activation_idx = k
+                    break
+
+            if activation_idx is None:
+                continue  # Structure never broke -- not yet a valid failure swing.
+
+            # Invalidation: first candle from activation crossing back below StopLevel.
+            # ENGINEERING ASSUMPTION #3.
+            invalid_idx = np.nan
+            for k in range(activation_idx, n):
+                price_ref = _close[k] if close_break else _low[k]
+                if price_ref < stop_level:
+                    invalid_idx = float(k)
+                    break
+
+            fs_arr[curr_swing]          = 1.0
+            mid_level_arr[curr_swing]   = mid_swing_level
+            stop_level_arr[curr_swing]  = stop_level
+            invalidated_arr[curr_swing] = invalid_idx
+
+    return pd.DataFrame({
+        "FS":            fs_arr,
+        "MidSwingLevel": mid_level_arr,
+        "StopLevel":     stop_level_arr,
+        "Invalidated":   invalidated_arr,
+    }, index=ohlc.index)
+
+
+smc._failure_swings = staticmethod(_failure_swings)

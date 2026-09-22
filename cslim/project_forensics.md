@@ -129,13 +129,189 @@
 - Visual Audit: passed on a single clean 15M example (2016-09-15 08:30, 10.9 pip sweep, expected classification, reverted to close 0.74695 below the 0.74956 swing level).
 - Golden Master reconfirmed unaffected throughout (HRR=471, LRR=37, 11 transitions).
 
+**Month 4, Video 12** — status: REVIEWED — no new detector required
+- Verified via real data (AUDUSD 15M Golden Master example) and against ICT's own worked numbers (EURUSD daily, pages 376-377) that the fair value gap boundary taught in this video is arithmetically identical to smc.fvg()'s existing Top/Bottom output (Candle 1 Low, Candle 3 High for a bearish FVG).
+- The "exclusion" language in the source (pages 376-377) is pedagogical explanation of WHY the boundary sits at the wick extreme, not a distinct narrower geometric rule -- an initial misreading of this was tested against real data, found to invert/destroy the gap mathematically, and correctly retracted before being accepted.
+- Two findings worth logging even without new code:
+  1. Body-based fill/mitigation reconfirmed a third time (page 384: "the wick trades through the body, but the bodies of the candle completely close in here") -- consistent with M4V9's vacuum block and M4V10's liquidity void close-based fill conventions.
+  2. Reusable-level behavior observed (pages 385-386): the same reference level gets hit and reacted to multiple times ("does it twice"), described as a "full block of delivery deficiency" addressed across both sides of price delivery. No current M4 detector (mitigation, breaker, rejection, propulsion, vacuum, liquidity void, liquidity raid) models a level being revisited/re-tradeable after first fill/invalidation -- all are single-formation, single-resolution. Flag this as a known simplification across the full detector set, relevant when Layer 3 (Level Registry) is eventually designed.
 
+**Month 4, Video 13** — status: REVIEWED — no new detector required
+- Two citation corrections caught and properly resolved before acceptance:
+  1. "20-30 pips" was an ungrounded figure -- source only states "30 pips or so" (p.391). Corrected.
+  2. "PD array" terminology does not appear anywhere in pages 387-396 and was retracted as an out-of-scope import from other ICT material, per the New Notes Protocol's rule against borrowing language from adjacent sources. Restated using only this video's own vocabulary.
+- Disposition rationale: this video teaches a discretionary confluence heuristic -- classic (Type 1) divergence identifies where retail is positioned wrong; price then sweeps nearby liquidity (equal lows / old highs) and retests an existing bullish order block's mean threshold before reversing, often confirmed by hidden (Type 2) divergence on the reversal leg. No new price geometry is introduced. All structural elements (order blocks, mean threshold, liquidity pools, swing highs/lows) are already implemented. The source explicitly states indicators should only be used as a "contrasting view" of retail sentiment, never as a trade-entry basis (p.396) -- building a stochastic/momentum detector into smc.py would contradict this video's own stated premise.
 
-## 2. KNOWN CORE LIBRARY DEFICIENCIES (new section, four tiers)
+**Month 4, Video 14** — status: LOCKED (this session)
+- New detector: smc._measured_moves(ohlc, swing_highs_lows, max_peak_diff_pips=20.0, pip_size=0.0001, breakout_close=True, target_hit_close=True), wired via staticmethod. Fills the Tier 1 gap already logged ("smc.measured_moves() never built").
+- Detects double top/bottom patterns and projects a 1:1 CONTINUATION target (not reversal) once price breaks out past the second peak. Confirmed against source's own worked example (target 0.7445, actual 0.7446, p.401).
+- Real correction during build: initial implementation had no proximity/equality check between the two peaks, pairing arbitrary far-apart swings (285-572 pips on daily data). Fixed with max_peak_diff_pips=20.0, sourced to M4V14's own explicit 10-20 pip stop-run range (p.402: "usually we expect a 20 pip, 10-20 pip range run above an old high or 10-20 pip run below an old low for stop runs") and aligned to M4V11's established sweep_expected_max_pips=20.0 threshold.
+- Two engineering assumptions documented in-code: (1) max_peak_diff_pips -- no numerical "relatively equal" threshold in source (p.397-398 uses qualitative language only); (2) outer-extreme anchor choice for MeasuredRange/ProjectedTarget -- source doesn't specify which near-equal peak to anchor to; max(Peak1, Peak2) for tops and min(Peak1, Peak2) for bottoms chosen because the outermost extreme is where the full liquidity cluster sits and only its breach unlocks the complete 1:1 projection.
+- Validated specifically on 1H data (the timeframe M4V14 itself predominantly demonstrates on, p.402 explicitly contrasts hourly framework against 15M): full-year AUDUSD 2016 1H sample of 261 patterns detected, 245 confirmed breakouts, 217 target hits (88.6% hit rate).
+- Visual Audit passed on a clean 1H double-bottom example (AUDUSD Sep 12-13 2016, 74.0 pip measured range, target 0.74198, target hit ~4 hours after breakout at 2016-09-13 13:00).
+- Golden Master reconfirmed unaffected throughout (HRR=471, LRR=37, 11 transitions).
+
+**Month 4 Batch Summary (Videos 9-14)** — all six resolved this session:
+- M4V9: LOCKED — smc._vacuum_blocks() built
+- M4V10: LOCKED — smc._liquidity_voids() built
+- M4V11: LOCKED — smc._liquidity_raids() built
+- M4V12: REVIEWED — no new code; FVG boundary arithmetically identical to existing smc.fvg()
+- M4V13: REVIEWED — no new code; discretionary confluence heuristic, no new price geometry
+- M4V14: LOCKED — smc._measured_moves() built; fills the last Tier 1 gap in this batch
+
+**Month 5, Video 1** — status: REVIEWED — no Layer 2 detector required
+- **Part 1 (Accumulation/Distribution):** The four underlying/benchmark non-confirmation scenarios (pp.407-410) are already implemented by `smc._smt_divergence()`. Verified via literal code check. The video provides application context (daily-timeframe restriction, "program" framing as multi-day sequences), not new detection logic.
+- **Part 2 (IPDA Data Ranges):** Genuine gap confirmed via repo-wide grep and `git log -S` (zero hits for IPDA, quarterly_shift, cast_forward, lookback_20, trading_days). This is a Layer 4 (MTF Alignment) temporal calibration utility, NOT a Layer 2 detector, as it computes anchor dates and trading-day windows, not price geometry.
+- **Layer 4 Deferred Requirement Logged:** IPDA Look Back / Cast Forward windowing. Anchor = first trading day of most recently closed calendar month; look back 60/40/20 trading days to identify order flow + reference points; cast forward 20/40/60 mirroring the asymmetric day-count (p.420).
+- **Explicit Build Flag (ENGINEERING ASSUMPTION):** When this gap is eventually built in Layer 4, "trading days" (p.413) must explicitly exclude exchange holidays (Christmas, etc.), not just weekends, since naive weekend-only exclusion will shift a 60-day window by a day or more. This must be an explicit engineering assumption, not silently absorbed.
+
+**Month 5, Video 2** — status: LOCKED (this session)
+- New detector: smc._swing_structure_hierarchy(ohlc, swing_highs_lows), wired via staticmethod.
+- Detects intermediate-term highs/lows: a short-term swing (from swing_highs_lows) that is strictly greater (for highs) or strictly less (for lows) than both its immediately preceding and immediately following short-term swing -- sourced to page 443's "head and shoulders" framing. Deliberately stops at one level; does not recurse to a "long-term" tier, since the source only explicitly defines one level up from short-term.
+- Real correction during build: an initial implementation plan wrongly claimed this detector filled the smc.macro_swing_grading() Tier 1 gap, based on surface name-pattern similarity ("swing grading" / "swing hierarchy"). Retracted after checking git log -S against the actual historical test target (verify_month3_video1.py), which confirmed macro_swing_grading() is an unrelated 5-quadrant Fibonacci retracement tool from Month 3. This is a genuinely new, separately named Tier 1 gap, now filled.
+- Data Audit verified via explicit prev/curr/next arithmetic checks against real swing points (not just calendar-adjacent OHLC context) -- all 5 spot-checked examples confirmed correct on AUDUSD 2016 daily. Sparse detection (6 intermediate-term swings across the full year) consistent with the established pattern for swing-dependent detectors at daily timeframe.
+- Two pieces of sourced content explicitly logged but NOT built: the directional-bias heuristic from pages 442-443 (watching whether intermediate-term highs/lows keep advancing or declining) is left as caller-side interpretation, not computed by the detector; the 3/6/12-month rolling high/low reference points from pages 433-434 are trivial caller-side .rolling().max()/.min() calls, not dignified with a dedicated function.
+- Visual Audit passed: full-year AUDUSD 2016 daily chart with all 6 intermediate-term swings shown against their flanking short-term swings via structure brackets, confirming the "head and shoulders" relationship visually, not just arithmetically.
+- Golden Master reconfirmed unaffected throughout (HRR=471, LRR=37, 11 transitions).
+
+**Month 5, Video 3** — status: REVIEWED (this session) -- no new Layer 2 detector, no code changes this video.
+- (a) IPDA 60-Day Look Back Refinement: When all reference points inside the 60-day look-back are already swept, price is expected to reach outside that 60-day window for the next high/low (source pages 453-454). Appended to the existing M5V1 Layer 4 gap.
+- (b) Open Interest Accumulation/Distribution: Rising open interest during a decline = central bank still providing liquidity to sellers; falling open interest during consolidation/decline = central bank reducing short exposure, a bullish signal (pages 460-465, sourced to Larry Williams). Logged under a NEW "data-infrastructure-blocked" category because it requires futures-contract data with an open-interest field (not derivable from standard forex OHLCV). Sourcing this data is a firm pending dependency, blocked on data infrastructure, not optional.
+- (c) Buy Side / Sell Side of Curve: Reconfirms M4V7's Market Maker Buy/Sell Model concept (pages 466-467). No new information, no change to M4V7's existing Layer 4 blocked status.
+
+**Month 5, Video 4** — status: REVIEWED (this session) -- no new Layer 2 detector, no code changes this video.
+- Open Float [min_low, max_high] Output: The 20/40/60 trading-day rolling min/max is folded into the EXISTING M5V1 Layer 4 IPDA windowing gap as its concrete output definition, not a new gap entry. The video confirms this box mechanic visually across six consecutive worked months (Aug-Jan 2016/17), with real price action reaching the identified extremes during each cast-forward window.
+- Concrete Reuse Confirmation: The worked USDCAD daily example (pages 480-483) explicitly labels a "Mitigation Block (Bearish)" on-chart. This corresponds directly to `smc._mitigation_blocks()` (M4V4), providing direct evidence that this video's application layer uses already-built detectors rather than just inferred reuse.
+- Naming Disambiguation: Explicitly flagged to avoid future confusion: M5V2's "intermediate-term high/low" is swing-based (a short-term swing flanked by other short-term swings). M5V4's "intermediate-term open float" is a fixed 60 trading-day rolling min/max with no swing detection. They share terminology but are computed entirely differently and answer different questions.
+- Open Interest: Reconfirms the existing TIER 5 (data-infrastructure-blocked) entry from M5V3 — no change needed to that entry.
+- Directional Bias Heuristic: The heuristic of determining bias by tracking whether rolling highs or rolling lows are being breached is left as caller-side interpretation (same treatment as M5V2's bias heuristic) and is not built into any detector.
+
+**Month 5, Video 5** — status: LOCKED (this session)
+- New detector: smc._failure_swings(ohlc, swing_highs_lows, confirm_break_close=True, close_break=True), wired via staticmethod.
+- Structural mirror-image counterpart to smc._breaker_blocks() (M4V5): same High-Low-High / Low-High-Low swing triplet scan, opposite comparison direction (High2 < High1 for bearish, Low2 > Low1 for bullish, vs. breaker's High2 > High1 / Low2 < Low1). Covers exactly the half of the triplet space that _breaker_blocks()'s own "continue" statement correctly discards per its M4V5 sourced definition -- that discard behavior is confirmed correct, not a bug, and was not changed.
+- Does NOT modify _breaker_blocks() or _mitigation_blocks(). Both confirmed correct against their own original sourced definitions and left untouched.
+- Output columns: FS (-1.0 bearish / 1.0 bullish), MidSwingLevel (the valley/peak retest trigger), StopLevel (wick extreme of the failed second swing), Invalidated.
+- Three engineering assumptions flagged in-code and in the docstring: StopLevel anchor (inferred by symmetry with the breaker's stop logic on page 491 -- not separately sourced for this specific pattern), confirm_break_close, close_break (neither specified in source).
+- Two real corrections caught during build, both logged for the record: (1) an initial diagram reading of the breaker's retest-trigger level (page 485) was wrong -- corrected via actual pixel measurement of the reference diagram, not re-argument; the retest trigger is the valley/short-term-low, not the originally-approached level. (2) A claimed "literal" code paste for _mitigation_blocks() was fabricated -- contained an impossible artifact inside a supposed AST extraction, and contradicted this project's own M4V4 lock record. Caught, root-caused (terminal output truncation during the original extraction, not deception), and re-extracted properly before being accepted.
+- Mutual exclusivity with _breaker_blocks() verified at the correct granularity (triplet identity: same prev_swing/mid_swing/curr_swing tuple), after an initial test at output-row-position gave a false-positive overlap. Confirmed 0 overlap across AUDUSD 2016 daily (25 H-L-H + 25 L-H-L triplets) and Sep 11-18 2016 15M (50 + 50 triplets).
+- Visual Audit passed: AUDUSD daily, bearish example (Aug 26 2016, MidSwing=0.75836, Stop=0.76920) -- High1/Low/High2 triplet points, activation, and invalidation all correctly and distinctly marked.
+- Golden Master reconfirmed unaffected throughout (HRR=471, LRR=37, 11 transitions).
+
+**Month 5, Video 6** — status: REVIEWED — no new Layer 2 detector required
+- Core concept: Macro-level environment classification (Trending vs. Consolidation) using directional correlation between 10-Year Treasury Note futures (ZN) and the Dollar Index (DXY).
+- Sourced model (pages 499, 501): If ZN and DXY move in tandem (same direction), the market is in long-term consolidation/range-bound (across forex too). If they move inversely, the market is in a long-term directional trend.
+- Disposition: Layer 4 (MTF Alignment / Macro Context) classification rule, not a Layer 2 price-geometry detector. Governs trade style (short-term/day trades vs. long-term position trades), not entry/exit geometry.
+- Source-text anomaly logged, NOT resolved: p.501 narration reads "...creating a short-term low in December, and finally making its high in the first portion of December of this year" — self-contradictory as transcribed (a "first portion" event cannot follow a same-month low described as later). Visual check of the DXH17 chart (p.501) shows the described low positioned near the "Dec" axis label and a subsequent higher peak positioned nearer the "Jan 17" label — consistent with, but not proof of, a transcription slip (December/January). No correction applied to the source quote. Flagged as an unresolved source-text artifact for the record, not inferred or fixed.
+- Logged as Layer 4 deferred requirement: Macro Trend Classification based on ZN/DXY sustained directional correlation over multi-week/month windows. No numeric threshold sourced for "tandem" vs. "inverse" — any mechanization requires an explicit ENGINEERING ASSUMPTION.
+- Cross-video contradiction flagged in M5V9 regarding DXY/bond-price direction — see M5V9 entry.
+
+**Month 5, Video 7** — status: REVIEWED — no new Layer 2 detector required
+- Core concept: Operationalizes the M5V6 macro classification by adding a TWO-instrument qualifying checklist: (1) ZN (10-Year Note futures) price making seasonal lows/highs consistent with the seasonal tendency, (2) DXY (Dollar Index) price cracking the tandem/consolidation correlation by moving inversely at that same moment. When both align, the condition is "qualifying" — an underlying positional trade is unfolding.
+- The yield chart (TNX) is presented as a third visual confirmation in the video but is NOT an independent data source: by definitional inversion (M5V6 p.494: "Treasury Prices are inverted to its Yield"), a declining yield is the same information as a rising ZN futures price, viewed through its inverse representation. It is a redundant visual restatement of the ZN leg, not a third independent confirming instrument.
+- Three historical examples worked: June 2015 (ZN lower lows / DXY lower highs → qualifying), June 2016 (ZN equal lows / DXY higher highs → qualifying), Nov 2016 pre-election (ZN lower high / DXY lower low instead of expected higher high → broken symmetry → confirmed the two-month dollar trending environment).
+- Disposition: Layer 4 extension — the two-instrument ZN/DXY qualifying checklist (with yield as a visual restatement) is appended as an operational sub-rule to the existing M5V6 Layer 4 deferred gap. No new Layer 2 function warranted.
+- Explicit sourced reuse confirmed (p.509): smc._smt_divergence() (M3V5) and triad_divergence() (M4V1) are called out verbatim by ICT as downstream qualification tools for this checklist. Both are already built and correctly wired.
+- Open Interest (p.508): reinforces existing M5V3 TIER 5 deferred entry — no change to that entry.
+- Source-text anomaly 1 (p.506) — Contextually resolved (inferred from M5V6 framework, not explicit in this video's own text): The narration applies the word "correlation" with two different implied reference points in the same paragraph without explicit signal. Exact quotes: "This is a cracking correlation." — then two sentences later — "That's a correct correlation there; therefore, it is a qualifying condition." Reading supported by context: "cracking" refers to the tandem/consolidation relationship breaking; "correct" refers to the inverse relationship (ZN down / DXY up) now being present. Both describe the same observable state. However, the word "correlation" shifts reference mid-paragraph without any marker, and a reader who does not carry the M5V6 tandem-vs-inverse framework forward will read this as self-contradictory. The resolution is plausible and well-reasoned but requires importing vocabulary from M5V6 that M5V7's own text never explicitly signals — it is an inference bridging a real gap, not a textual resolution.
+- Source-text anomaly 2 (p.508) — NOT resolved: The narration states "In fact, we see a lower low" about the DXY in early November 2016. The DXH17 daily chart (p.508) shows DXY in a broad uptrend from August through January — making higher highs overall. The "lower low" must refer to a specific pre-election short-term swing dip relative to an October local reference, not the broad trend direction. However, the chart is too zoomed out at the printed resolution to pinpoint which prior candlestick swing is the stated reference point, and the text does not name it explicitly. Cannot confirm or refute from the static image alone. Logged as an unresolved reference ambiguity — same treatment as M5V6's December/January artifact.
+
+**Month 5, Video 8** — status: REVIEWED — no new Layer 2 detector required
+- Core concept: Macro-level fundamental bias generation using Central Bank Interest Rate Differentials. The model pairs a high-yielding currency against a low-yielding currency to anticipate long-term institutional capital flows (funds seeking yield).
+- Application checklist: (1) Select high-yield vs low-yield pair, (2) identify higher-timeframe (HTF) support/resistance, (3) look for smart money clues like seasonal tendencies or massive Open Interest reduction (short covering), and (4) USDX directional confirmation qualifies the setup.
+- Checklist inference logic: The text simply states "USDX directional confirmation qualifies the setup." In the worked AUD example, this is visually demonstrated as DXY making higher highs while AUD fails to make lower lows. I am logging the linkage to SMT Divergence (M5V7) as a reasonable inference drawn from this worked example, not as an explicit textual claim made in M5V8 itself.
+- Two historical examples provided: 
+  - AUD/USD (Dec 2016): High-yield AUD vs low-yield USD. HTF support hit at 0.7150, Open Interest dropped sharply, and DXY made higher highs while AUD failed to make lower lows.
+  - USD/JPY (late 2016): Higher-yield USD vs negative-yield JPY. JPY cash price hit a HTF bearish order block at 0.9800 and sold off, resulting in a massive USD/JPY rally.
+- Disposition: Fundamental data layer / Macro Context. Does not define any new Layer 2 price geometry. It uses existing technical concepts (`smc.ob()`) to execute trades based on external fundamental bias.
+- Source-text anomaly logged, NOT resolved: Numeric inconsistency in the source material regarding the Bank of Japan rate. The slide on p.516 explicitly states "US .75% vs. Japan -.15%", whereas the reference tables on both p.510 and p.511 state "BANK OF JAPAN -0.1 %". Logged as an unresolved source-text contradiction; no assumption made as to which figure is correct.
+- TIER 5 deferred requirement logged: Central Bank Policy Interest Rate Data. Mechanizing this bias model requires an external data feed for global central bank interest rates. Direct search of the project (`fetch_macro_data.py` and the data directory) confirms this data is currently absent in any form. This is logged as a new, distinct Tier 5 infrastructure blockage (cross-referenced with, but separate from, the existing M5V3 Open Interest blockage).
+
+**Month 5, Video 9** — status: REVIEWED — no new Layer 2 detector required
+- Core concept: Macro-level Intermarket Analysis. Uses the directional correlation between four major asset classes (Bonds, Commodities, Stocks, Currencies) to establish or confirm a long-term directional bias, explicitly replacing the need to parse traditional fundamental economic data.
+- Key relationships defined:
+  - Bonds vs Stocks: Positive correlation (move together).
+  - Bonds vs Commodities: Inverse correlation (move opposite).
+  - US Dollar vs Commodities: Inverse correlation (move opposite).
+  - Asset-specific pairings: DXY inverse to Gold; Gold positive to AUD/NZD; Oil inverse to USDCAD; Dow positive to Nikkei; Nikkei positive to USDJPY.
+- Disposition: Layer 4 (Macro Context) / Layer 5 (Fundamental Data). Entirely conceptual. Does not define any new Layer 2 price geometry. 
+- CROSS-VIDEO SOURCED CONTRADICTION — logged, NOT resolved: A direct contradiction exists between this video and M5V6 regarding the relationship between the US Dollar and bond prices, confirmed in the explicit slide text of both videos.
+  - M5V6, p.494: "US Dollar Can Rally When Yields Increase – Treasuries prices drop." (DXY UP = Treasury prices DOWN)
+  - M5V9, p.522: "3. USDX UP = Stocks & Bonds UP" and narration (p.523) states "US dollar Index, if it's going higher or rallying, this is also seen with stocks and bonds moving up..." (DXY UP = Bond prices UP)
+  - Open Hypotheses: (a) M5V6's claim is anchored specifically to the 10-Year-Note/DXY interest-rate-differential mechanism, whereas M5V9 presents a high-level, non-instrument-specific framework. They may not be describing the exact same functional relationship, but this is unconfirmed textually. (b) Because of this contradiction, M5V9's framework cannot automatically be treated as compatible confirmation alongside the M5V6-M5V8 framework. It must be resolved against real historical data at Layer 4 build time.
+- Logged as Layer 4/5 deferred requirement: The framework states these macro correlations can have a lead/lag time of "6 to 12 months." Mechanizing this would require expanding the TIER 5 data blockage to include widespread external index/commodity data (Gold, Oil, CRB Index, Nikkei, Dow, Goldman Sachs indices) and requires explicit engineering assumptions to quantify what constitutes "alignment" across mismatched multi-month lead/lag windows.
+
+**Month 5, Video 10** — status: REVIEWED — no new Layer 2 detector required
+- Core concept: 40-year Seasonal Tendency charts as an additional macro confluence layer. Charts compile futures contract price action across all delivery months (data 1976–2015; blue line = 40-year avg; red line = 15-year avg) to produce a calendar-quarter roadmap of historical bullish/bearish tendency.
+- Structural rule (sourced): Seasonal tendency charts are built on Futures contract prices. For dollar-paired FX currencies (e.g. USDCAD), the Futures seasonal signal must be explicitly inverted before applying to the FX pair. A bearish Futures seasonal for CAD dollar = bullish seasonal for USDCAD.
+- Generalizable rule, logged for the first time in this project: For any USD-base currency pair (USDCAD, USDJPY, USDCHF — USD is first in the pair name), a bullish/bearish call on the non-USD instrument's own futures/spot price must be INVERTED before applying it to the forex pair direction. For USD-quote pairs (EURUSD, GBPUSD, AUDUSD), no inversion applies. Confirmed via direct search that this rule has never been named or generalized anywhere in smc.py or project_forensics.md prior to this entry. M5V8's USDJPY worked example (JPY futures bearish → USDJPY bullish, p.517) applied this same mechanism implicitly without stating it as a general rule — this is the first explicit, named statement of it.
+- Integration with existing framework: Seasonal tendencies answer the "buy or sell" directional question for a given quarter and layer on top of the existing quarterly-shift framework (M4 curriculum). Together they constitute a "loaded deal" — quarterly shift timing + seasonal direction bias.
+- Two worked examples provided:
+  - USDCAD weekly (2008–2016): Sep–Dec seasonal for CAD Futures bearishness inverted to USDCAD bullishness. Strong tendency confirmed across most years; two weak years (2009–2010) explicitly noted by ICT as due to overriding bearish macro structure — sourced caveat in the text itself.
+  - Crude Oil WTI weekly (2014–2016): Mar–Jun bullish seasonal visible even inside a long-term bear market (collapse from ~105). ICT notes the seasonal rally appeared all three years but adds "we do not force the trades."
+- Explicit sourced caveat (p.529): "Seasonal tendencies are merely a proverbial roadmap of past performance, and they are not to be viewed as a panacea or be-all-end-all concept." ICT explicitly states seasonal tendency alone is insufficient when macro structure is opposed.
+- Disposition: Layer 4 (Macro Calendar Overlay). No new Layer 2 price geometry. Does not require any new smc.py function.
+- TIER 5 deferred requirement (a) — Seasonal Tendency chart data: The 40-year compiled Futures delivery-month price tendency files are a specialized multi-decade statistical product, external to this project and confirmed absent from the codebase via direct directory search. ICT references them as templates he "made available over the years" and states he will share all currency seasonal tendency charts in M5V11. Closing this gap requires sourcing or replicating the multi-decade compiled seasonal tendency dataset — it cannot be substituted with raw OHLCV data alone.
+- TIER 5 deferred requirement (b) — Standard OHLCV data for USDCAD and Crude Oil (CL/WTI): Ordinary daily/weekly OHLCV price data for USDCAD and CL is confirmed absent from the project via direct search of fetch_macro_data.py and tests/test_data/. This is a standard data-infrastructure gap (same class as the ZN/ZB/DXY data already fetched in fetch_macro_data.py) and is distinct from the specialized seasonal tendency dataset in (a) — fetching OHLCV data would not substitute for (a).
+- No source-text anomalies detected across pp.528–536.
+- Cross-Video Confirmation: M5V11 p.537 slide states this rule directly and explicitly in ICT's own words ('The underlying currency market may move in tandem in a Forex pair or it may be inverted – based on the pairing with another currency'), upgrading it from an inference generalized from worked examples to a directly sourced general principle. See M5V11 entry.
+
+**Month 5, Video 11** — status: REVIEWED — no new Layer 2 detector required
+- Core concept: Utilizing bearish seasonal tendencies to anticipate HTF bullish quarterly shifts. A bearish seasonal decline is framed as the mechanism that drops price into HTF discount arrays (e.g. bullish order blocks) to form the quarterly low.
+- Asset of study: New Zealand Dollar (NZD / Kiwi). 
+- Quote-inversion contrast (sourced): ICT explicitly reinforces the M5V10 inversion rule by contrasting NZD with CAD. Because NZDUSD is a USD-quote pair, the NZD Futures seasonal tendency applies directly to the forex pair in tandem, without inversion.
+- Identified NZD Seasonal Windows: 
+  - Bearish tendency: Mid-Feb to Mid-March; May; Mid-August.
+  - Bullish tendency (Quarterly shift lows): March/April; June/July; Sept/Oct.
+- Explicit sourced caveat (p.546): ICT uses the 2008 financial crisis to explicitly state that "larger big picture macro events are going to take precedence" over seasonal tendencies. Seasonal tendencies are overridden by macro wild-card events.
+- Disposition: Layer 4 (Macro Calendar Overlay). No new Layer 2 price geometry. Does not require any new smc.py function.
+- TIER 5 deferred requirement: Reinforces the exact same TIER 5(a) blockage logged in M5V10 (External Seasonal Tendency compiled data). No new infrastructure gap introduced.
+- Minor sourced-completeness gap: p.542 narration mentions "a typical sell-off in the first week or so of January that goes down into February" — this window appears nowhere in the official p.543 recap list and is not marked on ICT's own annotated arrow chart (p.542-543), suggesting ICT himself treats it as secondary rather than a core window. Logged as mentioned-but-not-formalized, not as a core taught bearish window, so it isn't lost but also isn't overweighted.
+- Minor window-precision inconsistency: p.543 restates the bearish windows twice in adjacent paragraphs with different extents: "...May is going to be an amazing sell-off, and you have August can create a nice sell-off as well..." vs., a few lines later, "...May into June for sell-offs and in August into September, giving us weak points to sell on." Logged as unresolved precision ambiguity, relevant to any future Layer 4 mechanization of exact window boundaries.
+
+**Month 5, Video 12** — status: REVIEWED — no new Layer 2 detector required
+- Core concept: "Ideal Seasonal Tendencies." This introduces a confluence technique for Layer 4 macro overlay: comparing the seasonal tendency of a foreign currency's futures contract directly against the seasonal tendency of the US Dollar Index (DXY) futures. An "ideal" setup occurs when the two tendencies are diametrically opposed (e.g., currency tendency is bullish while DXY tendency is bearish at the exact same time of year).
+- Structural rule (sourced): ICT explicitly states that for an ideal setup to be tradable, both underlying instruments do *not* need to be in strong primary trends. "You only really need one" (p.561). For example, if CAD is in a primary uptrend but DXY is merely in long-term consolidation, the opposed seasonal tendencies are still sufficient to trigger a high-probability trade in the direction of the CAD trend.
+- Exhaustive pairings provided: The video defines diametrically opposed seasonal windows for AUD/USD (Mar-May), NZD/USD (Mar-May), EUR/USD (Jun-Jul), GBP/USD (Mar-May), USD/CHF (Jun-Jul), USD/JPY (Mar-Apr), and USD/CAD (Mar-May).
+- Disposition: Layer 4 (Macro Calendar Overlay). No new Layer 2 price geometry. Does not require any new smc.py function.
+- Slide Orientation & Inversion Rule (Structural Support): The visual slide orientation itself (currency chart on left / DXY on right for AUD, NZD, EUR, GBP; DXY on left / currency on right for USDCHF, USDJPY, USDCAD) is visually consistent with the already-logged M5V10/M5V11 quote-inversion rule, confirmed via direct image inspection. This serves as circumstantial structural support for the rule's application, though it is not a direct sourced textual statement of the rule being applied here.
+- TIER 5 deferred requirement: Expands the existing TIER 5(a) blockage (Specialized Seasonal Tendency chart data) to explicitly include the US Dollar Index (DXY) 15-year/40-year compiled seasonal tendency dataset.
+- USDCHF trade-direction gap: Unlike the other six pairs, ICT never states the explicit trade conclusion for USDCHF (no "sell this pair" or "this pair should rally" statement — only the chart contrast description). He states: "So, we have a strong tendency for that to make a major turning point in the summer months for this particular pair, and again this would be an ideal scenario where the dollar is in a bearish market, primary downtrend, or if we are in a primary uptrend for the Swiss franc, this will be a good scenario to trade this as well" (p.559). Logged as mentioned-but-incomplete, not given equal explicit treatment to the other six pairs.
+- GBP phrasing ambiguity (p.558): "For the British pound, we have the strongest tendency to make a low in March with a high forming in May, and if this is true, we would be seeing a high form between March and April with a low forming in May, and we do see that here". The second clause switches subject from GBP's own chart to DXY's chart without ever naming DXY/dollar index explicitly — the switch is only inferable from the paired chart layout and context. Logged as a genuine source-text articulation gap, not fully resolved by inference alone.
+
+**Month 5, Video 13** — status: REVIEWED — no new Layer 2 detector required
+- Core concept: Money Management and Risk Structuring for long-term position trading. The goal is extremely low drawdown to attract/manage investor funds, prioritizing steady annual growth (18-25%) over rapid compounding.
+- Stop-loss management: Tolerates wide stops (e.g., 200 pips) targeting minimum 3:1 reward-to-risk. Explicitly instructs not to move stops to break-even early.
+- Scale-out/Re-load: Take partial profits (halves/thirds/quarters) at logical resistance, then re-add position size on the next structural retracement.
+- Hedging mechanic (sourced): To manage the psychological and P&L impact of deep open-profit drawdowns inherent to long-term trading, ICT advises trading closely correlated or inversely correlated pairs on lower time frames in the opposite direction of the primary trend retracement.
+- Disposition: Review of existing Layer 6 (`risk_engine.py`) scaffolding against M5V13's sourced figures.
+  - Match: The codebase's existing `RR_MIN = 3.0` directly agrees with M5V13's sourced 3:1 minimum reward:risk, cross-validating the figure rather than logging it as new.
+  - CONFLICT (Unresolved): The codebase's `RISK_PCT_DEFAULT` (1.5%) and `RISK_PCT_MAX` (2%) represent risk-per-trade as a fraction of TOTAL account equity. M5V13 sources a materially different rule: risking 1% of only the 30%-allocated trading subset, which equals 0.3% of total account equity — roughly 5-6x smaller than what is currently coded. Logged as an unresolved conflict between existing code and this video's sourced figures.
+  - Genuine new gap: No equity allocation cap (the 30% rule) exists anywhere in `risk_engine.py`.
+  - Genuine new gap: No drawdown tracking or limit logic exists in the codebase.
+  - Disambiguation: The `MIN_SWING_PIPS = 20` constant in code is a structural floor on OB-based stop swing size, completely unrelated to M5V13's 200-pip HTF stop-loss figure. They are distinct concepts and should not be conflated.
+  - Prior Proposal Status: The `validate_liquidity_run()` function (proposed under M4V2) remains unbuilt. The `filter_rr()` function's 20-pip floor is the closest existing equivalent but is structurally distinct from the 40/75-pip liquidity-range proposal.
+- No source-text anomalies detected across pp.562–571.
+
+**Month 5, Video 1-13 Batch Summary** — all thirteen resolved this session:
+- M5V1: REVIEWED — no Layer 2 detector; IPDA windowing logged as Layer 4 deferred requirement
+- M5V2: LOCKED — smc._swing_structure_hierarchy() built
+- M5V3: REVIEWED — no new code; Open Interest logged as TIER 5 data-infrastructure-blocked
+- M5V4: REVIEWED — no new code; Open Float folded into existing M5V1 Layer 4 gap
+- M5V5: LOCKED — smc._failure_swings() built
+- M5V6: REVIEWED — no new code; Macro Trend classification logged as Layer 4 gap; transcription artifact explicitly flagged
+- M5V7: REVIEWED — no new code; ZN/DXY qualifying checklist appended to M5V6 Layer 4 gap; two source-text anomalies logged (one contextually resolved, one unresolved)
+- M5V8: REVIEWED — no new code; Central Bank Interest Rates logged as new TIER 5 data-infrastructure-blocked; Japan rate numeric inconsistency logged
+- M5V9: REVIEWED — no new code; Intermarket Analysis logged as Layer 4/5 gap; CROSS-VIDEO contradiction regarding DXY/bond-price direction logged
+- M5V10: REVIEWED — no new code; USD-base pair quote-inversion rule named for first time; seasonal tendency data and USDCAD/CL OHLCV both logged as distinct TIER 5 gaps
+- M5V11: REVIEWED — no new code; M5V10 quote-inversion rule explicitly confirmed; two minor source-text precision ambiguities logged; TIER 5(a) blockage reinforced
+- M5V12: REVIEWED — no new code; Ideal Seasonals matrix logged; USDCHF direction unstated; GBP/DXY phrasing overlapping; TIER 5(a) expanded to DXY seasonals
+- M5V13: REVIEWED — no new code; Risk rules vs. risk_engine.py compared; 3:1 RR matched; 0.3% vs 2% risk sizing conflict logged; 30% allocation gap noted
+
+## 2. KNOWN CORE LIBRARY DEFICIENCIES (new section, five tiers)
 
 TIER 1 — Never built, no code exists anywhere in repo history:
 - smc.macro_swing_grading()
-- smc.measured_moves()
+- ~~smc.measured_moves()~~ **BUILT this session** as smc._measured_moves() (M4V14)
 - smc.monthly_range_ob()
 
 TIER 2 — Real implementation exists but orphaned/unmerged/unverified:
@@ -150,6 +326,9 @@ TIER 4 — Existing function with a confirmed defect:
 - smc.ob() — Anchor candidate selection occasionally picks opposite-colored candles (e.g., an up-close candle selected as a bullish down-candle OB) if they hold the extreme wick of the swing. Confirmed on AUDUSD 2016 15M (4/12 bullish, 3/8 bearish anomalous). Contradicts strict consecutive-candle structural rules (M4V8). Workaround applied: downstream caller (_propulsion_blocks) filters by color guard. NOT fixed at source — deferred due to blast radius.
 - smc.ob() / smc.fvg() / smc.liquidity() — all three silently return integer RangeIndex instead of preserving the original DatetimeIndex. Worked around ad hoc in state_machine.py (lockstep .iloc), verify_step2.py (manual hot-patch), generate_gif.py (manual remapping). NOT fixed at source — deliberately deferred, high ripple risk. Warning comments added directly above each function in smc.py this session.
 - smc.fvg() -- missing MeanThreshold/equilibrium output column, same pattern as smc.ob()'s pre-fix defect. Computed locally inside _mitigation_blocks instead. Deferred.
+
+TIER 5 (DATA-INFRASTRUCTURE-BLOCKED) — Firm pending dependencies blocked by missing data feeds:
+- Open Interest Accumulation/Distribution (M5V3) — Requires futures-contract data with an open-interest field to detect central bank hedging (not derivable from standard forex OHLCV). Sourcing this data is a committed future requirement.
 
 ## 3. VERIFY SCRIPT INTEGRITY
 
@@ -196,6 +375,13 @@ TIER 4 — Existing function with a confirmed defect:
 - **`_breaker_blocks(ohlc, swing_highs_lows, confirm_break_close=True, close_break=True, zone_body_based=True, stop_wick_based=True)`** | Detects bullish and bearish breaker blocks. | Built: Month 4 Video 5 | Status: Built from scratch
 - **`_rejection_blocks(ohlc, swing_highs_lows, close_invalidation=True)`** | Detects bullish and bearish rejection blocks. | Built: Month 4 Video 6 | Status: Built from scratch
 - **`_propulsion_blocks(ohlc, ob_df)`** | Detects propulsion blocks. | Built: Month 4 Video 8 | Status: Built from scratch
+- **`_vacuum_blocks(ohlc, ob_df, close_fill=True, close_invalidation=True)`** | Detects breakaway gap vacuum blocks driven by volatility events. | Built: Month 4 Video 9 | Status: Built from scratch
+- **`_liquidity_voids(ohlc, consolidation_df, swing_highs_lows, fvg_df, close_fill=True)`** | Detects aggressive displacement runs (liquidity voids) from consolidation exit to terminating opposing swing. | Built: Month 4 Video 10 | Status: Built from scratch
+- **`_liquidity_raids(ohlc, swing_highs_lows, sweep_expected_min_pips=10.0, sweep_expected_max_pips=20.0, sweep_reject_threshold_pips=25.0, pip_size=0.0001, close_revert=True)`** | Detects swing-level stop raids — wick violations with depth classification and reversion check. | Built: Month 4 Video 11 | Status: Built from scratch
+- **`_measured_moves(ohlc, swing_highs_lows, max_peak_diff_pips=20.0, pip_size=0.0001, breakout_close=True, target_hit_close=True)`** | Detects double top/bottom measured-move projections; 1:1 continuation target above/below the equal extremes. | Built: Month 4 Video 14 | Status: Built from scratch
+- **`_swing_structure_hierarchy(ohlc, swing_highs_lows)`** | Detects intermediate-term highs/lows via flanking short-term swing comparison. | Built: Month 5 Video 2 | Status: Built from scratch
+- **`_failure_swings(ohlc, swing_highs_lows, confirm_break_close=True, close_break=True)`** | Detects failure swings -- structural mirror of _breaker_blocks() covering the non-swept half of the High-Low-High/Low-High-Low triplet space. | Built: Month 5 Video 5 | Status: Built from scratch
+
 
 ## 6. FULL FUNCTION INVENTORY — state_machine.py
 - **`PriceDeliveryState`** | Data class for logging state. | Built: UNKNOWN | Status: Built from scratch
@@ -282,19 +468,21 @@ Avg HRR block: 325.4 candles
 
 ## 10. LAYER STATUS
 - **Layer 1 (Data)**: Implemented. Raw CSVs are stored in `tests/test_data/MACRO/` and `tests/test_data/EURUSD/`.
-- **Layer 2 (Detection)**: Heavily implemented in `smc.py`.
-- **Layer 3 (Level Registry)**: Not started. No scaffolding exists.
-- **Layer 4 (MTF Alignment)**: Scaffolding exists (`mtf_engine.py`, `mtf_demo.py`).
+- **Layer 2 (Detection)**: Heavily implemented in `smc.py`. **Month 4 curriculum fully covered through Video 14 (~14 videos total).** Month 5 Video 1-5 batch complete this session: 2 new detectors built (`_swing_structure_hierarchy`, `_failure_swings`), 3 videos reviewed with no new code required (M5V1, M5V3, M5V4). All M4 and M5 detectors wired via module-level staticmethod monkey-patch. Remaining Layer 2 gaps: smc.macro_swing_grading() (Tier 1), smc.monthly_range_ob() (Tier 1), M4V7 (deferred to Layer 4), M4V2/M4V3 HTF-alignment concepts (deferred to Layer 4).
+- **Layer 3 (Level Registry)**: Not started. No scaffolding exists. Known simplification: all current detectors are single-formation, single-resolution — no level is modeled as revisitable after first fill/invalidation (see M4V12 reusable-level finding).
+- **Layer 4 (MTF Alignment)**: Scaffolding exists (`mtf_engine.py`, `mtf_demo.py`). Blocking: M4V2 pip-range minimum, M4V3 HTF OB selection, M4V7 Reclaimed OB "major swing" classification, and M5V1 IPDA Look Back / Cast Forward windowing utility (requires explicit holiday-calendar engineering assumption for "trading days" count); includes M5V3 refinement: when all reference points inside the 60-day look-back are swept, expect price to reach outside that window for the next high/low — all are Layer 4 dependencies deferred from their respective video reviews.
 - **Layer 5 (Rule Engine)**: Scaffolding exists (`state_machine.py`).
 - **Layer 6 (Risk Management)**: Scaffolding exists (`risk_engine.py`).
 - **Layer 7 (Execution)**: Not started / Minimal (some logic exists inside `_hns_signals` and `_phantom_signals`, but no standalone execution module).
 
 ## 11. RECENT SESSION HISTORY
-1. **Aug 7, 2026**: Add all PDFs, HTMLs, and images (except 308MB docx) to Git. Outcome: Completed.
-2. **Aug 7, 2026**: Add month4 resources, MACRO test data, verify script, and update extract_pdf_images. Outcome: Completed.
-3. **Jun 9, 2026**: fix: Implemented Gaps 3, 4, 5 — Neutral bond tolerance, comprehensive POI gate, and Triad+SMT chaining. Outcome: Completed.
-4. **Jun 9, 2026**: fix: Triad divergence gap fixes — resolution-agnostic docstring + POI gate (M4V1). Outcome: Completed.
-5. **Jun 9, 2026**: feat: Add missing 5-Year Note (ZF) data and integrate into Triad analysis. Outcome: Completed.
+1. **Sep 22, 2026**: Month 5 Video 1-5 batch review — built _swing_structure_hierarchy and _failure_swings; reviewed M5V1, M5V3, M5V4 (no new code). IPDA windowing and Open Float logged as Layer 4 deferred requirements; Open Interest logged as TIER 5 blocked. Outcome: Completed.
+2. **Aug 31, 2026**: M4V9-V14 batch review — built _vacuum_blocks, _liquidity_voids, _liquidity_raids, _measured_moves; reviewed M4V12 (no new code) and M4V13 (no new code); M4V14 LOCKED. Month 4 curriculum fully covered through Video 14. Outcome: Completed.
+2. **Aug 7, 2026**: Add all PDFs, HTMLs, and images (except 308MB docx) to Git. Outcome: Completed.
+3. **Aug 7, 2026**: Add month4 resources, MACRO test data, verify script, and update extract_pdf_images. Outcome: Completed.
+4. **Jun 9, 2026**: fix: Implemented Gaps 3, 4, 5 — Neutral bond tolerance, comprehensive POI gate, and Triad+SMT chaining. Outcome: Completed.
+5. **Jun 9, 2026**: fix: Triad divergence gap fixes — resolution-agnostic docstring + POI gate (M4V1). Outcome: Completed.
+6. **Jun 9, 2026**: feat: Add missing 5-Year Note (ZF) data and integrate into Triad analysis. Outcome: Completed.
 
 ## 12. ANYTHING FLAGGED AS UNCERTAIN
 - **Golden Master Test Integrity**: RESOLVED. `verify_step2.py` confirmed passing (HRR=471, LRR=37, 11 transitions) as of 2026-08-07. `verify_audusd_sept.py` is confirmed non-canonical — it called a function that never existed in the repo.
@@ -304,4 +492,4 @@ Avg HRR block: 325.4 candles
 
 
 ---
-*Last Updated: 2026-08-08*
+*Last Updated: 2026-09-01*
