@@ -25,6 +25,13 @@ def detect_reversals(ohlc, swing_hl):
       BEARISH REVERSAL — wick pierces above a prior swing high, body closes back below.
       BULLISH REVERSAL — wick pierces below a prior swing low, body closes back above.
       Order Block = the last opposing candle before the reversal candle.
+
+    RE-AUDIT NOTE (M1V1 p.5): the definition quoted above is M1V1's, and the location rule
+    (pools beyond an old swing high/low) matches it. NOT in M1V1: sweep by wick with a same-bar
+    close back inside; invalidating a level on any close beyond it; the 200-bar age cap; the
+    30-bar order-block search. M1V1's own p.5 slide shows several candles closing beyond the old
+    high before the reversal (see verify_month1_video1.py C6), which this rule never flags.
+    These are engineering assumptions pending M2V1 (turtle_soup_signals consumes this function).
     
     Returns DataFrame with columns:
       Reversal:    1.0 (bullish) / -1.0 (bearish) / NaN
@@ -877,10 +884,12 @@ class PriceDeliveryStateMachine:
     """
     ICT Price Delivery State Machine (Layer 5).
     
-    Tracks: Consolidation -> Expansion -> Retracement -> Reversal
-    
-    States PERSIST — once assigned, a state holds until a valid transition fires.
-    UNKNOWN only exists before the very first consolidation is detected.
+    RE-AUDIT NOTE (M1V1): this class does NOT classify price delivery into the four conditions.
+    process() assigns only CONSOLIDATION and EXPANSION; RETRACEMENT and REVERSAL are never set
+    and no transition table exists (so the REVERSAL test in is_run_state is unreachable).
+    M1V1 p.3 says price is always in exactly one of four conditions; that classifier is not
+    implemented here. In verify_step2.py "expansion" is fvg() renamed. Do not add states here
+    without re-running verify_step2.py (the Golden Master depends on this behavior).
     """
     
     def process(

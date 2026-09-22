@@ -67,6 +67,13 @@ class smc:
         Top = the top of the fair value gap
         Bottom = the bottom of the fair value gap
         MitigatedIndex = the index of the candle that mitigated the fair value gap
+
+        RE-AUDIT NOTE (M1V1): a 3-candle wick gap reported on the MIDDLE candle using the NEXT
+        candle (shift(-1)), so callers must not act on it before that next candle has closed.
+        MitigatedIndex is the first later candle whose wick touches the near edge. M1V1 does not
+        define FVG geometry: its retracement tool is "liquidity gaps and liquidity voids" (p.4),
+        and its p.4 void is the whole range of the fast move (compare _liquidity_voids, M4V10).
+        Using fvg() for retracement is a project decision, not an M1V1 derivation.
         """
 
         fvg = np.where(
@@ -393,6 +400,13 @@ class smc:
         Bottom = bottom of the order block
         OBVolume = volume + 2 last volumes amounts
         Percentage = strength of order block (min(highVolume, lowVolume)/max(highVolume, lowVolume))
+
+        RE-AUDIT NOTE (M1V1): this is a swing-break model (library original): the OB is the
+        lowest-low (bullish) or highest-high (bearish) candle between the last swing high
+        (bullish) or swing low (bearish) and the break candle, colour-agnostic, with wick-based
+        Top/Bottom. It is NOT M1V1's order block (the down candle right before the impulse that
+        leaves equilibrium, near or at equilibrium, pp.3-4) and has no link to a consolidation
+        range. MeanThreshold is the body midpoint (not from M1V1). See forensics Tier 4.
         """
 
         ohlc_len = len(ohlc)
@@ -1033,7 +1047,13 @@ class smc:
         n    = len(ohlc)
         high = ohlc["high"].values
         low  = ohlc["low"].values
-        # Video 3: Consolidation defined by bodies, not wicks
+        # Consolidation defined by bodies, not wicks (M1V1 p.6; the earlier tag here said "Video 3").
+        # RE-AUDIT (M1V1): the box edges and equilibrium below use bodies and the exact midpoint.
+        # BUT the pivots that decide whether a box continues or resets (hb_, lb_, zz, pp) are
+        # WICK-based (high/low) and are compared with the body-based box, so a wick beyond the
+        # body box can end it (see verify_month1_video1.py C2). The ZigZag pivot counting
+        # (prd, conslen) is imported Pine logic, not from M1V1. OTE is measured 62%/79% from the
+        # top only; M1V1's p.6 slide also shows an OTE line midway (about 70.5%), not computed.
         body_high = np.maximum(ohlc["open"].values, ohlc["close"].values)
         body_low  = np.minimum(ohlc["open"].values, ohlc["close"].values)
 
@@ -1176,6 +1196,15 @@ class smc:
         ICT Expansion detector.
         Detects when price body closes beyond the consolidation boundary.
         Identifies the direction and the source Order Block.
+
+        RE-AUDIT NOTE (M1V1): the trigger below (a close beyond the previous box edge) and the
+        discount/premium filter on the OB (bullish OB high <= equilibrium, bearish OB low >=
+        equilibrium) are NOT stated in M1V1. M1V1 p.3: expansion is price moving "quickly from a
+        level of equilibrium"; the bullish OB is the down candle right before the up move, which
+        the market makers leave "near or at equilibrium". Measured on the p.3 slide, that candle
+        closes on equilibrium with its open about 6 pips above it, so the filter would reject it.
+        The OB is also skipped when the box is cleared on the breakout bar (Equilibrium is read
+        at bar i). Whether only the first breakout bar is flagged has not been verified.
         """
         ohlc = ohlc.copy()
         
@@ -1244,7 +1273,6 @@ class smc:
                     
         return pd.DataFrame({
             "Expansion": expansion_result,
-            "OB_Top":    ob_top,
             "OB_Top":    ob_top,
             "OB_Bottom": ob_bottom,
         }, index=ohlc.index)
