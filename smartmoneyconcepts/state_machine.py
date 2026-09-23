@@ -189,7 +189,15 @@ def turtle_soup_signals(
     daily_ohlc        : pd.DataFrame  — the Daily OHLCV data (RangeIndex, matching daily_ob)
     liq_df            : pd.DataFrame  — optional output of smc.liquidity() on the same ohlc data.
     use_daily_ob_stop : bool          — when True, ts_ob_stop uses daily OB bottom instead of midpoint of the Daily OB candle (open+close)/2, per p.61
-    refinement_level  : str           — label ('1H', '15M', '5M') mapped to the signal refinement tier
+    refinement_level  : str           — caller-supplied label ('1H', '15M', '5M'), sourced to ICT
+                                        Month 2 Video 2's HTF-to-LTF refinement cascade (pp.64-71).
+                                        CURRENTLY A PASSTHROUGH ONLY: stored in the output but does
+                                        NOT change any computation below. Entry/stop/zone are always
+                                        derived from the Daily OB (ob_row/bar_row) regardless of this
+                                        value. M2V2's actual 15M/5M mechanic — a separate, locally
+                                        identified LTF down-candle order block with its own zone and
+                                        stop — is not implemented. See project_forensics.md, Month 2
+                                        Video 2 entry, for the gap writeup.
     entry_buffer_pips : float         — ICT Month 3 V3: 5 pips added above the OB bottom as the limit entry
     require_down_candle_violation : bool — ICT Month 3 V3: require a bearish candle at/below midnight
                                            open to be violated on the upside before firing bullish signal.
