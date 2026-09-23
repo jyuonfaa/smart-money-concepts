@@ -167,6 +167,9 @@ def turtle_soup_signals(
        Now we are in turtle soup conditions (that means a break below an old low).
        We could potentially expect this market to run higher."
 
+    ICT verbatim (page 61): 'it wont come back down below the middle of that down candle
+    (the bullish order block)' — sources the default stop placement below.
+
     Logic (no new detection — reuses existing reversal_bull signal):
       turtle_soup_bull = reversal == 1.0
                          AND current_price >= daily_ob_bottom
@@ -185,7 +188,7 @@ def turtle_soup_signals(
     daily_ob          : pd.DataFrame  — output of smc.ob() run on Daily timeframe (RangeIndex)
     daily_ohlc        : pd.DataFrame  — the Daily OHLCV data (RangeIndex, matching daily_ob)
     liq_df            : pd.DataFrame  — optional output of smc.liquidity() on the same ohlc data.
-    use_daily_ob_stop : bool          — when True, ts_ob_stop uses daily OB bottom instead of LTF midpoint
+    use_daily_ob_stop : bool          — when True, ts_ob_stop uses daily OB bottom instead of midpoint of the Daily OB candle (open+close)/2, per p.61
     refinement_level  : str           — label ('1H', '15M', '5M') mapped to the signal refinement tier
     entry_buffer_pips : float         — ICT Month 3 V3: 5 pips added above the OB bottom as the limit entry
     require_down_candle_violation : bool — ICT Month 3 V3: require a bearish candle at/below midnight
