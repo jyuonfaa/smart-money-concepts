@@ -211,8 +211,23 @@ def turtle_soup_signals(
       ts_ob_bottom     : float — Floor of ICT entry zone (bar.open for bull, wick low for bear)
       ts_entry_price   : float — Precision entry = ts_ob_bottom + entry_buffer_pips (bull) or ts_ob_top - buffer (bear)
       ts_ob_stop       : float — ICT stop
-      ts_target_near   : float — Nearest buy/sell stop cluster above/below entry (from liq_df)
-      ts_target_far    : float — Furthest buy/sell stop cluster above/below entry (from liq_df)
+      ts_target_near   : float — Nearest buy/sell stop cluster above/below entry (from liq_df).
+                                 Partially sourced to ICT Month 2 Video 3 (pp.72-74)'s multi-tier
+                                 liquidity-pool cascade (5min->15min->hourly targets). Caveat: this
+                                 field and ts_target_far represent near/far levels WITHIN A SINGLE
+                                 timeframe (whatever ohlc/liq_df was passed in), not the cross-
+                                 timeframe escalation M2V3 actually describes.
+      ts_target_far    : float — Furthest buy/sell stop cluster above/below entry (from liq_df).
+                                 See ts_target_near above for M2V3 sourcing caveat.
+      ts_target_1h     : float — Nearest 1H-timeframe liquidity pool above/below entry (from liq_1h).
+                                 Partially sourced to M2V3's hourly-tier target; M2V3 sources a
+                                 three-tier cascade (5min/15min/hourly) but this is the only distinct
+                                 higher-timeframe tier implemented — no 15M-specific field exists.
+                                 M2V3's core teaching (R-multiples computed against a fixed original
+                                 stop as each tier's target is reached: 3R/9R/15R in its worked
+                                 example) has NO implementation anywhere — these fields return raw
+                                 price levels only, never an R-multiple. See project_forensics.md,
+                                 Month 2 Video 3 entry, for the full gap writeup.
       down_candle_violated : bool — True if a bearish candle at/below midnight open was broken on upside
       ts_target_fvg        : float — Nearest unmitigated FVG above entry (bull) or below entry (bear)
       refinement_level : str   — The passed refinement level label
