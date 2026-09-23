@@ -40,7 +40,10 @@ RR_MIN_VIABLE    = 1.0     # 1:1 — viable floor when compounding is applied
 # "we can take a quarter of it off, we could even take a half of it off"      — at R3
 # "It ultimately gets to multiple of 5 and clears the buy stops"              — at R5
 EXIT_SCHEDULE = {
-    1: {"action": "partial",  "close_fraction": 0.75, "note": "Take 3/4 of risk% off — 0.75% banked"},
+    # CORRECTED 2026-10-08: close_fraction was 0.75 (the quoted result %,
+    # not the position fraction); source says 'half the position'. See project_forensics.md
+    # Month 2 Video 4 entry.
+    1: {"action": "partial",  "close_fraction": 0.5, "note": "Take 1/2 of position off — 0.75% banked (0.5 * RISK_PCT_DEFAULT)"},
     2: {"action": "be_stop",  "close_fraction": 0.00, "note": "Hold — stop moves to breakeven at R2"},
     3: {"action": "partial",  "close_fraction": 0.25, "note": "Take 1/4 to 1/2 off — clears Point 4 buy stops"},
     4: {"action": "be_trail", "close_fraction": 0.00, "note": "Trail stop only — close to buy stops at Pts 1&2"},
@@ -54,8 +57,13 @@ EXIT_SCHEDULE = {
 EXIT_SCHEDULE_V3 = {
     3:  {"action": "partial", "close_fraction": 0.50,
          "note": "Take 50% off at 3R — 3% locked on 2% risk account"},
+    # ENGINEERING ASSUMPTION: M2V3 (p.73) frames this decision as fully
+    # discretionary ('the choice is going to be yours') with no fraction stated.
+    # 25% is a default choice, not a sourced figure.
     9:  {"action": "partial", "close_fraction": 0.25,
          "note": "Take 25% off at 9R — 15M pool reached"},
+    # ENGINEERING ASSUMPTION: M2V3 never explicitly states a full close at 15R —
+    # it only states 15R is reachable. 100%/close is a default choice, not sourced.
     15: {"action": "close",   "close_fraction": 1.00,
          "note": "Full close at 15R — 1H pool cleared"},
 }
