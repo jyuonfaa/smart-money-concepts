@@ -2603,7 +2603,26 @@ def _filter_quarterly_swings(swings_df, min_days=60):
     """
     Enforce the ICT Quarterly Shift Constraint.
     Filter swing_highs_lows_v4 output to only keep pivots that are at least
-    `min_days` calendar days apart. This simulates a 3-4 month macro lookback.
+    min_days calendar days apart. This simulates a 3-4 month macro lookback.
+
+    Concept sourced to ICT Month 2 Video 6, pp.104-105 (verbatim): "every three
+    months or so, there is a new price shift in the higher time frames... I'll
+    allow a little bit of overlap... it's not that clear-cut" -- ICT states 3-4
+    months himself, hedged as approximate, non-calendar-exact.
+
+    NOT sourced to M2V6 or any video reviewed so far: the specific pivot-filtering
+    mechanic itself (M2V6 never describes an operational swing-filtering algorithm,
+    only the general macro-cycle concept) and the min_days=60 default value.
+
+    OPEN DISCREPANCY, not resolved here: min_days=60 calendar days (~2 months) is
+    noticeably short of this docstring's own "3-4 month" claim (~90-120 days).
+    Needs a decision: correct the default, or correct the docstring's framing.
+
+    DISAMBIGUATION (same pattern as MIN_SWING_PIPS, see risk_engine.py): this is
+    60 CALENDAR days (via pandas .days). The already-logged M5V1 IPDA Look Back
+    window is 60 TRADING days -- a different, larger span (~84 calendar days).
+    Do not conflate the two despite the shared number. See project_forensics.md,
+    Month 2 Video 6 entry.
     """
     if swings_df.empty:
         return swings_df
