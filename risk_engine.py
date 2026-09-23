@@ -9,6 +9,14 @@ Implements the three ICT rules from "Growing Small Accounts Without High Risk":
 One Function, One Job. No visualization. No state. Pure calculation.
 """
 
+# FORENSICS CORRECTION (Month 2 Video 4):
+# project_forensics.md's Month 2 Video 1 and Month 2 Video 3 entries previously claimed
+# this codebase had no implementation of the R-multiple scale-out/exit mechanic at all.
+# That claim was made without reading this file and was false — EXIT_SCHEDULE and
+# EXIT_SCHEDULE_V3 already implemented it. See project_forensics.md, Month 2 Video 4
+# entry, for the correction and for two open numeric questions in EXIT_SCHEDULE/EXIT_SCHEDULE_V3
+# that remain unresolved pending a decision.
+
 # ─── Constants (verbatim from ICT Month 2 Video 1 slides) ───────────────────
 
 # IDEAL standard (B.3 from page 53 slide):
@@ -107,7 +115,7 @@ def calc_r_multiples(entry: float, stop: float, max_r: int = 5, bullish: bool = 
 
     ICT Month 2 Video 1, page 62 annotated chart:
       R Multiple = 1, 2, 3, 4, 5  stacked above (bullish) or below (bearish) entry.
-    At R Multiple = 4: stop moves to breakeven.
+    At R Multiple = 2: stop moves to breakeven (see BREAKEVEN_TRIGGER_R, EXIT_SCHEDULE[2]).
     At R Multiple = 5: full exit, buy stops cleared.
 
     IMPORTANT — direction must be passed explicitly via `bullish`.
@@ -200,6 +208,10 @@ def min_rr_for_win_rate(win_rate: float) -> float:
     at a given win rate.
     Formula: min_rr = (1 - win_rate) / win_rate
     Example: win_rate=0.33 -> min_rr = 2.03
+    
+    Sourced to ICT Month 2 Video 1, p.57 Reward:Risk table — formula reproduces every row
+    (e.g. 25% win rate -> 3.0 min RR; 50% -> 1.0; 75% -> 0.33), though not stated as an
+    explicit formula in the source itself (derived from the table, not quoted verbatim).
     """
     if win_rate <= 0 or win_rate >= 1:
         raise ValueError("win_rate must be strictly between 0 and 1")
