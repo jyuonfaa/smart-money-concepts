@@ -69,8 +69,15 @@ EXIT_SCHEDULE_V3 = {
 }
 BREAKEVEN_TRIGGER_R = 2  # After R2 fills, stop moves to entry price
 
-# Month 2 Video 5 Constants
+# MITIGATION / RE-ENTRY RULE (page 88 verbatim):
+# "we're going to go long with one half of the position size we used on the
+#  initial loss... if we took a initial loss of two percent on the first trade,
+#  we have to go down to one percent."
+# Confirmed general, not one-off: same halving stated again for a 1%->0.5% example.
 MITIGATION_REENTRY_RISK_FRACTION = 0.5
+# Payoff point (page 89-90 verbatim): "you only need a multiple of R2 to get that
+# trade paid back to you." Confirmed by exact arithmetic: required_rr = initial/reentry
+# = initial / (initial*0.5) = 2.0, matching this constant exactly.
 MITIGATION_EXIT_R = 2
 
 # MINIMUM SWING SIZE (page 58 + page 57 slide 2):
@@ -289,7 +296,14 @@ def calc_position_size(
 def calc_mitigation_recovery(initial_risk_pct: float, reentry_risk_pct: float) -> dict:
     """
     Computes the R-multiple required on a re-entry trade to fully mitigate an initial loss.
-    Based on ICT Month 2 Video 5.
+    Based on ICT Month 2 Video 5, pp.88-90. Formula verified by hand against the source's
+    own worked example: initial_risk_pct=0.02, reentry_risk_pct=0.01 -> required_rr=2.0,
+    exactly matching "you only need a multiple of R2 to get that trade paid back to you."
+    NOT modeled by this function or anywhere else in the codebase: the video's separate
+    stop-placement change on re-entry (full OB low instead of mean threshold, p.87) and
+    two explicitly-discretionary exit considerations (weekend/day-of-week timing, p.89;
+    R3 profit-take, p.90, stated as "in my opinion" not a rule). See project_forensics.md,
+    Month 2 Video 5 entry.
     
     Parameters
     ----------
