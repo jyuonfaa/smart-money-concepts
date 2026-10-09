@@ -181,6 +181,23 @@ def turtle_soup_signals(
                          AND current_price <= daily_ob_top
                          (where daily OB is the most recent unmitigated bearish OB on the Daily chart)
 
+    KNOWN GAP, NOT BUILT (Month 3 Video 1, pp.164-168):
+    This function requires a reversal to close INSIDE an unmitigated Daily OB zone
+    to fire at all (bull_obs/bear_obs loop below) -- there is no standalone stop-
+    run/turtle-soup trigger independent of OB confluence. M3V1 describes sweep-
+    and-OB as separable, independently tradable setups ("I'm selling above a
+    previous high... OR I'm selling at previous bearish orderblock"), and ICT
+    explicitly poses the distinction himself: "if it's me trading back to a
+    bearish order block, but it could potentially be a turtle soup, how do I know
+    which one?" This does NOT invalidate this function's existing M2V1 sourcing --
+    M2V1's own worked example genuinely combines sweep + OB landing. M3V1 is a
+    second, independent source describing turtle soup as not requiring OB
+    confluence. NOT built this session -- deferred pending a dedicated design
+    decision (new mode on this function vs. a separate function, following the
+    _failure_swings()/_breaker_blocks() precedent) and pending resolution of an
+    open source-text ambiguity in M3V1 itself. See project_forensics.md, Month 3
+    Video 1 entry.
+
     Parameters
     ----------
     ohlc              : pd.DataFrame  — the lower-timeframe (15M or 1H) OHLCV bar data
@@ -201,6 +218,19 @@ def turtle_soup_signals(
     entry_buffer_pips : float         — ICT Month 3 V3: 5 pips added above the OB bottom as the limit entry
     require_down_candle_violation : bool — ICT Month 3 V3: require a bearish candle at/below midnight
                                            open to be violated on the upside before firing bullish signal.
+    monthly_ob_df     : pd.DataFrame = None — Monthly OB zone dataset. When provided, LTF signals
+                                              are restricted to bars whose close falls inside the
+                                              active Monthly bullish or bearish OB zone. Signals
+                                              outside the active zone are suppressed entirely.
+                                              UNCITED PROVENANCE, FLAGGED NOT RESOLVED (Month 3
+                                              Video 1, pp.152-167): this Monthly-OB-gates-LTF-
+                                              signals mechanism has no video citation anywhere in
+                                              this docstring. M3V1's entire worked example is
+                                              structurally this exact pattern (Monthly OB sets
+                                              bias/zone, lower timeframes refine within it), but
+                                              this is NOT confirmed as M3V1's actual source --
+                                              provenance was not checked this session. See
+                                              project_forensics.md, Month 3 Video 1 entry.
 
     Returns
     -------
