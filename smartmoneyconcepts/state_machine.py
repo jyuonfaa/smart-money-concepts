@@ -592,6 +592,15 @@ def false_flag_signals(
     calculation rather than M2V7's own stated method. See project_forensics.md,
     Month 2 Video 7 entry, for the full writeup -- this is the same class of
     conflict already gated for smc.ob()'s Top/Bottom fields vs M4V3.
+
+    UNRESOLVED CROSS-VIDEO ATTRIBUTION (Month 2 Video 8, pp.130-145): Path 2 of
+    this function ("Consolidation Breakout Failure") was cited to M2V7 at this
+    function's original lock, but its literal mechanic -- a wick beyond a
+    consolidation boundary that closes back inside -- is structurally closer to
+    M2V8's own "False Breakout" definition than to M2V7's flag framing. NOT
+    re-attributed here; this citation is left exactly as it was at lock time
+    pending a direct side-by-side M2V7/M2V8 re-read. See project_forensics.md,
+    Month 2 Video 8 entry.
     """
     if daily_measured_moves is not None:
         raise NotImplementedError(

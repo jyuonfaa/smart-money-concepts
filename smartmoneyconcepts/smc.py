@@ -3969,6 +3969,15 @@ def _liquidity_raids(
        'Elevated' fills the gap between those two numbers without claiming source support it
        doesn't have.
 
+    CROSS-VIDEO CONFLICT, LOGGED NOT RESOLVED (Month 2 Video 8, pp.130-145):
+    M2V8 explicitly describes the liquidity TARGET/reference level (the old high/low
+    being run toward) as body-based ("primarily all the volume is seen in... the
+    bodies of the candles," p.135) -- the opposite of this function's wick-based
+    SwingLevel violation sourcing (p.366). Not resolved here. Possible the two are
+    answering different questions (order-trigger mechanics vs. target-level
+    selection) rather than truly conflicting, but that is not adjudicated in code.
+    See project_forensics.md, Month 2 Video 8 entry.
+
     Parameters
     ----------
     ohlc                        : standard OHLC DataFrame
@@ -4141,6 +4150,15 @@ def _measured_moves(
         Until the higher peak (for tops) or lower trough (for bottoms) is breached, the full
         range of liquidity is not unlocked, making the outer extreme the institutional
         baseline from which the 1:1 expansion target is projected.
+
+    KNOWN GAP, NOT THIS FUNCTION (Month 2 Video 8, pp.142-144):
+    M2V8 describes a structurally different equal-leg projection technique: a
+    measured leg (low1->high1) is projected forward from an unrelated THIRD point
+    (a later, separate sweep-low, low2) rather than from either endpoint of the
+    measured leg itself, and the two legs are NOT required to be near-equal (unlike
+    this function's max_peak_diff_pips constraint on its two outer peaks). This is
+    NOT implemented by this function or anywhere else in the codebase. See
+    project_forensics.md, Month 2 Video 8 entry.
 
     Returns
     -------
