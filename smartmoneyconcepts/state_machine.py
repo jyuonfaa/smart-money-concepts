@@ -572,7 +572,41 @@ def false_flag_signals(
     flagpole with a 4H displacement candle, then uses the 4H OB as the precision entry zone.
     The LTF (15M) finds the first candle that returns to the 4H OB zone and closes
     inside/beyond the swept flag level.
+
+    KNOWN GAPS, not implemented here or anywhere else in the codebase:
+    - M2V7 p.118 describes the midpoint of a liquidity void as functioning as a
+      bearish/bullish order block reference. Neither smc._liquidity_voids() nor
+      this function computes any such midpoint. The OB used here instead comes
+      from a simpler last-opposite-candle-before-breakout method (see the local
+      swing-fractal + OB search below), which is NOT the void-midpoint method
+      M2V7 describes.
+    - This function contains its own inline 5-candle fractal swing-high/low
+      detector rather than reusing smc.swing_highs_lows(). Duplicated logic,
+      not necessarily wrong, flagged for awareness.
+
+    KNOWN CONFLICT, not resolved here: M2V7 (pp.120-121) explicitly instructs
+    computing equilibrium/retracement on candle BODIES, "ignoring wicks." The
+    daily_retracements input (smc.retracements()) is wick-based (uses ohlc high/
+    low directly), not body-based. daily_premium/daily_discount, and therefore
+    this function's entire Path 1/Path 2 gating, inherit that wick-based
+    calculation rather than M2V7's own stated method. See project_forensics.md,
+    Month 2 Video 7 entry, for the full writeup -- this is the same class of
+    conflict already gated for smc.ob()'s Top/Bottom fields vs M4V3.
     """
+    if daily_measured_moves is not None:
+        raise NotImplementedError(
+            "false_flag_signals(): daily_measured_moves is passed but its "
+            "expected schema (BearAmplitude/BullAmplitude columns) does not "
+            "match smc._measured_moves()'s actual output (DoubleType, "
+            "Peak1Level, MeasuredRange, ProjectedTarget, etc.). This is a "
+            "confirmed, currently-live bug -- backtest_video7.py and "
+            "visualize_month2_video8.py both pass a real daily_measured_moves "
+            "and would KeyError inside this function. Raising here instead "
+            "of letting it fail deep in the loop. See project_forensics.md, "
+            "Month 2 Video 7 entry, for the full writeup and required fix "
+            "(filter by DoubleType and align on index, not a column rename)."
+        )
+
     n_ltf = len(ohlc_ltf)
     false_bull_flag = np.zeros(n_ltf, dtype=bool)
     false_bear_flag = np.zeros(n_ltf, dtype=bool)
@@ -612,15 +646,15 @@ def false_flag_signals(
     last_fired_zone = None  # (ctop, cbot) tuple — block re-entries on identical flag zones
     last_fired_extreme = None
 
-    CONS_LOOKBACK = 5  # daily bars: Ensure consolidation is fresh (a true Flag)
-    POLE_LOOKBACK = 5  # daily bars: Window to find the flagpole before the consolidation
+    CONS_LOOKBACK = 5  # daily bars: Ensure consolidation is fresh (a true Flag) # ENGINEERING ASSUMPTION: not sourced to M2V7 or any video reviewed so far.
+    POLE_LOOKBACK = 5  # daily bars: Window to find the flagpole before the consolidation # ENGINEERING ASSUMPTION: not sourced to M2V7 or any video reviewed so far.
 
     # Precompute daily body sizes for flagpole strength check
     daily_opens  = ohlc_daily['open'].values
     daily_closes = ohlc_daily['close'].values
     daily_bodies = np.abs(daily_closes - daily_opens)
     avg_daily_body = np.mean(daily_bodies)  # baseline: average daily candle body size
-    POLE_BODY_MULTIPLIER = 1.5  # flagpole must be at least 1.5x the average daily body
+    POLE_BODY_MULTIPLIER = 1.5  # flagpole must be at least 1.5x the average daily body # ENGINEERING ASSUMPTION: not sourced to M2V7 or any video reviewed so far.
 
     for i in range(n_daily):
         # Find most recent consolidation zone within lookback window
@@ -665,8 +699,8 @@ def false_flag_signals(
         # We check BOTH here and skip only if neither condition could possibly apply.
         daily_high_i = ohlc_daily['high'].values[i]
         daily_low_i  = ohlc_daily['low'].values[i]
-        can_be_bull_trap = daily_high_i >= ctop * 0.998  # swept the top
-        can_be_bear_trap = daily_low_i  <= cbot * 1.002  # swept the bottom
+        can_be_bull_trap = daily_high_i >= ctop * 0.998  # swept the top # ENGINEERING ASSUMPTION: not sourced to M2V7 or any video reviewed so far.
+        can_be_bear_trap = daily_low_i  <= cbot * 1.002  # swept the bottom # ENGINEERING ASSUMPTION: not sourced to M2V7 or any video reviewed so far.
         if not can_be_bull_trap and not can_be_bear_trap:
             continue
 
@@ -761,12 +795,12 @@ def false_flag_signals(
         found_sweep = False
         for k in range(ep_start_idx, ep_end_idx):
             if ep['type'] == 'bear':
-                if ltf_highs[k] >= ep['sweep_extreme'] * 0.9999:
+                if ltf_highs[k] >= ep['sweep_extreme'] * 0.9999: # ENGINEERING ASSUMPTION: not sourced to M2V7 or any video reviewed so far.
                     sweep_idx = k
                     found_sweep = True
                     break
             else:
-                if ltf_lows[k] <= ep['sweep_extreme'] * 1.0001:
+                if ltf_lows[k] <= ep['sweep_extreme'] * 1.0001: # ENGINEERING ASSUMPTION: not sourced to M2V7 or any video reviewed so far.
                     sweep_idx = k
                     found_sweep = True
                     break
@@ -788,6 +822,7 @@ def false_flag_signals(
             
             for i in range(start_idx + 2, end_idx - 2):
                 # Find local swing low
+                # ENGINEERING ASSUMPTION: not sourced to M2V7 or any video reviewed so far. (5-candle fractal width is an engineering choice)
                 if ltf_lows[i] < ltf_lows[i-1] and ltf_lows[i] < ltf_lows[i-2] and ltf_lows[i] < ltf_lows[i+1] and ltf_lows[i] < ltf_lows[i+2]:
                     swing_low = ltf_lows[i]
                     # Find breakdown
@@ -827,6 +862,7 @@ def false_flag_signals(
             
             for i in range(start_idx + 2, end_idx - 2):
                 # Find local swing high
+                # ENGINEERING ASSUMPTION: not sourced to M2V7 or any video reviewed so far. (5-candle fractal width is an engineering choice)
                 if ltf_highs[i] > ltf_highs[i-1] and ltf_highs[i] > ltf_highs[i-2] and ltf_highs[i] > ltf_highs[i+1] and ltf_highs[i] > ltf_highs[i+2]:
                     swing_high = ltf_highs[i]
                     # Find breakout
