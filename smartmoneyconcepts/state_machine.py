@@ -218,6 +218,26 @@ def turtle_soup_signals(
     entry_buffer_pips : float         — ICT Month 3 V3: 5 pips added above the OB bottom as the limit entry
     require_down_candle_violation : bool — ICT Month 3 V3: require a bearish candle at/below midnight
                                            open to be violated on the upside before firing bullish signal.
+    ny_midnight : pd.Series = None — Per-bar NY midnight opening price series. Used
+                                      to compute power3_sponsored (see Returns) and
+                                      as a reference level in the down-candle-violation
+                                      check. Sourced to ICT Month 3 Video 3, pp.194-197
+                                      ("Power Three" framing — see power3_sponsored
+                                      entry above for the full citation). Previously
+                                      undocumented despite being in the function
+                                      signature. See project_forensics.md, Month 3
+                                      Video 3 entry.
+    lethargy_window : int = 5
+    lethargy_threshold_pips : float = 0.0010
+                                    CONCEPT SOURCED, NUMBERS NOT (Month 3 Video 3, pp.187-188): the qualitative
+                                    principle behind this check is sourced verbatim: "you need to see immediate
+                                    dynamic response. If it's lethargic... that means there is no institutional
+                                    orders in that area." M3V3 gives no numeric window or pip threshold — the
+                                    specific defaults below (lethargy_window=5, lethargy_threshold_pips=0.0010)
+                                    remain unsourced ENGINEERING ASSUMPTIONS. Note also: M3V3 describes active
+                                    position-management responses to lethargy (reduce risk, cut position in half,
+                                    bail entirely) that this boolean flag does NOT implement — those remain
+                                    unbuilt Layer 5/Layer 6 gaps. See project_forensics.md, Month 3 Video 3 entry.
     monthly_ob_df     : pd.DataFrame = None — Monthly OB zone dataset. When provided, LTF signals
                                               are restricted to bars whose close falls inside the
                                               active Monthly bullish or bearish OB zone. Signals
@@ -261,6 +281,15 @@ def turtle_soup_signals(
       down_candle_violated : bool — True if a bearish candle at/below midnight open was broken on upside
       ts_target_fvg        : float — Nearest unmitigated FVG above entry (bull) or below entry (bear)
       refinement_level : str   — The passed refinement level label
+      power3_sponsored : bool — True where price has traded through the NY midnight
+                               open in the direction consistent with ICT's "Power
+                               Three" framing (bullish: close below midnight open =
+                               accumulation). Sourced to ICT Month 3 Video 3, pp.194-197
+                               (verbatim, p.196-197): "Power Three is the concept I
+                               teach as it relates to the daily open high low close
+                               bar... when you're bullish you want to be buying near
+                               or below the opening price." Previously uncited. See
+                               project_forensics.md, Month 3 Video 3 entry.
     """
     n = len(ohlc)
     bull_flags    = np.zeros(n, dtype=bool)
