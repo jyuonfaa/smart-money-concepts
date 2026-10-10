@@ -1935,6 +1935,147 @@ class smc:
             pd.Series(bb_invalid_arr,    name="Invalidated",   index=ohlc.index),
         ], axis=1)
 
+    @classmethod
+    def monthly_contrarian_range(cls, ohlc: DataFrame) -> DataFrame:
+        """
+        Monthly Contrarian Range & Order Block Logic.
+        ICT Month 3, Video 4 — Where The Next Setup Will Form (pp.200-215).
+
+        Delineates the higher timeframe (monthly) range using the most recent
+        down/up candle and the nearest prior opposite candle with a full gap
+        between wicks. The most recent candle serves as a contrarian Order Block
+        candidate that activates upon a close-based break.
+        Top = OPEN of the up candle, Bottom = OPEN of the down candle (both directions).
+        Gap validation uses wicks; activation uses closes.
+
+        Parameters
+        ----------
+        ohlc : DataFrame
+            Historical OHLC dataframe (typically monthly resolution).
+
+        Returns
+        -------
+        DataFrame with columns:
+            OB        : 1.0 for bullish OB candidate, -1.0 for bearish, NaN elsewhere.
+            Top       : Range top level at OB candle.
+            Bottom    : Range bottom level at OB candle.
+            Activated : 1.0 if activated by subsequent close break, 0.0 if not, NaN elsewhere.
+            Mitigated : Alias for Activated (1.0 if activated, 0.0 if not).
+        """
+        n = len(ohlc)
+        if n < 2:
+            return pd.DataFrame({
+                "OB": pd.Series(np.nan, index=ohlc.index, dtype=np.float64),
+                "Top": pd.Series(np.nan, index=ohlc.index, dtype=np.float64),
+                "Bottom": pd.Series(np.nan, index=ohlc.index, dtype=np.float64),
+                "Activated": pd.Series(np.nan, index=ohlc.index, dtype=np.float64),
+                "Mitigated": pd.Series(np.nan, index=ohlc.index, dtype=np.float64),
+            })
+
+        _open = ohlc["open"].values
+        _high = ohlc["high"].values
+        _low = ohlc["low"].values
+        _close = ohlc["close"].values
+
+        ob_arr = np.full(n, np.nan, dtype=np.float64)
+        top_arr = np.full(n, np.nan, dtype=np.float64)
+        bottom_arr = np.full(n, np.nan, dtype=np.float64)
+        activated_arr = np.full(n, np.nan, dtype=np.float64)
+
+        # ── BULLISH CASE ───────────────────────────────────────────────────
+        # 1. Find the most recent down candle (close < open) in the dataframe.
+        down_indices = np.where(_close < _open)[0]
+        if len(down_indices) > 0:
+            down_idx = down_indices[-1]
+            down_high = _high[down_idx]
+
+            # 2. Scan backward from it for the nearest PRIOR up candle (close > open)
+            # whose LOW is strictly greater than the down candle's HIGH — i.e. a
+            # full gap, no overlap, between the two candles' wicks.
+            prior_up_idx = None
+            for j in range(down_idx - 1, -1, -1):
+                if _close[j] > _open[j]:
+                    if _low[j] > down_high:
+                        prior_up_idx = j
+                        break
+
+            # 3. If found: range top = that up candle's OPEN. Range bottom = the down
+            # candle's OPEN. The down candle is a bullish order block candidate.
+            if prior_up_idx is not None:
+                range_top = _open[prior_up_idx]
+                # ENGINEERING ASSUMPTION: range = OPEN of down candle to OPEN of up candle.
+                # Source text gives only the numbers; derived by pixel-measuring the M3V4
+                # charts (USDJPY, NZDUSD, USDCAD), where the drawn lines land on candle
+                # opens, not wicks.
+                range_bottom = _open[down_idx]
+
+                # 4. Activation: the OB activates when a later candle's CLOSE trades above the
+                # down candle's high. This is a close-based trigger — mark it in a comment as:
+                # ENGINEERING ASSUMPTION: activation trigger is close-based, inferred
+                # from ob()'s own precedent and the project's no-lookahead standard — NOT
+                # explicitly stated in M3V4's source text, which only says "trades above."
+                activated = 0.0
+                for k in range(down_idx + 1, n):
+                    if _close[k] > down_high:
+                        activated = 1.0
+                        break
+
+                ob_arr[down_idx] = 1.0
+                top_arr[down_idx] = range_top
+                bottom_arr[down_idx] = range_bottom
+                activated_arr[down_idx] = activated
+
+        # ── BEARISH CASE ───────────────────────────────────────────────────
+        # 1. Find the most recent up candle (close > open).
+        up_indices = np.where(_close > _open)[0]
+        if len(up_indices) > 0:
+            up_idx = up_indices[-1]
+            up_low = _low[up_idx]
+
+            # 2. Scan backward from it for the nearest prior down candle whose HIGH
+            # is strictly less than the up candle's LOW (same full-gap requirement).
+            prior_down_idx = None
+            for j in range(up_idx - 1, -1, -1):
+                if _close[j] < _open[j]:
+                    if _high[j] < up_low:
+                        prior_down_idx = j
+                        break
+
+            # 3. Range top = up candle's OPEN. Range bottom = prior down candle's OPEN.
+            # The up candle is a bearish order block candidate.
+            if prior_down_idx is not None:
+                range_top = _open[up_idx]
+                # ENGINEERING ASSUMPTION: range = OPEN of down candle to OPEN of up candle.
+                # Source text gives only the numbers; derived by pixel-measuring the M3V4
+                # charts (USDJPY, NZDUSD, USDCAD), where the drawn lines land on candle
+                # opens, not wicks.
+                range_bottom = _open[prior_down_idx]
+
+                # 4. Same close-based activation logic, same comment.
+                # ENGINEERING ASSUMPTION: activation trigger is close-based, inferred
+                # from ob()'s own precedent and the project's no-lookahead standard — NOT
+                # explicitly stated in M3V4's source text, which only says "trades above."
+                # Bearish case mirrors the bullish case (p.206, p.215); the NZDUSD
+                # worked example (pp.211-213) demonstrates it.
+                activated = 0.0
+                for k in range(up_idx + 1, n):
+                    if _close[k] < up_low:
+                        activated = 1.0
+                        break
+
+                ob_arr[up_idx] = -1.0
+                top_arr[up_idx] = range_top
+                bottom_arr[up_idx] = range_bottom
+                activated_arr[up_idx] = activated
+
+        return pd.DataFrame({
+            "OB": pd.Series(ob_arr, index=ohlc.index, name="OB"),
+            "Top": pd.Series(top_arr, index=ohlc.index, name="Top"),
+            "Bottom": pd.Series(bottom_arr, index=ohlc.index, name="Bottom"),
+            "Activated": pd.Series(activated_arr, index=ohlc.index, name="Activated"),
+            "Mitigated": pd.Series(activated_arr, index=ohlc.index, name="Mitigated"),
+        })
+
 
 # ================================================================
 # SMT DIVERGENCE — module-level functions (bypass @apply decorator)
