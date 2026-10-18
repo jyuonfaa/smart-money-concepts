@@ -2107,6 +2107,13 @@ def _smt_divergence(
     Gap 1 (p.222): FVG void on benchmark confirmed as closed-in.
     Gap 2 (p.226): Use smt_apply_bias_filter() to gate ob()/ny_midnight_open().
 
+    CROSS-VIDEO SOURCING (M3V6 p.233): correlation="positive" mode's Branch A
+    (asset HH confirmed + benchmark fails HH -> BEARISH) is confirmed sourced
+    to Month 3 Video 6, not this video -- worked twice (ZN vs ZB, Sep 2016).
+    Branches B and D in both correlation modes, and inverse-mode Branch A,
+    remain UNCONFIRMED by any video reviewed so far (not sourced, not built
+    from assumption -- symmetry-inferred only).
+
     Parameters
     ----------
     ohlc            : OHLC of the primary asset (e.g. AUDUSD)
@@ -2784,11 +2791,26 @@ def _macro_bond_bias(zn_df, zb_df, dxy_df=None):
     Calculates Macro Regime (3-4 Month Shift) and Micro Execution Triggers.
 
     Layer 1: Macro Regime via ZB vs DXY inverse SMT (60-day quarterly filter).
-             Forward-filled but expires after 130 trading days (~6 months per ICT).
+             CONFIRMED sourced (p.229-230): ZB HH confirmed + DXY fails LL -> Bullish USD.
+             Forward-filled but expires after MAX_REGIME_DAYS trading days.
+             ENGINEERING ASSUMPTION: MAX_REGIME_DAYS=130 (~6mo) takes the OUTER
+             bound of ICT's stated "three to six months" range (p.228) -- not
+             itself a number ICT gave.
     Layer 2: Micro Execution Triggers via ZN vs ZB positive SMT (unfiltered).
-             Bearish bond divergence (ZN HH, ZB fails HH) = interest rates rising = USD Bullish.
+             CONFIRMED sourced (p.233, worked twice): ZN HH confirmed + ZB fails HH
+             (Branch A) = interest rates rising = USD Bullish. Branches B/D of this
+             positive-correlation mode are NOT confirmed by this or any video
+             reviewed so far -- symmetry-inferred only, same treatment as every
+             other unconfirmed mirror branch in this codebase.
     Layer 3: Alignment gate — trigger's USD directional effect must match active regime.
-             Triple-instrument simultaneous pivot = manipulation spike, discarded.
+             ENGINEERING ASSUMPTION: the triple-instrument-simultaneous-pivot
+             "manipulation spike" discard rule is NOT sourced to M3V6 or any
+             video reviewed so far. M3V6's own manipulation example (p.238,
+             "that whole overnight fiasco... was all fluff... manipulation")
+             is actually SMT non-confirmation itself -- already captured by
+             Layer 1/2's own divergence logic -- not a same-day-triple-pivot
+             coincidence check. Left as-is (working code, mis-cited only);
+             not rebuilt this session.
 
     Returns a DataFrame with columns:
         'regime': +1 Bullish USD, -1 Bearish USD, 0 Neutral (capped at 130 days)
