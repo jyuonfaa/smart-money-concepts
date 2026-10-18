@@ -2445,10 +2445,17 @@ def triad_divergence(usdx_ohlc, triad_ohlcs, usdx_swings, lookaround_bars=5, usd
     - triad_ohlcs   : dict of DataFrames for the triad assets e.g.
                       {'ZB': df, 'ZN': df, 'ZF': df}
     - usdx_swings   : DataFrame output of smc.swing_highs_lows_v4() on usdx_ohlc.
-    - lookaround_bars: int, bars either side of a swing to search for extremes.
+    - lookaround_bars: int, bars either side of a swing to search for extremes. # ENGINEERING ASSUMPTION: the value 5 and the lookaround-window mechanic itself are not sourced to M4V1 — the source states only that ICT visually identifies failure swings on a 90-minute chart over 15-18 days (pp.265-266), giving no numeric bar-search-window parameter.
     - usdx_pois     : Optional DataFrame of USDX POI zones with columns
                       'top' and 'bottom' (or 'Top'/'Bottom'). When provided,
                       only swings whose price falls inside a POI zone are evaluated.
+    - neutral_tolerance_pct: float, default 0.001. Threshold below which a
+      triad asset's HH/LL change vs. the prior swing is treated as flat/
+      neutral rather than confirming or diverging (the M4V1 p.266 '10-year...
+      flat to neutral' case). # ENGINEERING ASSUMPTION: the 0.001 (0.1%)
+      value itself is not sourced to M4V1 or any video reviewed so far —
+      the source gives no numeric neutral threshold, only the visual/
+      qualitative 10-year example.
 
     Returns:
     DataFrame indexed like usdx_ohlc with columns:
