@@ -3341,6 +3341,26 @@ smc.phantom_signals = _phantom_signals
 def _false_hns_patterns(ohlc, swings, max_neckline_slope_pct=0.005):
     """
     Detects False Head and Shoulders Traps (Month 3 Video 8).
+
+    CONFIRMED SOURCED (pp.252-254): 5-point H-L-H-L-H (bullish) / L-H-L-H-L
+    (bearish) topology matches the classical Head & Shoulders / Inverted H&S
+    definitions exactly (p.252-253). Head-strictly-highest/lowest constraint
+    confirmed ("it creates a higher high... another lower price peak," p.252).
+    Equal-neckline-points requirement CONFIRMED as a real constraint, sourced
+    qualitatively to both worked examples ("two equal lows at points 4 and 5,"
+    p.256; "equal highs at points 2 and 3," p.257) -- but the specific
+    max_neckline_slope_pct=0.005 (0.5%) tolerance value itself is NOT sourced.
+
+    ENGINEERING ASSUMPTION: max_neckline_slope_pct default (0.005) -- ICT never
+    gives a numeric equality tolerance for the neckline points, only the
+    qualitative "equal" framing.
+
+    SOURCE-TEXT ANOMALY, not resolved: p.252 states the neckline connects
+    "those three successive peaks," but the diagram and the mirror passage for
+    the inverted pattern (p.253: "connect the highs that form around those
+    three successive lower lows") both describe the neckline at the TROUGH
+    level between the peaks, not through the peaks themselves. Likely a
+    narration slip; not corrected here, flagged only.
     """
     # Clean swings
     swing_arr = swings[~swings['type'].isna()].copy()
@@ -3425,6 +3445,29 @@ def _false_hns_patterns(ohlc, swings, max_neckline_slope_pct=0.005):
 def _hns_signals(ohlc, patterns, htf_bias=None, htf_poi_top=None, htf_poi_btm=None):
     """
     Executes trades on the diagonal neckline sweep.
+
+    CONFIRMED SOURCED (pp.253-255): htf_bias gate matches the core "fade the
+    retail pattern based on the higher timeframe" thesis exactly. htf_poi_top/
+    htf_poi_btm gate (requiring an active, bounded POI, not just directional
+    bias) matches both worked examples: Worked Example 1's fade is justified
+    by a specific daily bullish Order Block (1.5546, p.256); Worked Example 2's
+    fade is justified by being "inside of a breaker" (1.5345-1.5350, p.258).
+    Note: this code only checks whether a POI is currently active -- it does
+    NOT additionally require the H&S pattern's own price levels to sit inside
+    the POI's bounds; the source never states such an alignment requirement
+    either, so this is a faithful, non-over-specified reading.
+
+    Entry trigger (sweep of equal-lows / equal-highs level): CONFIRMED EXACT
+    MATCH, p.254 ("I'll buy the sell stops below those equal lows" / mirror).
+    target_1 (Right Shoulder, first partial): CONFIRMED, p.255 ("take your
+    first profit at the right shoulder on both these patterns"). target_2
+    (Head level): CONFIRMED, p.254 ("buy stops above the highest high in this
+    pattern" / mirror).
+
+    ENGINEERING ASSUMPTION: the pre-entry invalidation rule (trap discarded if
+    price clears the Head/target_2 before the neckline sweep triggers) is NOT
+    explicitly stated anywhere in pp.252-260. Reasonable inference (the fade's
+    premise is broken if price reaches the Head first), but not sourced.
     """
     signals = pd.DataFrame(index=ohlc.index)
     signals['signal'] = 0
