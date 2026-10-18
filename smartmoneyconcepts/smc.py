@@ -2999,15 +2999,44 @@ def _trendline_phantoms(ohlc, swings):
     """
     Detects False Trendline (Phantom) Traps from Month 3 Video 7.
 
+    CONFIRMED SOURCED (pp.239, 242-244): trap_type=1 ("Bullish Trap", built from
+    3 consecutive Lower Highs) maps to the source's Retail Bearish Resistance /
+    Market Maker BUY scenario (pp.243-244) -- trap_interim (low between touch 2
+    and touch 3) and trap_point2 (High-2 level, the buy-stop target) both match
+    exactly. trap_type=-1 ("Bearish Trap", 3 consecutive Higher Lows) maps to
+    the mirror Retail Bullish Support / Market Maker SELL scenario (pp.239, 242,
+    244) -- trap_interim (high between touches) and trap_point2 (Low-2, the
+    stop-loss target, p.244: "go down below Point number two") also match
+    exactly. Labels name the resulting price direction the trap pushes toward,
+    not which retail trendline pattern triggered it.
+
     Returns a DataFrame with columns:
-    - trap_interim  : price of the high/low between touches 2 and 3
-    - trap_point2   : price of the 2nd touch (retail stop cluster)
-    - trap_touch3   : price of the 3rd touch (for limit-order entry, Gap 7)
-    - trap_p1_ts    : timestamp of Point 1 (for FVG target lookup)
-    - trap_fvg_top  : top of the FVG left by Point 1 impulse (Gap 8)
-    - trap_fvg_bot  : bottom of the FVG left by Point 1 impulse (Gap 8)
+    - trap_interim  : price of the high/low between touches 2 and 3 (CONFIRMED, see above)
+    - trap_point2   : price of the 2nd touch (retail stop cluster) (CONFIRMED, see above)
+    - trap_touch3   : price of the 3rd touch (for limit-order entry, Gap 7) --
+                      ENGINEERING ASSUMPTION: the touch-3 price itself is NOT
+                      sourced as an entry trigger anywhere in pp.239-251; every
+                      worked entry targets the interim zone between touch 2 and
+                      touch 3, never touch 3 itself.
+    - trap_p1_ts    : timestamp of Point 1 (for FVG target lookup) (see trap_fvg_top/bot)
+    - trap_fvg_top  : top of the FVG left by Point 1 impulse (Gap 8) --
+                      PARTIALLY SOURCED: the FVG's construction matches p.246
+                      exactly ("a fair value gap from the low of the up candle
+                      that makes the intermediate term high at point 1 to the
+                      high of the next up candle"). Using it as a POST-ENTRY
+                      secondary target is NOT sourced -- the worked example
+                      (p.246) treats it as a pre-entry reactionary level to
+                      "stalk," not a take-profit; price never returns to it
+                      later in that example.
+    - trap_fvg_bot  : bottom of the FVG left by Point 1 impulse (Gap 8) -- see trap_fvg_top note
     - trap_ts       : timestamp when trap became active (after 3rd touch)
     - trap_type     : 1 for Bullish Trap, -1 for Bearish Trap
+
+    KNOWN SIMPLIFICATION: Worked Example 1 (pp.246-249) chains a daily FVG/
+    institutional-reference bias call together with TWO separate, sequential
+    LTF trend-line fakeouts on one continuous chart -- a nested/chained trap
+    structure this detector does not model. It only catches one isolated
+    3-touch triplet at a time. Not a defect; a scope note.
     """
     import pandas as pd
     import numpy as np
@@ -3105,22 +3134,44 @@ def _phantom_signals(ohlc, phantoms, ob_df, htf_bias=None):
     Full 3-Phase Market Maker Trap Execution Engine (Month 3, Video 7).
 
     Phase 2 Entry Triggers at the Interim Extreme:
-      A. Turtle Soup       -- price sweeps below/above the interim level
-      B. Limit at 3rd Touch -- price touches the 3rd-touch trendline level (Gap 7)
-      C. OB Tap            -- price taps an Order Block at the interim level
-      D. Breaker           -- price breaks a prior swing in the trap direction (Gap 6)
+      A. Turtle Soup       -- CONFIRMED (p.242: "I will be allowing price to
+                               just briefly poke its head above that high for
+                               a turtle soup")
+      B. Limit at 3rd Touch -- NOT SOURCED (Gap 7). No passage in pp.239-251
+                               describes an order placed at the 3rd touch
+                               itself; every entry targets the interim zone
+                               between touch 2 and touch 3 instead.
+      C. OB Tap            -- CONFIRMED (p.242: "I aim in that high for a
+                               bearish order block"; p.243-244 mirror for the
+                               bullish OB case)
+      D. Breaker           -- CONFIRMED (p.243: "I'm looking for maybe
+                               sometimes on a lower time frame I'm looking for
+                               a bearish breaker where the market has shown a
+                               willingness to Rally up to take out an old high")
 
-    Phase 2 Target        : trap_point2 (retail stop cluster)
-    Secondary Target      : trap_fvg_top / trap_fvg_bot (FVG from Point 1, Gap 8)
+    Phase 2 Target        : trap_point2 (retail stop cluster) -- CONFIRMED,
+                             p.244 (both directions, see _trendline_phantoms docstring)
+    Secondary Target      : trap_fvg_top / trap_fvg_bot (FVG from Point 1, Gap 8) --
+                             ENGINEERING ASSUMPTION: zone construction is sourced
+                             (p.246) but its use as a secondary TAKE-PROFIT is
+                             NOT -- the source treats it as a pre-entry level to
+                             watch, not a post-entry target. See
+                             _trendline_phantoms docstring for detail.
 
     Phase 3 Reversal (after Point 2 is swept):
       Signal  : opposite direction
       Target  : trap_interim (deep liquidity pool)
+      ENGINEERING ASSUMPTION: only weak, indirect support in the source.
+      Worked Example 2 (pp.250-251) shows new liquidity becoming available
+      after a stop sweep ("the liquidity below points 3 and 5 would be
+      allowed to be tested") but this is not stated as an explicit reversal
+      rule.
 
     signal column  : 1=Buy, -1=Sell
     trigger_type   : identifies which phase and entry type fired
     target_price   : primary Take Profit
-    secondary_target: FVG-based secondary Take Profit (Gap 8)
+    secondary_target: FVG-based secondary Take Profit (Gap 8) -- see ENGINEERING
+                       ASSUMPTION note above
     """
     import pandas as pd
     import numpy as np
