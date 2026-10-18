@@ -998,3 +998,32 @@ Run against smc.consolidation(prd=10, conslen=5) and smc.expansion() post-Tier-A
 - Reaffirms, not new: the already-logged M4V12 reusable/recapitalized-order-block gap (pp.272-289's repeated "populate more buy orders" on retested OBs is a second confirming data point).
 - Golden Master: not re-run this session -- no code changed.
 - Not gated for closing M4V2's review itself: the risk_engine.py citation correction and the smc.py negative-search both stand on their own, complete. The M1V7 overlap question is logged as its own open item, carried forward, not a blocker -- same treatment as the still-open M1V6/M4V10 liquidity-void overlap.
+
+## 14. OPEN ITEMS REGISTRY
+
+Running list of every unresolved gap, cross-video overlap, or deferred
+build decision surfaced during the re-audit so far. Each item links to
+its full writeup in Section 13. This section is appended to, not
+rewritten, as new items surface or existing ones resolve (a resolved
+item gets struck through with the resolving entry cited, not deleted).
+
+- **M1V2/M1V1 transition-graph contradiction** (Expansion->Consolidation, Reversal->Retracement edges): neither confirmed nor ruled out. See M1V2 entry.
+- **M1V6/M4V10 liquidity-void overlap**: M1V6's bracketing-up-candles void description vs. M4V10's entire-run-range `_liquidity_voids()` -- same concept re-taught, or genuinely different? Not resolved. See M1V6 entry.
+- **M1V6 expansion() discount/premium OB filter anchor-selection**: which equilibrium anchor to measure against remains unresolved even though the directional rule is now textually sourced. See M1V6 entry.
+- **M1V7 High/Low Resistance Liquidity Run**: CONFIRMED GAP, no function counts intervening swings, classifies a run, or applies the point-6 transition rule. See M1V7 entry.
+- **M1V7/M4V2 overlap**: does M4V2's two-axis relativity rule + HTF-directional-bias gate complete M1V7's "never formalized" gap, or just re-describe it with a fuller worked example? Requires direct side-by-side re-read. Nothing built either way. See M4V2 entry.
+- **M2V1 turtle_soup_signals() standalone-trigger mode**: M3V1 shows sweep+OB as separable, independently-tradable setups; current code hard-ANDs them. Build deliberately deferred to a dedicated session. See M3V1 entry.
+- **M2V7/M2V8/M3V1 "turtle soup = false breakout" / false_flag_signals() Path 2 attribution**: unresolved which video actually sources Path 2's consolidation-breakout-failure logic. See M2V8 entry.
+- **M2V8 vs M4V11 `_liquidity_raids()` wick/body conflict**: wick-based (M4V11-sourced) vs. body-based target framing (M2V8-sourced). Gated for explicit decision. See M2V8 entry.
+- **M2V6 `_filter_quarterly_swings()` min_days=60 vs. its own docstring's "3-4 month" claim**: internal discrepancy, not video-sourced either way. See M2V6 entry.
+- **M3V1 "only three setups" source-text ambiguity**: two passages (pp.167-168) with non-1:1-mapping item lists; may describe the same setups twice or four distinct items. See M3V1 entry.
+- **M3V1 turtle_soup_signals() monthly_ob_df gate provenance**: uncited mechanism, not confirmed as M3V1-sourced or otherwise. See M3V1 entry.
+- **M3V4 Part 2 (MTFEngine.get_monthly_contrarian_cascade())**: written, uncommitted, blocked on missing monthly/weekly CONFIG data. See M3V4 entry.
+- **M3V4 objective logic, multi-candle OB grouping, body-size tiebreak**: three sub-gaps, none built. See M3V4 entry.
+- **M3V5/M3V6 `_smt_divergence()` positive-mode Branches B/D, inverse-mode Branch A**: unconfirmed by any video reviewed so far, symmetry-inferred only. See M3V5/M3V6 entries.
+- **M3V5 `_macro_bond_bias()` Layer 2 (positive mode)**: depends on the above unsourced branches, stays open. See M3V5 entry.
+- **Tier 4 wick/body conflicts** (`ob()` vs M4V3, `_liquidity_raids()` vs M2V8, `retracements()` vs M2V7): gated for an explicit project-wide decision, not resolved per-video. See M3V2/M4V3 entries and Section 4.
+- **M4V2/M4V7/M4V3 HTF-alignment / "major swing" significance**: Layer 4 dependency, undefined operationally by any video reviewed so far. See M4V3/M4V7 entries.
+- **M4V12 reusable/recapitalized order block**: no current detector models a level as revisitable after first mitigation; reaffirmed by M3V3, M4V2. See M4V12 entry.
+- **M4V1/M3V5 `lookaround_bars=5` unsourced pattern**: shared across two functions, no source found in any video checked (M1V1, M1V7, M2V6, M3V5, M3V6). See M4V1 entry.
+- **Layer 3 (Level Registry) not yet built**: reaffirmed repeatedly (M3V2, M3V3, M5V14) as the master structural gap underlying several of the above. See M3V2/M5V14 entries.
