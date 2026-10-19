@@ -1659,7 +1659,7 @@ class smc:
             Candle in the most recent Swing Low prior to an Old High being violated."
           Bullish: L1 -> H_mid -> LL (raid below L1) -> reversal up through H_mid zone.
             The BB candle = last up-body candle in [L1+1, H_mid].
-            Source p.320: "Bullish Breaker Block is a bullish range or Up Close Candle
+            Source p.319: "Bullish Breaker Block is a bullish range or Up Close Candle
             in the most recent Swing High prior to an Old Low being violated."
 
         Staircase / cascading behaviour:
