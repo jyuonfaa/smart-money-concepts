@@ -1450,10 +1450,12 @@ class smc:
             it is computed locally here as (Top + Bottom) / 2. The gap in
             smc.fvg() is a deferred Tier 4 defect (project_forensics.md).
         close_mitigation : bool, default True
-            SOURCED RULE. Controls the Invalidated test: whether A's body is
-            considered violated when a retest candle's *close* crosses A's body
-            top (True), or when its *high* crosses A's body top (False).
-            Source: p.315 -- "the body of the candle is not violated."
+            PARTIALLY SOURCED -- BOUNDARY ONLY. Source p.315 ("the body of the
+            candle is not violated") confirms A's BODY TOP is the correct
+            violation boundary. The source does NOT specify whether a retest
+            candle's close or high is the price tested against that boundary --
+            this distinction is an ENGINEERING ASSUMPTION, not sourced. True
+            (close-based) is the current default.
         structure_break_body : bool, default False
             ENGINEERING ASSUMPTION -- NOT DIRECTLY QUOTED FROM SOURCE.
             Controls the C-point detection threshold: whether the next swing low
