@@ -3975,6 +3975,22 @@ def _vacuum_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame, close_fill: bool = T
        formation candle. ob_df.MitigatedIndex == 0.0 means never mitigated; a positive
        value means mitigated at that positional index. OBs mitigated before the VB forms
        are excluded.
+    4. Partial-Fill Reversal Confirmation: Source pp.350-353 describes price retracing into
+       a vacuum block and reversing at a live same-direction order block inside the gap
+       without reaching the original VBLow (bull) / VBHigh (bear) boundary, leaving an
+       unfilled residual gap. Reversal confirmation is an ENGINEERING ASSUMPTION: confirmed
+       when price first touches into the overlapping OB (lowest low < OB Top for bull /
+       highest high > OB Bottom for bear) and then CLOSES back above the OB's Top (bull) /
+       below the OB's Bottom (bear). This mirrors the close-based confirmation convention
+       used elsewhere in this codebase for consistency. VBPartialFillConfirmed and VBFilled
+       are independent, non-exclusive facts -- a block can both bounce off an internal OB
+       (partial-fill) and later have its original boundary fully closed (VBFilled); these
+       commonly coincide in real data and both are retained.
+    5. VBResidualRevisited: Tracks whether a LATER, SEPARATE move closed through the residual
+       range [VBResidualBoundary, VBPartialFillLevel] after the reversal was confirmed.
+       If VBFilled fires at the exact same timestamp as the residual closure (same bar),
+       that is continuous follow-through from the original move rather than a second visit,
+       so VBResidualRevisited is left NaN. Only a genuine second revisit sets this timestamp.
 
     Zone Geometry (sourced from p.349 diagram):
     - Bullish: VBLow  = close[i-1], VBHigh = open[i]
@@ -3994,17 +4010,23 @@ def _vacuum_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame, close_fill: bool = T
     Returns:
     pd.DataFrame
         Indexed identically to ohlc. Columns:
-        'VB'               : 1 (bullish gap up) / -1 (bearish gap down) / NaN
-        'VBHigh'           : Upper boundary of the vacuum zone
-        'VBLow'            : Lower boundary of the vacuum zone
-        'VBMeanThreshold'  : Midpoint of zone (VBHigh + VBLow) / 2
-        'VBFilled'         : Timestamp when gap was fully closed, else NaN
-        'VBInvalidated'    : Timestamp when price re-entered gap post-fill, else NaN
-        'VBOverlapsOB'     : True if any LIVE ob_df zone overlaps [VBLow, VBHigh] at formation
+        'VB'                     : 1 (bullish gap up) / -1 (bearish gap down) / NaN
+        'VBHigh'                 : Upper boundary of the vacuum zone
+        'VBLow'                  : Lower boundary of the vacuum zone
+        'VBMeanThreshold'        : Midpoint of zone (VBHigh + VBLow) / 2
+        'VBFilled'               : Timestamp when gap was fully closed, else NaN
+        'VBInvalidated'          : Timestamp when price re-entered gap post-fill, else NaN
+        'VBOverlapsOB'           : True if any LIVE ob_df zone overlaps [VBLow, VBHigh] at formation
+        'VBPartialFillLevel'     : Extreme price reached during pullback before reversal, else NaN
+        'VBResidualBoundary'     : Original VBLow (bull) / VBHigh (bear) forming far edge of residual gap, else NaN
+        'VBResidualRevisited'    : Timestamp when a later separate move closes through residual range, else NaN
+        'VBPartialFillConfirmed' : bool True if partial-fill reversal confirmed, else NaN
     """
     out = pd.DataFrame(index=ohlc.index, columns=[
         'VB', 'VBHigh', 'VBLow', 'VBMeanThreshold',
-        'VBFilled', 'VBInvalidated', 'VBOverlapsOB'
+        'VBFilled', 'VBInvalidated', 'VBOverlapsOB',
+        'VBPartialFillLevel', 'VBResidualBoundary',
+        'VBResidualRevisited', 'VBPartialFillConfirmed'
     ])
 
     if 'OB' not in ob_df.columns:
@@ -4043,6 +4065,8 @@ def _vacuum_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame, close_fill: bool = T
         # MitigatedIndex == 0.0 means never mitigated (live).
         # MitigatedIndex > i means mitigated after this VB formed (still live at formation).
         overlaps = False
+        overlap_ob_top = None
+        overlap_ob_bottom = None
         for j in range(i):
             if pd.isna(ob_dirs[j]):
                 continue
@@ -4053,6 +4077,8 @@ def _vacuum_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame, close_fill: bool = T
             ob_live = (mit == 0.0) or (mit > i)
             if ob_live and ob_dirs[j] == direction and ob_bottoms[j] <= vb_high and ob_tops[j] >= vb_low:
                 overlaps = True
+                overlap_ob_top = ob_tops[j]
+                overlap_ob_bottom = ob_bottoms[j]
                 break
 
         # Forward scan: fill and invalidation
@@ -4081,12 +4107,76 @@ def _vacuum_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame, close_fill: bool = T
                         inval_idx = j
                         break
 
+        # Partial-Fill / Residual-Gap scenario (M4V9 pp.350-353)
+        # Evaluated when an overlapping live same-direction OB exists.
+        # Runs over full forward window independently of VBFilled.
+        partial_level = np.nan
+        residual_boundary = np.nan
+        residual_revisited = np.nan
+        partial_confirmed = np.nan
+
+        if overlaps and overlap_ob_top is not None:
+            ext = None
+            rev_idx = -1
+
+            for j in range(i + 1, len(ohlc)):
+                c_j = closes[j]
+                l_j = lows[j]
+                h_j = highs[j]
+
+                # Full-fill guard: if price has already reached past the true boundary,
+                # this is a full fill, not a partial fill. Break out immediately.
+                fill_test = (c_j if close_fill else l_j) if direction == 1 else (c_j if close_fill else h_j)
+                if (direction == 1 and fill_test <= vb_low) or (direction == -1 and fill_test >= vb_high):
+                    rev_idx = -1
+                    break
+
+                if direction == 1:
+                    ext = l_j if ext is None else min(ext, l_j)
+                    # Reversal confirmed when price touches into OB and closes back above OB Top
+                    if c_j > overlap_ob_top and ext < overlap_ob_top:
+                        rev_idx = j
+                        break
+                else:
+                    ext = h_j if ext is None else max(ext, h_j)
+                    # Reversal confirmed when price touches into OB and closes back below OB Bottom
+                    if c_j < overlap_ob_bottom and ext > overlap_ob_bottom:
+                        rev_idx = j
+                        break
+
+            if rev_idx != -1:
+                partial_confirmed = True
+                partial_level = ext
+                residual_boundary = vb_low if direction == 1 else vb_high
+
+                # Check if a later move closes through the residual range [residual_boundary, partial_level]
+                naive_closed_idx = -1
+                for k in range(rev_idx + 1, len(ohlc)):
+                    test_k = (closes[k] if close_fill else lows[k]) if direction == 1 else (closes[k] if close_fill else highs[k])
+                    if direction == 1:
+                        if test_k <= vb_low:
+                            naive_closed_idx = k
+                            break
+                    else:
+                        if test_k >= vb_high:
+                            naive_closed_idx = k
+                            break
+
+                # If closure coincides with the initial VBFilled, it is continuous follow-through,
+                # not a second revisit. Only set VBResidualRevisited if it is a genuine later revisit.
+                if naive_closed_idx != -1 and naive_closed_idx != filled_idx:
+                    residual_revisited = idx_array[naive_closed_idx]
+
         ts = idx_array[i]
-        out.loc[ts, 'VB']              = direction
-        out.loc[ts, 'VBHigh']          = vb_high
-        out.loc[ts, 'VBLow']           = vb_low
-        out.loc[ts, 'VBMeanThreshold'] = vb_mt
-        out.loc[ts, 'VBOverlapsOB']    = overlaps
+        out.loc[ts, 'VB']                     = direction
+        out.loc[ts, 'VBHigh']                 = vb_high
+        out.loc[ts, 'VBLow']                  = vb_low
+        out.loc[ts, 'VBMeanThreshold']        = vb_mt
+        out.loc[ts, 'VBOverlapsOB']           = overlaps
+        out.loc[ts, 'VBPartialFillLevel']     = partial_level
+        out.loc[ts, 'VBResidualBoundary']     = residual_boundary
+        out.loc[ts, 'VBResidualRevisited']    = residual_revisited
+        out.loc[ts, 'VBPartialFillConfirmed'] = partial_confirmed
         if filled_idx != -1:
             out.loc[ts, 'VBFilled']     = idx_array[filled_idx]
         if inval_idx != -1:
