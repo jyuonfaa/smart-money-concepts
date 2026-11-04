@@ -3623,6 +3623,13 @@ def _rejection_blocks(
     modeled on the _breaker_blocks precedent to scan the contiguous price leg that
     built the swing extreme without introducing hallucinated mathematical boundaries.
     Not sourced from M4V6 text.
+
+    ZERO-REJECTION INVARIANT [ENGINEERING ASSUMPTION]
+    A cluster is silently skipped (no block recorded) when its wick extreme
+    exactly equals its body extreme -- i.e. the highest/lowest candle has no
+    wick on the relevant side, so there is no wick/body gap to form a
+    rejection zone from. This is reasonable defensive logic but is NOT
+    stated anywhere in M4V6's source text (pp.324-333). Not sourced.
     """
     rb           = pd.Series(np.nan, index=ohlc.index)
     rb_top       = pd.Series(np.nan, index=ohlc.index)
