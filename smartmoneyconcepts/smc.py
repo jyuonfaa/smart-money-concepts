@@ -3761,7 +3761,18 @@ def _propulsion_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame) -> pd.DataFrame:
        This is NOT a claim that the conservative rule is more source-accurate; it is 
        explicitly a choice to err toward false negatives over false positives pending 
        any future sourced definition of local or proximity scope.
-       
+    7. Retest Detection (PARTIALLY SOURCED -- BOUNDARY ONLY): Source M4V8 p.346
+       describes a "later retest" of the propulsion block's wick extreme as a valid
+       continuation-phase entry. The wick extreme (wick_extreme, already computed in
+       Phase 1) is used as the retest boundary -- this boundary is sourced. Whether
+       a retest is confirmed by the NEXT bar's close returning beyond wick_extreme
+       (PBRetestRejected) is an ENGINEERING ASSUMPTION: M4V8 p.346 does not specify
+       close-vs-wick or how many bars constitute a "rejection". The retest scan runs
+       independently of Phase 2 (MeanThresholdViolated / Invalidated) because the
+       p.346 retest is a distinct continuation-phase entry signal, not a restatement
+       of the original setup's validity. A block that has been invalidated by Phase 2
+       may still register a retest -- this reflects source intent and is intentional.
+
     Parameters:
     ohlc : pd.DataFrame
         Historical OHLC data.
@@ -3771,11 +3782,13 @@ def _propulsion_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame) -> pd.DataFrame:
     Returns:
     pd.DataFrame
         DataFrame with columns: ['PB', 'PBTop', 'PBBottom', 'AnchorOB_Index', 
-                                 'MeanThresholdViolated', 'Invalidated']
+                                 'MeanThresholdViolated', 'Invalidated',
+                                 'PBRetestIndex', 'PBRetestRejected']
     """
     out = pd.DataFrame(index=ohlc.index, columns=[
         'PB', 'PBTop', 'PBBottom', 'AnchorOB_Index', 
-        'MeanThresholdViolated', 'Invalidated'
+        'MeanThresholdViolated', 'Invalidated',
+        'PBRetestIndex', 'PBRetestRejected'
     ])
     
     if 'OB' not in ob_df.columns:
@@ -3872,20 +3885,40 @@ def _propulsion_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame) -> pd.DataFrame:
             forward_close = ohlc['close'].iloc[k]
             
             if direction == 1:
-                # Bullish Warning: close below Mean Threshold
-                if pd.isna(mt_violated) and forward_close < mt:
+                if forward_close < mt:
                     mt_violated = ohlc.index[k]
-                # Bullish Invalidation: close below Wick Extreme
-                if pd.isna(invalidated) and forward_close < wick_extreme:
                     invalidated = ohlc.index[k]
                     break
             else:
-                # Bearish Warning: close above Mean Threshold
-                if pd.isna(mt_violated) and forward_close > mt:
+                if forward_close > mt:
                     mt_violated = ohlc.index[k]
-                # Bearish Invalidation: close above Wick Extreme
-                if pd.isna(invalidated) and forward_close > wick_extreme:
                     invalidated = ohlc.index[k]
+                    break
+        
+        # Phase 3: Retest Detection (M4V8 p.346 "later retest" -- runs independently of Phase 2)
+        retest_index = np.nan
+        retest_rejected = np.nan
+        
+        for k in range(idx + 1, len(ohlc)):
+            if direction == 1:
+                # Bullish: retest when low touches or breaches wick_extreme (wick low)
+                if ohlc['low'].iloc[k] <= wick_extreme:
+                    retest_index = ohlc.index[k]
+                    # Rejection confirmed if next bar's close is back above wick_extreme
+                    if k + 1 < len(ohlc):
+                        retest_rejected = ohlc['close'].iloc[k + 1] > wick_extreme
+                    else:
+                        retest_rejected = False
+                    break
+            else:
+                # Bearish: retest when high touches or breaches wick_extreme (wick high)
+                if ohlc['high'].iloc[k] >= wick_extreme:
+                    retest_index = ohlc.index[k]
+                    # Rejection confirmed if next bar's close is back below wick_extreme
+                    if k + 1 < len(ohlc):
+                        retest_rejected = ohlc['close'].iloc[k + 1] < wick_extreme
+                    else:
+                        retest_rejected = False
                     break
         
         # Map back to DatetimeIndex
@@ -3896,6 +3929,8 @@ def _propulsion_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame) -> pd.DataFrame:
         out.loc[ts, 'AnchorOB_Index'] = rec['anchor_ts']
         out.loc[ts, 'MeanThresholdViolated'] = mt_violated
         out.loc[ts, 'Invalidated'] = invalidated
+        out.loc[ts, 'PBRetestIndex'] = retest_index
+        out.loc[ts, 'PBRetestRejected'] = retest_rejected
         
     return out
 

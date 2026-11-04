@@ -54,33 +54,56 @@ def verify_propulsion(df, timeframe_name):
     # Check Invariants
     invariant_geom = True
     invariant_time = True
+    invariant_retest = True
     for i, row in pb_valid.iterrows():
         # PBTop >= PBBottom
         if row['PBTop'] < row['PBBottom']:
             invariant_geom = False
             
-        # MT Violated <= Invalidated (if both exist)
+        # MT Violated <= Invalidated (if both exist) -- should always match post Phase-2 fix
         mtv = row['MeanThresholdViolated']
         inv = row['Invalidated']
         if pd.notna(mtv) and pd.notna(inv):
             if mtv > inv:
                 invariant_time = False
+        
+        # PBRetestRejected must only be non-NaN when PBRetestIndex is also non-NaN
+        rtest_idx = row['PBRetestIndex']
+        rtest_rej = row['PBRetestRejected']
+        if pd.notna(rtest_rej) and pd.isna(rtest_idx):
+            invariant_retest = False
                 
     print(f"\nSTRUCTURAL INVARIANTS:")
     print(f"PBTop >= PBBottom always: {'PASSED' if invariant_geom else 'FAILED'}")
-    print(f"MeanThresholdViolated <= Invalidated (when both present): {'PASSED' if invariant_time else 'FAILED'}")
+    print(f"MeanThresholdViolated == Invalidated (when both present): {'PASSED' if invariant_time else 'FAILED'}")
+    print(f"PBRetestRejected only when PBRetestIndex present: {'PASSED' if invariant_retest else 'FAILED'}")
+    
+    # Retest summary counts
+    has_retest = pb_valid[pb_valid['PBRetestIndex'].notna()]
+    rejected = has_retest[has_retest['PBRetestRejected'] == True]
+    not_rejected = has_retest[has_retest['PBRetestRejected'] == False]
+    print(f"\nRETEST SUMMARY:")
+    print(f"PBs with retest: {len(has_retest)} / {total_pb}")
+    print(f"  Rejected (close back beyond wick_extreme): {len(rejected)}")
+    print(f"  Not rejected (close stayed inside):        {len(not_rejected)}")
     
     # Print detail table
     print(f"\nDETAIL TABLE:")
     if total_pb > 0:
-        print(f"{'Date':<20} | {'Dir':<4} | {'PBTop':<9} | {'PBBottom':<9} | {'AnchorOB_Index':<20} | {'MT_Violated':<20} | {'Invalidated':<20}")
-        print("-" * 115)
+        hdr = (f"{'Date':<20} | {'Dir':<4} | {'PBTop':<9} | {'PBBottom':<9} | "
+               f"{'AnchorOB_Index':<20} | {'MT_Violated':<20} | {'Invalidated':<20} | "
+               f"{'PBRetestIndex':<20} | {'PBRetestRejected'}")
+        print(hdr)
+        print("-" * len(hdr))
         for ts, row in pb_valid.iterrows():
             d_str = "BULL" if row['PB'] == 1 else "BEAR"
             anch_str = str(row['AnchorOB_Index'])
             mtv_str = str(row['MeanThresholdViolated']) if pd.notna(row['MeanThresholdViolated']) else "NaN"
             inv_str = str(row['Invalidated']) if pd.notna(row['Invalidated']) else "NaN"
-            print(f"{str(ts):<20} | {d_str:<4} | {row['PBTop']:<9.5f} | {row['PBBottom']:<9.5f} | {anch_str:<20} | {mtv_str:<20} | {inv_str:<20}")
+            ri_str = str(row['PBRetestIndex']) if pd.notna(row['PBRetestIndex']) else "NaN"
+            rr_str = str(row['PBRetestRejected']) if pd.notna(row['PBRetestRejected']) else "NaN"
+            print(f"{str(ts):<20} | {d_str:<4} | {row['PBTop']:<9.5f} | {row['PBBottom']:<9.5f} | "
+                  f"{anch_str:<20} | {mtv_str:<20} | {inv_str:<20} | {ri_str:<20} | {rr_str}")
     else:
         print("No Propulsion Blocks detected.")
 

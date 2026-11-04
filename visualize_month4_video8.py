@@ -100,6 +100,47 @@ def make_chart(df, pb_rows, title, out_png, out_html):
                 text='INV', showarrow=False, font=dict(size=9, color='black'), yshift=5
             )
 
+        # Phase 3: Retest marker
+        retest_ts  = row.get('PBRetestIndex') if hasattr(row, 'get') else row['PBRetestIndex']
+        retest_rej = row.get('PBRetestRejected') if hasattr(row, 'get') else row['PBRetestRejected']
+        wick_extreme_level = float(row['PBBottom']) if direction == 1 else float(row['PBTop'])
+        # For bullish: wick_extreme is below PBBottom (wick low); for bearish: above PBTop (wick high)
+        # We stored wick_extreme in smc.py but not in pb_df columns, so approximate from known geometry:
+        # (wick_extreme is not in the output DataFrame -- we draw the horizontal at the wick level by
+        #  reading the actual OHLC low/high of the PB candle from df if available)
+        if ts in df.index:
+            wb_candle = df.loc[ts]
+            wick_extreme_level = float(wb_candle['low']) if direction == 1 else float(wb_candle['high'])
+
+        if pd.notna(retest_ts) and retest_ts in df.index:
+            retest_str = retest_ts.isoformat()
+            rej_label = 'RETEST✓' if retest_rej else 'RETEST✗'
+            rej_color = 'green' if retest_rej else 'darkorange'
+            # Vertical line at retest bar
+            fig.add_shape(type='line',
+                x0=retest_str, x1=retest_str,
+                y0=0, y1=1, xref='x', yref='paper',
+                line=dict(color=rej_color, width=1.5, dash='dashdot')
+            )
+            fig.add_annotation(
+                x=retest_str, y=0.75, xref='x', yref='paper',
+                text=rej_label, showarrow=False,
+                font=dict(size=9, color=rej_color), yshift=5
+            )
+            # Horizontal wick_extreme level (dashed, full window width)
+            fig.add_shape(type='line',
+                x0=df.index[0].isoformat(), x1=df.index[-1].isoformat(),
+                y0=wick_extreme_level, y1=wick_extreme_level,
+                xref='x', yref='y',
+                line=dict(color=rej_color, width=1, dash='dash')
+            )
+            fig.add_annotation(
+                x=retest_str, y=wick_extreme_level,
+                text='wick', showarrow=False,
+                font=dict(size=8, color=rej_color),
+                xref='x', yref='y', xshift=20
+            )
+
         # Anchor vertical line
         if anchor_str and anchor_ts >= df.index[0]:
             fig.add_shape(type='line',
@@ -129,18 +170,18 @@ def make_chart(df, pb_rows, title, out_png, out_html):
         print(f'PNG failed ({e}), HTML saved: {out_html}')
 
 
-# --- Chart 1: Nov-10 BULL block (clean short-gap example) ---
-# Block at 2016-11-10 21:00, anchor at 2016-11-10 04:45
+# --- Chart 1: Nov-10 BULL block — extended window to include retest at 2016-11-11 09:30 ---
+# Block at 2016-11-10 21:00, anchor at 2016-11-10 04:45, retest at 2016-11-11 09:30
 focus_ts1 = pd.Timestamp('2016-11-10 21:00')
 anchor_ts1 = pd.Timestamp('2016-11-10 04:45')
 win_start1 = anchor_ts1 - pd.Timedelta(hours=4)
-win_end1   = focus_ts1 + pd.Timedelta(hours=16)
+win_end1   = pd.Timestamp('2016-11-11 11:00')   # Extended: covers retest at 09:30 + 1.5h buffer
 df_win1 = df_15m.loc[win_start1:win_end1]
 pb_rows1 = [(ts, row) for ts, row in pb_valid.iterrows()
             if ts >= win_start1 and ts <= win_end1]
 
 make_chart(df_win1, pb_rows1,
-    title='M4V8 BULL Propulsion Block — Nov 10 2016 (Clean Short-Gap)',
+    title='M4V8 BULL Propulsion Block — Nov 10 2016 (Retest at Nov 11 09:30)',
     out_png=r'd:\C.Slim\ict-intelligence\pb_bull_nov10.png',
     out_html=r'd:\C.Slim\ict-intelligence\pb_bull_nov10.html')
 
