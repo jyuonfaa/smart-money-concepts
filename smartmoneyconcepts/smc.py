@@ -3767,11 +3767,16 @@ def _propulsion_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame) -> pd.DataFrame:
        Phase 1) is used as the retest boundary -- this boundary is sourced. Whether
        a retest is confirmed by the NEXT bar's close returning beyond wick_extreme
        (PBRetestRejected) is an ENGINEERING ASSUMPTION: M4V8 p.346 does not specify
-       close-vs-wick or how many bars constitute a "rejection". The retest scan runs
-       independently of Phase 2 (MeanThresholdViolated / Invalidated) because the
-       p.346 retest is a distinct continuation-phase entry signal, not a restatement
-       of the original setup's validity. A block that has been invalidated by Phase 2
-       may still register a retest -- this reflects source intent and is intentional.
+       close-vs-wick or how many bars constitute a "rejection". The retest is only
+       valid when it occurs BEFORE Phase 2 invalidation: M4V8 p.346 describes the
+       retest ("trades right back up into this candle's low") in the context of a
+       setup whose mean threshold has NOT yet been broken -- the source text reads
+       "it's already showing a willingness to not want to go above that mean threshold
+       here, but it breaks down, then trades right back up into this candle's low".
+       A retest occurring at or after the Phase 2 invalidation bar is a different
+       market event and is NOT the p.346 pattern; it is correctly excluded. If the
+       first touch of wick_extreme occurs at or after `invalidated`, PBRetestIndex
+       and PBRetestRejected are left NaN for that block.
 
     Parameters:
     ohlc : pd.DataFrame
@@ -3895,7 +3900,10 @@ def _propulsion_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame) -> pd.DataFrame:
                     invalidated = ohlc.index[k]
                     break
         
-        # Phase 3: Retest Detection (M4V8 p.346 "later retest" -- runs independently of Phase 2)
+        # Phase 3: Retest Detection (M4V8 p.346 "later retest")
+        # Only valid if the retest bar occurs strictly BEFORE the Phase 2 invalidation
+        # bar (or the block was never invalidated). A retest at or after `invalidated`
+        # is a different market event and does not match the p.346 source pattern.
         retest_index = np.nan
         retest_rejected = np.nan
         
@@ -3903,22 +3911,30 @@ def _propulsion_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame) -> pd.DataFrame:
             if direction == 1:
                 # Bullish: retest when low touches or breaches wick_extreme (wick low)
                 if ohlc['low'].iloc[k] <= wick_extreme:
-                    retest_index = ohlc.index[k]
-                    # Rejection confirmed if next bar's close is back above wick_extreme
-                    if k + 1 < len(ohlc):
-                        retest_rejected = ohlc['close'].iloc[k + 1] > wick_extreme
-                    else:
-                        retest_rejected = False
+                    candidate_ts = ohlc.index[k]
+                    # Gate: only accept if no invalidation yet, or retest is before it
+                    if pd.isna(invalidated) or candidate_ts < invalidated:
+                        retest_index = candidate_ts
+                        # Rejection confirmed if next bar's close is back above wick_extreme
+                        if k + 1 < len(ohlc):
+                            retest_rejected = ohlc['close'].iloc[k + 1] > wick_extreme
+                        else:
+                            retest_rejected = False
+                    # Either way, this was the first wick touch -- stop scanning
                     break
             else:
                 # Bearish: retest when high touches or breaches wick_extreme (wick high)
                 if ohlc['high'].iloc[k] >= wick_extreme:
-                    retest_index = ohlc.index[k]
-                    # Rejection confirmed if next bar's close is back below wick_extreme
-                    if k + 1 < len(ohlc):
-                        retest_rejected = ohlc['close'].iloc[k + 1] < wick_extreme
-                    else:
-                        retest_rejected = False
+                    candidate_ts = ohlc.index[k]
+                    # Gate: only accept if no invalidation yet, or retest is before it
+                    if pd.isna(invalidated) or candidate_ts < invalidated:
+                        retest_index = candidate_ts
+                        # Rejection confirmed if next bar's close is back below wick_extreme
+                        if k + 1 < len(ohlc):
+                            retest_rejected = ohlc['close'].iloc[k + 1] < wick_extreme
+                        else:
+                            retest_rejected = False
+                    # Either way, this was the first wick touch -- stop scanning
                     break
         
         # Map back to DatetimeIndex
@@ -3945,7 +3961,7 @@ def _vacuum_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame, close_fill: bool = T
     caused by a volatility event (e.g. NFP, FOMC, session open).
 
     Source: ICT Mentorship 2016, Month 4 Video 9, pages 347-354.
-    Exact citation (p.342/347): "A bullish vacuum block is a gap that's created in price
+    Exact citation (p.347): "A bullish vacuum block is a gap that's created in price
     action as a result of a volatility event."
 
     ENGINEERING ASSUMPTIONS (both unspecified in source, p.347-354):
@@ -4035,7 +4051,7 @@ def _vacuum_blocks(ohlc: pd.DataFrame, ob_df: pd.DataFrame, close_fill: bool = T
                 continue
             # Live if never mitigated (0.0) or mitigated after this bar
             ob_live = (mit == 0.0) or (mit > i)
-            if ob_live and ob_bottoms[j] <= vb_high and ob_tops[j] >= vb_low:
+            if ob_live and ob_dirs[j] == direction and ob_bottoms[j] <= vb_high and ob_tops[j] >= vb_low:
                 overlaps = True
                 break
 
