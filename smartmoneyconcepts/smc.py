@@ -4446,6 +4446,10 @@ def _liquidity_raids(
     sweep_reject_threshold_pips: float = 25.0,
     pip_size: float = 0.0001,
     close_revert: bool = True,
+    reactive_entry_near_pips: float = 10.0,
+    reactive_entry_far_pips: float = 20.0,
+    stop_min_pips: float = 30.0,
+    stop_max_pips: float = 50.0,
 ) -> pd.DataFrame:
     """
     Month 4 Video 11: Reinforcing Liquidity Pools [When To Anticipate Raids]
@@ -4476,6 +4480,14 @@ def _liquidity_raids(
        gives the 10-20 'anticipated' range and the >25 'probably not a stop run' ceiling.
        'Elevated' fills the gap between those two numbers without claiming source support it
        doesn't have.
+    3. Technique A Entry Price: Sourced definition (p.366) states "place a Buy Limit Order just
+       below or at the recent Low" (mirror for High raids: sell limit at or just above recent High).
+       The "or just below/above" variant is not built as a separate field because the source provides
+       no numeric offset for it, unlike Technique B; only the exact "at" SwingLevel is modeled.
+    4. Technique B Stop Anchor: Sourced text (p.366) states "A 30- to 50-pip stop is ideal if your
+       entry is Under the Low and not above it." Anchoring the stop calculation to TechBEntryFar
+       (the far 20-pip edge) rather than the near edge or SwingLevel is an ENGINEERING ASSUMPTION,
+       chosen because the prose emphasizes the deeper 20-pip penetration as the ideal entry point.
 
     CROSS-VIDEO CONFLICT, LOGGED NOT RESOLVED (Month 2 Video 8, pp.130-145):
     M2V8 explicitly describes the liquidity TARGET/reference level (the old high/low
@@ -4486,6 +4498,16 @@ def _liquidity_raids(
     selection) rather than truly conflicting, but that is not adjudicated in code.
     See project_forensics.md, Month 2 Video 8 entry.
 
+    TWO ENTRY TECHNIQUES (M4V11 pp.366-367):
+    - Technique A (Anticipatory Limit, p.366): Buy Limit at or just below recent Low / Sell Limit
+      at or just above recent High before the sweep occurs. Modeled at TechAEntryPrice = SwingLevel.
+      No stop rule is sourced for Technique A.
+    - Technique B (Reactive Post-Sweep Entry, pp.366-367): Explicitly preferred by ICT ("it's better
+      to wait... that's a really good, ideal entry point"). Entry is taken within a 10-20 pip zone
+      beyond the swing level AFTER the sweep occurs. Valid only when SweepDepthPips reaches at least
+      reactive_entry_near_pips (10.0 pips); otherwise left NaN.
+      Stop rule (p.366): 30-50 pip stop beyond entry, computed from the far edge (TechBEntryFar).
+
     Parameters
     ----------
     ohlc                        : standard OHLC DataFrame
@@ -4494,18 +4516,27 @@ def _liquidity_raids(
     sweep_expected_max_pips     : float, default 20.0 (sourced to p.366)
     sweep_reject_threshold_pips : float, default 25.0 (sourced to p.366)
     pip_size                    : float, default 0.0001
-    close_revert                : bool, default True (ENGINEERING ASSUMPTION)
+    close_revert                : bool, default True (ENGINEERING ASSUMPTION #1)
+    reactive_entry_near_pips    : float, default 10.0 (sourced to p.366, near edge of Technique B entry zone)
+    reactive_entry_far_pips     : float, default 20.0 (sourced to p.366, far edge of Technique B entry zone)
+    stop_min_pips               : float, default 30.0 (sourced to p.366, near stop distance for Technique B)
+    stop_max_pips               : float, default 50.0 (sourced to p.366, far stop distance for Technique B)
 
     Returns
     -------
     DataFrame indexed identically to ohlc with columns:
-        RaidType       : 'high' (buy stops raided above swing high) or 'low' (sell stops raided below swing low)
-        SwingLevel     : Price level of the swing that was raided
-        SwingIndex     : Timestamp of the original swing point
-        RaidIndex      : Timestamp of the violation bar
-        SweepDepthPips : Penetration distance beyond the swing level, in pips
-        Classification : 'expected' / 'shallow' / 'elevated' / 'excessive'
-        RaidReverted   : bool, True if price reverted back beyond the swing level within the scan window
+        RaidType         : 'high' (buy stops raided above swing high) or 'low' (sell stops raided below swing low)
+        SwingLevel       : Price level of the swing that was raided
+        SwingIndex       : Timestamp of the original swing point
+        RaidIndex        : Timestamp of the violation bar
+        SweepDepthPips   : Penetration distance beyond the swing level, in pips
+        Classification   : 'expected' / 'shallow' / 'elevated' / 'excessive'
+        RaidReverted     : bool, True if price reverted back beyond the swing level within the scan window
+        TechAEntryPrice  : float, Technique A anticipatory limit entry price (SwingLevel)
+        TechBEntryNear   : float, Technique B reactive entry zone near edge (10 pips beyond swing), else NaN
+        TechBEntryFar    : float, Technique B reactive entry zone far edge (20 pips beyond swing), else NaN
+        TechBStopNear    : float, Technique B 30-pip stop anchored to TechBEntryFar, else NaN
+        TechBStopFar     : float, Technique B 50-pip stop anchored to TechBEntryFar, else NaN
     """
     df = ohlc.copy()
     n = len(df)
@@ -4524,6 +4555,11 @@ def _liquidity_raids(
     out_SweepDepthPips = np.full(n, np.nan)
     out_Classification = np.full(n, np.nan, dtype=object)
     out_RaidReverted = np.full(n, np.nan, dtype=object)
+    out_TechAEntryPrice = np.full(n, np.nan)
+    out_TechBEntryNear = np.full(n, np.nan)
+    out_TechBEntryFar = np.full(n, np.nan)
+    out_TechBStopNear = np.full(n, np.nan)
+    out_TechBStopFar = np.full(n, np.nan)
 
     ohlc_high = df["high"].values
     ohlc_low = df["low"].values
@@ -4589,6 +4625,28 @@ def _liquidity_raids(
                         reverted = True
                         break
 
+            # Technique A (Anticipatory Limit, p.366)
+            tech_a_entry = swing_price
+
+            # Technique B (Reactive Entry & Stops, pp.366-367)
+            # Only populated if sweep reaches at least reactive_entry_near_pips
+            tech_b_near = np.nan
+            tech_b_far = np.nan
+            tech_b_stop_near = np.nan
+            tech_b_stop_far = np.nan
+
+            if depth_pips >= reactive_entry_near_pips:
+                if is_high:
+                    tech_b_near = swing_price + (reactive_entry_near_pips * pip_size)
+                    tech_b_far = swing_price + (reactive_entry_far_pips * pip_size)
+                    tech_b_stop_near = tech_b_far + (stop_min_pips * pip_size)
+                    tech_b_stop_far = tech_b_far + (stop_max_pips * pip_size)
+                else:
+                    tech_b_near = swing_price - (reactive_entry_near_pips * pip_size)
+                    tech_b_far = swing_price - (reactive_entry_far_pips * pip_size)
+                    tech_b_stop_near = tech_b_far - (stop_min_pips * pip_size)
+                    tech_b_stop_far = tech_b_far - (stop_max_pips * pip_size)
+
             out_RaidType[v_idx] = raid_type
             out_SwingLevel[v_idx] = swing_price
             out_SwingIndex[v_idx] = pd.Timestamp(timestamps[i])
@@ -4596,6 +4654,11 @@ def _liquidity_raids(
             out_SweepDepthPips[v_idx] = depth_pips
             out_Classification[v_idx] = classification
             out_RaidReverted[v_idx] = reverted
+            out_TechAEntryPrice[v_idx] = tech_a_entry
+            out_TechBEntryNear[v_idx] = tech_b_near
+            out_TechBEntryFar[v_idx] = tech_b_far
+            out_TechBStopNear[v_idx] = tech_b_stop_near
+            out_TechBStopFar[v_idx] = tech_b_stop_far
 
     return pd.DataFrame({
         "RaidType": out_RaidType,
@@ -4605,6 +4668,11 @@ def _liquidity_raids(
         "SweepDepthPips": out_SweepDepthPips,
         "Classification": out_Classification,
         "RaidReverted": out_RaidReverted,
+        "TechAEntryPrice": out_TechAEntryPrice,
+        "TechBEntryNear": out_TechBEntryNear,
+        "TechBEntryFar": out_TechBEntryFar,
+        "TechBStopNear": out_TechBStopNear,
+        "TechBStopFar": out_TechBStopFar,
     }, index=idx)
 
 
