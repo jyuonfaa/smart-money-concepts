@@ -4202,48 +4202,78 @@ def _liquidity_voids(ohlc: pd.DataFrame, consolidation_df: pd.DataFrame, swing_h
     run via individual wick-gap pockets. The liquidity void is the ENTIRE run range -- from
     consolidation exit to the terminating opposing swing -- not the pockets inside it.
 
+    ENGINEERING ASSUMPTIONS:
+    1. close_fill: Source does not specify wick vs. close for fill confirmation. Default True =
+       confirmed by candle close past the cap level; False = wick penetration sufficient.
+    2. Void Boundary Extension Risk: end_idx is found by scanning forward to the first confirmed
+       opposing swing in swing_highs_lows, which by construction lags the true reversal point
+       (swing confirmation requires bars on both sides before a pivot is confirmed). Source
+       language (p.356) describes the void itself as originating from a short displacement run
+       ('only two or three candles') with no precise alternative boundary formula given. As a
+       result, LVLow/LVHigh may extend past where one-sided price delivery actually exhausted,
+       including some post-reversal consolidation in the flagged range. No better-sourced
+       alternative boundary rule exists in the text, so this is disclosed rather than silently
+       patched with an equally unsourced fix.
+    3. Second Poke Detection (M4V10 p.360): After LVFilled triggers, price pulls back and returns
+       for a second touch of cap_level that "just pokes its head above" the first fill touch
+       (higher high for bearish void / buy-side missing; lower low for bullish void / sell-side
+       missing). "Marginally beyond" has no numeric threshold in source; an ENGINEERING ASSUMPTION
+       treats any new extreme beyond the first fill touch as satisfying this condition.
+    4. Common Gap & Entry Confirmation (M4V10 pp.360-361): In the 1-2 candles immediately following
+       the second poke, a fresh common gap forms (standard 2-candle body gap: down-close candle
+       whose open > prev close for bullish void / sell-entry, or up-close candle whose open < prev
+       close for bearish void / buy-entry). Entry confirmation is SOURCED to p.361: confirmed when
+       a subsequent candle BODY closes back through the gap (close below gap bottom for sell entry,
+       close above gap top for buy entry), with wick tolerance allowed ("wicks up into the body...
+       that's all that's necessary"). Scanning over subsequent bars for this confirming body close
+       is an ENGINEERING ASSUMPTION (source gives no explicit forward scan limit).
+
     Parameters
     ----------
     ohlc              : standard OHLC DataFrame (RangeIndex, as produced by smc callers)
     consolidation_df  : output of smc.consolidation() -- used to find BreakLong/BreakShort
     swing_highs_lows  : output of smc.swing_highs_lows() -- HighLow column (-1=low, 1=high)
-    fvg_df            : output of smc.fvg() -- used for LVCommonGapRef look-up only
-    close_fill        : ENGINEERING ASSUMPTION -- source does not specify wick vs. close for
+    fvg_df            : output of smc.fvg() -- legacy parameter retained for signature compatibility
+    close_fill        : ENGINEERING ASSUMPTION #1 -- source does not specify wick vs. close for
                         fill confirmation. Default True = confirmed by candle close past the
                         cap level; False = wick penetration sufficient.
 
     Returns
     -------
     DataFrame indexed identically to ohlc with columns:
-        LVStart          : Timestamp of the consolidation exit that originated the void.
-        MissingLiquidity : 'buy-side' (bearish run) or 'sell-side' (bullish run).
-                           Named for the liquidity NOT delivered (p.357: "There's a void of
-                           buy-side liquidity; that means the markets aggressively moved away
-                           from that consolidation... it was all on sell-side liquidity.").
-        LVLow            : Lowest low of the full displacement run (high-low extremes, no
-                           wick/body distinction -- source gives none).
-        LVHigh           : Highest high of the full displacement run.
-        LVFilled         : Timestamp when void is filled (price closes / wicks back through
-                           cap level). Null until filled. Source (p.356): "There's no specific
-                           time limit on how long it's going to take for these voids to close in."
-                           No timeout logic is added.
-        LVCommonGapRef   : ENGINEERING ASSUMPTION -- after LVFilled triggers, pointer to the
-                           first FVG in fvg_df whose zone falls at or near the cap level (within
-                           20% of the void range). This is NOT new gap-detection logic; it is a
-                           reference into the existing fvg() output used as the common gap entry
-                           context described on pages 360-361. Null if none found.
+        LVStart                 : Timestamp of the consolidation exit that originated the void.
+        MissingLiquidity        : 'buy-side' (bearish run) or 'sell-side' (bullish run).
+                                  Named for the liquidity NOT delivered (p.357: "There's a void of
+                                  buy-side liquidity; that means the markets aggressively moved away
+                                  from that consolidation... it was all on sell-side liquidity.").
+        LVLow                   : Lowest low of the full displacement run (high-low extremes, no
+                                  wick/body distinction -- source gives none).
+        LVHigh                  : Highest high of the full displacement run.
+        LVFilled                : Timestamp when void is filled (price closes / wicks back through
+                                  cap level). Null until filled. Source (p.356): "There's no specific
+                                  time limit on how long it's going to take for these voids to close in."
+                                  No timeout logic is added.
+        LVSecondPokeConfirmed   : bool, True once price makes a second touch beyond the initial fill extreme.
+        LVSecondPokeIndex       : Timestamp of the confirming second poke bar, else NaN.
+        LVCommonGapTop          : Upper boundary of the fresh common gap formed post-second-poke, else NaN.
+        LVCommonGapBottom       : Lower boundary of the fresh common gap formed post-second-poke, else NaN.
+        LVCommonGapEntryIndex   : Timestamp of the candle whose BODY closes back through the gap, else NaN.
     """
     df = ohlc.copy()
     n  = len(df)
 
     # ENGINEERING ASSUMPTION: No minimum size or candle-count threshold is given in the source.
     # Every consolidation-exit-to-next-swing move is flagged as a candidate void, full stop.
-    out_LVStart          = np.full(n, np.nan, dtype=object)
-    out_MissingLiquidity = np.full(n, np.nan, dtype=object)
-    out_LVLow            = np.full(n, np.nan)
-    out_LVHigh           = np.full(n, np.nan)
-    out_LVFilled         = np.full(n, np.nan, dtype=object)
-    out_LVCommonGapRef   = np.full(n, np.nan, dtype=object)
+    out_LVStart               = np.full(n, np.nan, dtype=object)
+    out_MissingLiquidity      = np.full(n, np.nan, dtype=object)
+    out_LVLow                 = np.full(n, np.nan)
+    out_LVHigh                = np.full(n, np.nan)
+    out_LVFilled              = np.full(n, np.nan, dtype=object)
+    out_LVSecondPokeConfirmed = np.full(n, np.nan, dtype=object)
+    out_LVSecondPokeIndex     = np.full(n, np.nan, dtype=object)
+    out_LVCommonGapTop        = np.full(n, np.nan)
+    out_LVCommonGapBottom     = np.full(n, np.nan)
+    out_LVCommonGapEntryIndex = np.full(n, np.nan, dtype=object)
 
     idx = df.index
     # Timestamp resolution fix: when ohlc is passed after reset_index(), df.index is a
@@ -4301,29 +4331,84 @@ def _liquidity_voids(ohlc: pd.DataFrame, consolidation_df: pd.DataFrame, swing_h
                             filled_idx = k
                             break
 
-                # Common Gap Reference: pointer into fvg_df, not new gap detection.
-                # ENGINEERING ASSUMPTION: "at or near" = FVG boundary within 20% of void
-                # range from cap level. Source describes this contextually (pp.360-361) but
-                # gives no numerical proximity threshold.
-                cg_ts = np.nan
+                # Second Poke & Common Gap Mechanic (M4V10 pp.360-362)
+                second_poke_confirmed = np.nan
+                second_poke_ts        = np.nan
+                cg_top                = np.nan
+                cg_bottom             = np.nan
+                cg_entry_ts           = np.nan
+
                 if filled_idx != -1:
-                    near_thresh = void_range * 0.20
-                    for m in range(filled_idx, n):
-                        f_val = fvg_df["FVG"].iloc[m]
-                        if pd.notna(f_val):
-                            f_top = float(fvg_df["Top"].iloc[m])
-                            f_bot = float(fvg_df["Bottom"].iloc[m])
-                            if (abs(f_top - cap_level) <= near_thresh or
-                                    abs(f_bot - cap_level) <= near_thresh):
-                                cg_ts = pd.Timestamp(timestamps[m])
+                    first_touch_extreme = df["high"].iloc[filled_idx] if is_bearish else df["low"].iloc[filled_idx]
+
+                    # 1. Scan forward for second poke beyond first touch extreme at cap level
+                    poke_idx = -1
+                    for p in range(filled_idx + 1, n):
+                        if is_bearish:
+                            if df["high"].iloc[p] > first_touch_extreme and df["high"].iloc[p] >= cap_level:
+                                poke_idx = p
+                                break
+                        else:
+                            if df["low"].iloc[p] < first_touch_extreme and df["low"].iloc[p] <= cap_level:
+                                poke_idx = p
                                 break
 
-                out_LVStart[end_idx]          = pd.Timestamp(timestamps[i])
-                out_MissingLiquidity[end_idx] = void_type
-                out_LVLow[end_idx]            = lv_low
-                out_LVHigh[end_idx]           = lv_high
-                out_LVFilled[end_idx]         = filled_ts
-                out_LVCommonGapRef[end_idx]   = cg_ts
+                    if poke_idx != -1:
+                        second_poke_confirmed = True
+                        second_poke_ts        = pd.Timestamp(timestamps[poke_idx])
+
+                        # 2. Fresh common gap in 1-2 candles immediately following second poke
+                        gap_idx = -1
+                        for off in (1, 2):
+                            k = poke_idx + off
+                            if k >= n:
+                                break
+                            o_k  = df["open"].iloc[k]
+                            c_k  = df["close"].iloc[k]
+                            c_k1 = df["close"].iloc[k - 1]
+
+                            if not is_bearish:
+                                # Bullish void (sell-side missing): look for down-close candle
+                                # whose open is above previous candle's close
+                                if c_k < o_k and o_k > c_k1:
+                                    cg_top    = float(o_k)
+                                    cg_bottom = float(c_k1)
+                                    gap_idx   = k
+                                    break
+                            else:
+                                # Bearish void (buy-side missing): look for up-close candle
+                                # whose open is below previous candle's close
+                                if c_k > o_k and o_k < c_k1:
+                                    cg_top    = float(c_k1)
+                                    cg_bottom = float(o_k)
+                                    gap_idx   = k
+                                    break
+
+                        # 3. Entry confirmation: subsequent candle BODY closes back through gap
+                        if gap_idx != -1:
+                            for m in range(gap_idx + 1, n):
+                                c_m = df["close"].iloc[m]
+                                if not is_bearish:
+                                    # Sell entry: candle body closes below gap bottom
+                                    if c_m < cg_bottom:
+                                        cg_entry_ts = pd.Timestamp(timestamps[m])
+                                        break
+                                else:
+                                    # Buy entry: candle body closes above gap top
+                                    if c_m > cg_top:
+                                        cg_entry_ts = pd.Timestamp(timestamps[m])
+                                        break
+
+                out_LVStart[end_idx]               = pd.Timestamp(timestamps[i])
+                out_MissingLiquidity[end_idx]      = void_type
+                out_LVLow[end_idx]                 = lv_low
+                out_LVHigh[end_idx]                = lv_high
+                out_LVFilled[end_idx]              = filled_ts
+                out_LVSecondPokeConfirmed[end_idx] = second_poke_confirmed
+                out_LVSecondPokeIndex[end_idx]     = second_poke_ts
+                out_LVCommonGapTop[end_idx]        = cg_top
+                out_LVCommonGapBottom[end_idx]     = cg_bottom
+                out_LVCommonGapEntryIndex[end_idx] = cg_entry_ts
 
                 # Advance past the end of this void to avoid re-processing its bars.
                 i = end_idx
@@ -4332,12 +4417,16 @@ def _liquidity_voids(ohlc: pd.DataFrame, consolidation_df: pd.DataFrame, swing_h
         i += 1
 
     return pd.DataFrame({
-        "LVStart":          out_LVStart,
-        "MissingLiquidity": out_MissingLiquidity,
-        "LVLow":            out_LVLow,
-        "LVHigh":           out_LVHigh,
-        "LVFilled":         out_LVFilled,
-        "LVCommonGapRef":   out_LVCommonGapRef,
+        "LVStart":               out_LVStart,
+        "MissingLiquidity":      out_MissingLiquidity,
+        "LVLow":                 out_LVLow,
+        "LVHigh":                out_LVHigh,
+        "LVFilled":              out_LVFilled,
+        "LVSecondPokeConfirmed": out_LVSecondPokeConfirmed,
+        "LVSecondPokeIndex":     out_LVSecondPokeIndex,
+        "LVCommonGapTop":        out_LVCommonGapTop,
+        "LVCommonGapBottom":     out_LVCommonGapBottom,
+        "LVCommonGapEntryIndex": out_LVCommonGapEntryIndex,
     }, index=idx)
 
 
