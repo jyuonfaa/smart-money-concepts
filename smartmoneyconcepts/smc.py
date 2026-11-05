@@ -4217,8 +4217,11 @@ def _liquidity_voids(ohlc: pd.DataFrame, consolidation_df: pd.DataFrame, swing_h
     3. Second Poke Detection (M4V10 p.360): After LVFilled triggers, price pulls back and returns
        for a second touch of cap_level that "just pokes its head above" the first fill touch
        (higher high for bearish void / buy-side missing; lower low for bullish void / sell-side
-       missing). "Marginally beyond" has no numeric threshold in source; an ENGINEERING ASSUMPTION
-       treats any new extreme beyond the first fill touch as satisfying this condition.
+       missing). Semantics: evaluated strictly on the NEXT approach to cap_level after the fill,
+       evaluated once, not the best of all future approaches. If that next touch does not exceed
+       the first fill touch extreme, there is no second-poke event for this void. "Marginally beyond"
+       has no numeric threshold in source; an ENGINEERING ASSUMPTION treats any new extreme beyond
+       the first fill touch as satisfying this condition. No numeric time window is specified in source.
     4. Common Gap & Entry Confirmation (M4V10 pp.360-361): In the 1-2 candles immediately following
        the second poke, a fresh common gap forms (standard 2-candle body gap: down-close candle
        whose open > prev close for bullish void / sell-entry, or up-close candle whose open < prev
@@ -4341,16 +4344,18 @@ def _liquidity_voids(ohlc: pd.DataFrame, consolidation_df: pd.DataFrame, swing_h
                 if filled_idx != -1:
                     first_touch_extreme = df["high"].iloc[filled_idx] if is_bearish else df["low"].iloc[filled_idx]
 
-                    # 1. Scan forward for second poke beyond first touch extreme at cap level
+                    # 1. Scan forward for the next approach to cap_level (evaluated once, not best of all future)
                     poke_idx = -1
                     for p in range(filled_idx + 1, n):
                         if is_bearish:
-                            if df["high"].iloc[p] > first_touch_extreme and df["high"].iloc[p] >= cap_level:
-                                poke_idx = p
+                            if df["high"].iloc[p] >= cap_level:
+                                if df["high"].iloc[p] > first_touch_extreme:
+                                    poke_idx = p
                                 break
                         else:
-                            if df["low"].iloc[p] < first_touch_extreme and df["low"].iloc[p] <= cap_level:
-                                poke_idx = p
+                            if df["low"].iloc[p] <= cap_level:
+                                if df["low"].iloc[p] < first_touch_extreme:
+                                    poke_idx = p
                                 break
 
                     if poke_idx != -1:
