@@ -2111,10 +2111,29 @@ def _smt_divergence(
 
     CROSS-VIDEO SOURCING (M3V6 p.233): correlation="positive" mode's Branch A
     (asset HH confirmed + benchmark fails HH -> BEARISH) is confirmed sourced
-    to Month 3 Video 6, not this video -- worked twice (ZN vs ZB, Sep 2016).
-    Branches B and D in both correlation modes, and inverse-mode Branch A,
-    remain UNCONFIRMED by any video reviewed so far (not sourced, not built
-    from assumption -- symmetry-inferred only).
+    to Month 3 Video 6 -- worked twice (ZN vs ZB, Sep 2016).
+
+    CROSS-VIDEO SOURCING (M5V1 pp.407-410): correlation="positive" mode's
+    Branch C (BM HH + asset fails HH -> BEARISH, "Sell-ii", DXY/USDCHF, p.409)
+    and Branch D (BM LL + asset fails LL -> BULLISH, "Buy-ii", DXY/USDCHF,
+    p.407) are confirmed sourced here, first confirmation for both. Inverse
+    mode's Branch D (BM HH + asset fails LL -> BULLISH, "Buy-iv", DXY/EURUSD,
+    p.408) is also confirmed here, first confirmation (previously logged
+    STILL UNSOURCED after the M3V5 re-audit -- see m3v5-audit.md). Inverse
+    Branch A ("Buy-iii", p.408) and Branch B ("Sell-iii", p.409) each gain an
+    additional independent source here, on top of their existing M3V5
+    sourcing (see below). Inverse Branch C ("Sell-iv", p.409) gains an
+    additional source on top of its original build-time sourcing.
+
+    CARRY-FORWARD FIX (not sourced to M5V1 -- stale docstring, corrected
+    here): inverse-mode Branch A and Branch B were confirmed by the M3V5
+    ground-up re-audit (2026-10-21/22) -- Branch A exact-match to p.220,
+    Branch B confirmed-by-pattern to pp.222-225 (see m3v5-audit.md) -- but
+    that confirmation was never written back into this docstring. git log -S
+    confirms no commit since 640b48b touched this text. Fixed now.
+
+    Branches B and D of correlation="positive" mode remain UNCONFIRMED by
+    any video reviewed so far.
 
     Parameters
     ----------
